@@ -27,10 +27,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 16
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 12
 
 [node name="VBox" type="VBoxContainer" parent="Layout"]
 layout_mode = 2
@@ -38,28 +38,93 @@ theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="Layout/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = "ARSENAL FRONT"
 
 [node name="Subtitle" type="Label" parent="Layout/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Phase 1 - 装甲戦闘車両 / T2 データ構造 デモ表示 (マウスホイールでスクロール)"
+theme_override_font_sizes/font_size = 12
+text = "Phase 1 - 装甲戦闘車両 / アセンブル + 戦闘デモ"
 
-[node name="OutputScroll" type="ScrollContainer" parent="Layout/VBox"]
+[node name="Tabs" type="TabContainer" parent="Layout/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="AssembleTab" type="MarginContainer" parent="Layout/VBox/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HBox" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="LeftPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LeftTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "設計 (パーツを変更するとステータスが更新されます)"
+
+[node name="NameRow" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel/NameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+text = "設計名 :"
+
+[node name="NameEdit" type="LineEdit" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel/NameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SlotsTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "スロット (固定6種)"
+
+[node name="SlotsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="RightPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="RightTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/RightPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "算出ステータス (リアルタイム)"
+
+[node name="StatsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/RightPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BattleTab" type="MarginContainer" parent="Layout/VBox/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Scroll" type="ScrollContainer" parent="Layout/VBox/Tabs/BattleTab"]
+layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="Output" type="Label" parent="Layout/VBox/OutputScroll"]
+[node name="Output" type="Label" parent="Layout/VBox/Tabs/BattleTab/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 14
 text = "loading..."
-vertical_alignment = 0
 autowrap_mode = 0
 
 [node name="Status" type="Label" parent="Layout/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "T2 ready - 設計を読み込んでステータス計算済み"
+text = "T5 アセンブル + T6 自動戦闘 ready"
