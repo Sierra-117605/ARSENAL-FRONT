@@ -21,6 +21,9 @@ Thumbs.db
 *.swo
 *~
 
+# Local-only convenience launchers (paths are user-specific)
+/open_in_godot.bat
+
 # Save data (player save files should not be in git)
 /saves/*
 !/saves/.gitkeep
