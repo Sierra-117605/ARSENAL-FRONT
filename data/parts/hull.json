@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hull_light",
+    "slot": "hull",
+    "name": "軽量車体",
+    "stats": { "hp": 40, "armor": 10 },
+    "weight": 25,
+    "module_slots": 2
+  },
+  {
+    "id": "hull_medium",
+    "slot": "hull",
+    "name": "中量車体",
+    "stats": { "hp": 60, "armor": 20 },
+    "weight": 40,
+    "module_slots": 3
+  },
+  {
+    "id": "hull_heavy",
+    "slot": "hull",
+    "name": "重量車体",
+    "stats": { "hp": 90, "armor": 30 },
+    "weight": 60,
+    "module_slots": 4
+  }
+]

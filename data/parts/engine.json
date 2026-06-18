@@ -1,0 +1,23 @@
+[
+  {
+    "id": "engine_low",
+    "slot": "engine",
+    "name": "低出力エンジン",
+    "stats": {},
+    "weight": 10
+  },
+  {
+    "id": "engine_standard",
+    "slot": "engine",
+    "name": "標準エンジン",
+    "stats": {},
+    "weight": 18
+  },
+  {
+    "id": "engine_high",
+    "slot": "engine",
+    "name": "高出力エンジン",
+    "stats": {},
+    "weight": 28
+  }
+]

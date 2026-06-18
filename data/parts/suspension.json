@@ -1,0 +1,23 @@
+[
+  {
+    "id": "suspension_standard",
+    "slot": "suspension",
+    "name": "標準サスペンション",
+    "stats": {},
+    "weight": 8
+  },
+  {
+    "id": "suspension_high_speed",
+    "slot": "suspension",
+    "name": "高速型サスペンション",
+    "stats": {},
+    "weight": 6
+  },
+  {
+    "id": "suspension_heavy_load",
+    "slot": "suspension",
+    "name": "重荷重型サスペンション",
+    "stats": {},
+    "weight": 14
+  }
+]

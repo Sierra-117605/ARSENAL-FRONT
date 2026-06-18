@@ -1,0 +1,30 @@
+[
+  {
+    "id": "armor_light",
+    "slot": "armor",
+    "name": "軽装甲",
+    "stats": { "armor": 10, "hp": 10 },
+    "weight": 12
+  },
+  {
+    "id": "armor_medium",
+    "slot": "armor",
+    "name": "中装甲",
+    "stats": { "armor": 25, "hp": 20 },
+    "weight": 25
+  },
+  {
+    "id": "armor_heavy",
+    "slot": "armor",
+    "name": "重装甲",
+    "stats": { "armor": 40, "hp": 35 },
+    "weight": 40
+  },
+  {
+    "id": "armor_sloped",
+    "slot": "armor",
+    "name": "傾斜装甲",
+    "stats": { "armor": 30, "hp": 25 },
+    "weight": 28
+  }
+]

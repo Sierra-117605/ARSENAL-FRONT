@@ -1,0 +1,23 @@
+[
+  {
+    "id": "turret_rotary",
+    "slot": "turret",
+    "name": "旋回砲塔",
+    "stats": {},
+    "weight": 10
+  },
+  {
+    "id": "turret_rws",
+    "slot": "turret",
+    "name": "無人砲塔 (RWS)",
+    "stats": { "soft_attack": 5 },
+    "weight": 6
+  },
+  {
+    "id": "turret_fixed",
+    "slot": "turret",
+    "name": "無砲塔固定",
+    "stats": { "hp": 10 },
+    "weight": 4
+  }
+]

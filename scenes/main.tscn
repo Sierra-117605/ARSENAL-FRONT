@@ -11,25 +11,35 @@ offset_bottom = 720.0
 color = Color(0.11, 0.15, 0.2, 1)
 
 [node name="Title" type="Label" parent="."]
-offset_left = 80.0
-offset_top = 80.0
-offset_right = 1200.0
-offset_bottom = 140.0
-theme_override_font_sizes/font_size = 36
+offset_left = 40.0
+offset_top = 24.0
+offset_right = 1240.0
+offset_bottom = 70.0
+theme_override_font_sizes/font_size = 32
 text = "ARSENAL FRONT"
 
 [node name="Subtitle" type="Label" parent="."]
-offset_left = 80.0
-offset_top = 140.0
-offset_right = 1200.0
-offset_bottom = 180.0
-theme_override_font_sizes/font_size = 18
-text = "Phase 1 - 装甲戦闘車両 / 司令官モード + 自動戦闘"
+offset_left = 40.0
+offset_top = 72.0
+offset_right = 1240.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 16
+text = "Phase 1 - 装甲戦闘車両 / T2 データ構造 デモ表示"
+
+[node name="Output" type="Label" parent="."]
+offset_left = 40.0
+offset_top = 110.0
+offset_right = 1240.0
+offset_bottom = 670.0
+theme_override_font_sizes/font_size = 14
+text = "loading..."
+vertical_alignment = 0
+autowrap_mode = 0
 
 [node name="Status" type="Label" parent="."]
-offset_left = 80.0
-offset_top = 620.0
-offset_right = 1200.0
-offset_bottom = 660.0
-theme_override_font_sizes/font_size = 14
-text = "boot ok - 環境構築フェーズ (T1)"
+offset_left = 40.0
+offset_top = 680.0
+offset_right = 1240.0
+offset_bottom = 710.0
+theme_override_font_sizes/font_size = 12
+text = "T2 ready - 設計を読み込んでステータス計算済み"

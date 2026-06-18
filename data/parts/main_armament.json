@@ -1,0 +1,51 @@
+[
+  {
+    "id": "gun_30mm_auto",
+    "slot": "main_armament",
+    "name": "30mm 機関砲",
+    "stats": { "soft_attack": 30, "hard_attack": 10, "piercing": 20 },
+    "weight": 5
+  },
+  {
+    "id": "gun_105mm_smooth",
+    "slot": "main_armament",
+    "name": "105mm 滑腔砲",
+    "stats": { "soft_attack": 20, "hard_attack": 35, "piercing": 50 },
+    "weight": 12
+  },
+  {
+    "id": "gun_120mm_smooth",
+    "slot": "main_armament",
+    "name": "120mm 滑腔砲",
+    "stats": { "soft_attack": 25, "hard_attack": 50, "piercing": 70 },
+    "weight": 15
+  },
+  {
+    "id": "launcher_atgm",
+    "slot": "main_armament",
+    "name": "対戦車ミサイルランチャー",
+    "stats": { "soft_attack": 10, "hard_attack": 70, "piercing": 90 },
+    "weight": 8
+  },
+  {
+    "id": "gun_howitzer_155mm",
+    "slot": "main_armament",
+    "name": "155mm 榴弾砲",
+    "stats": { "soft_attack": 45, "hard_attack": 30, "piercing": 30 },
+    "weight": 18
+  },
+  {
+    "id": "gun_railgun",
+    "slot": "main_armament",
+    "name": "レールガン (近未来)",
+    "stats": { "soft_attack": 30, "hard_attack": 75, "piercing": 120 },
+    "weight": 20
+  },
+  {
+    "id": "gun_laser",
+    "slot": "main_armament",
+    "name": "レーザー砲 (近未来)",
+    "stats": { "soft_attack": 35, "hard_attack": 25, "piercing": 60 },
+    "weight": 14
+  }
+]

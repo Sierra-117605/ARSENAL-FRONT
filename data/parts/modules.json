@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mod_mg",
+    "slot": "module",
+    "name": "副武装機銃",
+    "stats": { "soft_attack": 10 },
+    "weight": 3
+  },
+  {
+    "id": "mod_aa_mg",
+    "slot": "module",
+    "name": "対空機銃",
+    "stats": { "soft_attack": 5 },
+    "weight": 3
+  },
+  {
+    "id": "mod_extra_armor",
+    "slot": "module",
+    "name": "追加装甲",
+    "stats": { "armor": 10, "hp": 10 },
+    "weight": 8
+  },
+  {
+    "id": "mod_radio",
+    "slot": "module",
+    "name": "無線機",
+    "stats": {},
+    "weight": 2
+  },
+  {
+    "id": "mod_night_vision",
+    "slot": "module",
+    "name": "暗視装置",
+    "stats": {},
+    "weight": 2
+  },
+  {
+    "id": "mod_autoloader",
+    "slot": "module",
+    "name": "自動装填装置",
+    "stats": {},
+    "weight": 4
+  },
+  {
+    "id": "mod_smoke_launcher",
+    "slot": "module",
+    "name": "煙幕発射機",
+    "stats": {},
+    "weight": 2
+  },
+  {
+    "id": "mod_mine_roller",
+    "slot": "module",
+    "name": "地雷除去ローラー",
+    "stats": {},
+    "weight": 6
+  }
+]
