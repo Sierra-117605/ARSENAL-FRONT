@@ -1,8 +1,9 @@
-extends Node2D
+extends Control
 
 # Phase 1 の起点シーン。
 # 今は T2 系の検証として、3 つの戦車設計 (MBT / 偵察 / ATGM) の
 # 5 項目ステータスを画面に表示する。
+# 全体は Control + アンカーでウィンドウサイズに追従する (Node2D 絶対座標は使わない)。
 
 const DEMO_UNITS: Array[Dictionary] = [
 	{
@@ -49,7 +50,7 @@ const DEMO_UNITS: Array[Dictionary] = [
 	},
 ]
 
-@onready var output_label: Label = $Output
+@onready var output_label: Label = $Layout/VBox/Output
 
 func _ready() -> void:
 	print("[ARSENAL FRONT] boot ok")
