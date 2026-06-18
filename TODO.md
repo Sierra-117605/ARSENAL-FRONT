@@ -21,10 +21,14 @@
   - ヘッドレスでの起動確認 OK（`[ARSENAL FRONT] boot ok` 出力確認）
   - フォルダ構成（data/parts, scenes, scripts, saves, assets, docs）を作成
   - データ構造方針 docs/DATA_STRUCTURE.md と 相互レビュー手順 docs/REVIEW_FLOW.md を作成
+  - **Godot エディタで F5 起動して画面表示を目視確認済み**（ユーザー側検証 OK）
+  - GitHub CLI 導入 + PR #1（project.godot 整形）作成・マージ・後片付け完了
+- **Codex 契約状況**：**未契約**。よって T1-3 の「Codex レビュー」は実施不可
+  - 当面の運用：Claude Code 単独実装＋ユーザーによる動作検証で進める（B案）
+  - Codex 契約後、それまでに書いた分をまとめてレビュー依頼する
 - **次にやること**：
-  1. ユーザーが Godot エディタで開いて F5 で起動し画面表示を確認（T1-3 ユーザー側検証）
-  2. Codex に最小サンプルのレビューを依頼（T1-3 仕上げ）
-  3. その後 T2 系（データ構造の実装）へ着手
+  1. T2 系（データ構造の共通基盤）に着手
+  2. まず T2-3（5項目ステータスの定義）と T2-1（ユニット定義データ構造）の最小実装から
 
 ---
 
@@ -44,8 +48,9 @@ SPEC §1.6 より：
 - [x] T1-2：フォルダ構成を決める（`data/`, `data/parts/`, `scenes/`, `scripts/`, `saves/`, `assets/`, `docs/` の分離。.gitkeep 配置）
 - [~] T1-3：Claude Code と Codex の GDScript 出力品質を簡単なサンプルで検証し、相互レビュー運用を確立（SPEC §2.8 の留意点）
   - 運用ルール → `docs/REVIEW_FLOW.md`
-  - 最小サンプル → `scenes/main.tscn` + `scripts/main.gd`（ヘッドレス起動 OK 確認済み）
-  - 残：ユーザー側で Godot エディタ F5 起動確認 → その後 Codex レビュー依頼
+  - 最小サンプル → `scenes/main.tscn` + `scripts/main.gd`
+  - Claude Code 単独でのヘッドレス起動 + Godot エディタ F5 起動の両方で動作確認済み
+  - **残：Codex 側レビュー（Codex 契約後に実施。それまではブロック中）**
 - [x] T1-4：マルチプレイ将来対応のため、ユニット・戦闘状態を**シリアライズ可能なデータ構造**で設計する方針を確認（SPEC §2.14）
   - 成果物 → `docs/DATA_STRUCTURE.md`
 
