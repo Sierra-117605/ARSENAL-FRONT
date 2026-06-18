@@ -75,6 +75,20 @@
 - Codex 契約タイミング：他兵科追加やマルチプレイ実装など、Phase 1 より複雑な領域に入る前を推奨
 - 関連 TODO：T1-3
 
+### 2026-06-19 画面いっぱいに UI を広げる方法（最大ハマりポイント）
+- 状況：F5 で起動した画面が、ウィンドウを最大化しても中央の小さい箱に収まったまま広がらなかった。数回の修正を経て解決
+- 原因（複数の要因が重なっていた）：
+  1. **Node2D + 絶対座標で UI を組んでいた**：ウィンドウサイズが変わってもピクセル位置が固定のため広がらない → 解決：ルートを Control にして anchors_preset=15（フルアンカー）で組む
+  2. **Godot 4.4+ の Embedded Game Mode**：F5 実行時にゲームを「エディタ内蔵のデバッグウィンドウ」で表示する新機能。エディタ設定 → 実行 → ウィンドウの配置 → Game Embed Mode を **「Disabled」** に変更しないと、画面伸縮設定が無視される
+  3. **stretch_mode=canvas_items + aspect=expand**：UI 拡縮には使えるが、ウィンドウサイズ追従の効きが弱い場面がある → 解決：**`stretch_mode="viewport"` + `stretch_aspect="keep"`** に変更（ピクセルバッファ全体をウィンドウに引き伸ばす、16:9 維持）
+- 教訓：
+  - **画面表示の Control は最初から `Control` ルート + アンカー** で組む（Node2D は世界に物を置く用）
+  - **`stretch_mode="viewport"` は確実に効く**。情報密度を細かく調整する必要が出てきたら `canvas_items` に戻す検討をする
+  - **新規 PC で Godot 4.4+ を使う場合は最初に Game Embed Mode を Disabled にしておく**
+  - 長文や多数項目を表示するときは **ScrollContainer でラップする** のが定石
+- 関連 TODO：T1-2（フォルダ構成・project.godot 設定）、T5（アセンブル UI）以降の全画面実装
+- 関連コミット：`2559866`（Control 化）、`a09e5c5`（viewport モード化）、`f42d8e7`（ScrollContainer 追加）
+
 ### 2026-06-19 新しい class_name を追加したらインポートが必要（ハマりポイント）
 - 状況：`class_name Stats` などを新規追加したスクリプトを書いた直後にヘッドレス実行 (`--quit-after`) したら "Could not find type Stats in the current scope" でパースエラー
 - 原因：Godot は **エディタが起動するか `--import` が走るとき** にプロジェクト全体をスキャンして `class_name` のグローバル登録を更新する。新規 class_name はその登録が無いとパースで見つからない
