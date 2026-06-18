@@ -54,6 +54,10 @@ const DEMO_UNITS: Array[Dictionary] = [
 
 func _ready() -> void:
 	print("[ARSENAL FRONT] boot ok")
+	# 画面サイズ診断用 (出力ログで実際のサイズを確認する)
+	var win_size: Vector2i = DisplayServer.window_get_size()
+	var viewport_size: Vector2 = get_viewport_rect().size
+	print("[ARSENAL FRONT] window=%dx%d  viewport=%dx%d" % [win_size.x, win_size.y, int(viewport_size.x), int(viewport_size.y)])
 	var catalog: PartsCatalog = PartsCatalog.new()
 	var loaded: int = catalog.load_all()
 	print("[ARSENAL FRONT] parts loaded: %d" % loaded)
