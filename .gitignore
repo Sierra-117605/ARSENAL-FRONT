@@ -1,0 +1,34 @@
+# Godot 4+ specific ignores
+# https://github.com/github/gitignore/blob/main/Godot.gitignore
+
+.godot/
+/android/
+/builds/
+*.translation
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores (if C# is ever added)
+.mono/
+data_*/
+mono_crash.*.json
+
+# System / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Save data (player save files should not be in git)
+/saves/*
+!/saves/.gitkeep
+
+# Build artifacts
+/dist/
+/export/
+*.pck
+*.exe
+*.zip
+!icon.svg

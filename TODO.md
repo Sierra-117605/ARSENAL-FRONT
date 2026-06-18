@@ -14,9 +14,17 @@
 
 ## 現在地（最初に読む）
 - **現在のフェーズ：Phase 1（装甲戦闘車両のみ・司令官モード＋自動戦闘）**
-- **技術スタック：Godot 4（2D モード）+ GDScript**（SPEC §2.8）
-- **直近の作業：まだ実装未着手。環境構築から始める**
-- **次にやること：T1-1（Godot プロジェクト作成）**
+- **技術スタック：Godot 4.6.3 stable（2D モード）+ GDScript**（SPEC §2.8）
+- **直近の作業（2026-06-19）**：
+  - Godot 4.6.3 を winget で導入完了
+  - 最小プロジェクト（project.godot / scenes/main.tscn / scripts/main.gd / icon.svg）を作成
+  - ヘッドレスでの起動確認 OK（`[ARSENAL FRONT] boot ok` 出力確認）
+  - フォルダ構成（data/parts, scenes, scripts, saves, assets, docs）を作成
+  - データ構造方針 docs/DATA_STRUCTURE.md と 相互レビュー手順 docs/REVIEW_FLOW.md を作成
+- **次にやること**：
+  1. ユーザーが Godot エディタで開いて F5 で起動し画面表示を確認（T1-3 ユーザー側検証）
+  2. Codex に最小サンプルのレビューを依頼（T1-3 仕上げ）
+  3. その後 T2 系（データ構造の実装）へ着手
 
 ---
 
@@ -32,10 +40,14 @@ SPEC §1.6 より：
 ---
 
 ## T1. 環境構築・基盤
-- [ ] T1-1：Godot 4 プロジェクトを作成し、Git リポジトリを初期化
-- [ ] T1-2：フォルダ構成を決める（データ / シーン / スクリプト / セーブ の分離）
-- [ ] T1-3：Claude Code と Codex の GDScript 出力品質を簡単なサンプルで検証し、相互レビュー運用を確立（SPEC §2.8 の留意点）
-- [ ] T1-4：マルチプレイ将来対応のため、ユニット・戦闘状態を**シリアライズ可能なデータ構造**で設計する方針を確認（SPEC §2.14）
+- [x] T1-1：Godot 4 プロジェクトを作成し、Git リポジトリを初期化（既存 origin に最初のプロジェクトコミットを追加）
+- [x] T1-2：フォルダ構成を決める（`data/`, `data/parts/`, `scenes/`, `scripts/`, `saves/`, `assets/`, `docs/` の分離。.gitkeep 配置）
+- [~] T1-3：Claude Code と Codex の GDScript 出力品質を簡単なサンプルで検証し、相互レビュー運用を確立（SPEC §2.8 の留意点）
+  - 運用ルール → `docs/REVIEW_FLOW.md`
+  - 最小サンプル → `scenes/main.tscn` + `scripts/main.gd`（ヘッドレス起動 OK 確認済み）
+  - 残：ユーザー側で Godot エディタ F5 起動確認 → その後 Codex レビュー依頼
+- [x] T1-4：マルチプレイ将来対応のため、ユニット・戦闘状態を**シリアライズ可能なデータ構造**で設計する方針を確認（SPEC §2.14）
+  - 成果物 → `docs/DATA_STRUCTURE.md`
 
 ## T2. データ構造（兵科非依存の共通基盤）
 SPEC §3・§1.4 より。ここを汎用に作ることが後の兵科追加のカギ。

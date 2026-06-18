@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#1c2733"/>
+  <rect x="16" y="48" width="96" height="40" fill="#4a5a6a" stroke="#8aa0b8" stroke-width="2"/>
+  <rect x="44" y="24" width="40" height="28" fill="#5a6b7d" stroke="#8aa0b8" stroke-width="2"/>
+  <rect x="80" y="32" width="40" height="6" fill="#8aa0b8"/>
+  <circle cx="32" cy="92" r="8" fill="#2a3340" stroke="#8aa0b8" stroke-width="2"/>
+  <circle cx="64" cy="92" r="8" fill="#2a3340" stroke="#8aa0b8" stroke-width="2"/>
+  <circle cx="96" cy="92" r="8" fill="#2a3340" stroke="#8aa0b8" stroke-width="2"/>
+  <text x="64" y="118" font-family="monospace" font-size="10" fill="#8aa0b8" text-anchor="middle">ARSENAL</text>
+</svg>

@@ -67,7 +67,17 @@
 ---
 
 ## 3. 実装中に詰まったこと（ここから随時追記）
-※まだ実装前。詰まりが出たら以下の形式で追記する。
+
+### 2026-06-19 環境構築フェーズの学び（T1-1 〜 T1-4）
+- 状況：Godot 4 のインストールから最小プロジェクト作成まで進めた
+- 学び・要点：
+  - **Godot は winget で導入できる**（`winget install GodotEngine.GodotEngine` で 4.6.3 stable が入った）
+  - winget 経由の場合、実体は `C:\Users\tkmuh\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_*\Godot_v4.6.3-stable_win64.exe` に置かれる
+  - PATH のエイリアス（`godot`）は管理者権限なしだと作られないため、シェルで `godot --version` がすぐ通らない場合あり → エディタ起動はスタートメニューから可能
+  - **動作検証は `godot --headless --path <project> --quit-after <frames>` で可能**（無人検証に有用）
+  - **`godot --headless --path <project> --import` でプロジェクトを最初にインポート**しておくと、`.godot/` キャッシュが生成されてその後の起動が速い
+- 関連 TODO：T1-1, T1-3
+- 関連ドキュメント：docs/REVIEW_FLOW.md（相互レビュー運用）, docs/DATA_STRUCTURE.md（データ構造方針）
 
 <!--
 ### [日付] タイトル（例：Godot のセーブで配列が壊れる）
