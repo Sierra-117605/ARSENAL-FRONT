@@ -50,7 +50,7 @@ const DEMO_UNITS: Array[Dictionary] = [
 	},
 ]
 
-@onready var output_label: Label = $Layout/VBox/Output
+@onready var output_label: Label = $Layout/VBox/OutputScroll/Output
 
 func _ready() -> void:
 	print("[ARSENAL FRONT] boot ok")
