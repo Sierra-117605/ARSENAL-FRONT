@@ -202,6 +202,11 @@ autowrap_mode = 3
 [node name="Footer" type="HBoxContainer" parent="Layout/VBox/Tabs/CommanderTab/VBox"]
 layout_mode = 2
 
+[node name="SortieTestButton" type="Button" parent="Layout/VBox/Tabs/CommanderTab/VBox/Footer"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+text = "出撃テスト (Phase 2)"
+
 [node name="FooterSpacer" type="Control" parent="Layout/VBox/Tabs/CommanderTab/VBox/Footer"]
 layout_mode = 2
 size_flags_horizontal = 3

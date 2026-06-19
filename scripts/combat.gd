@@ -180,3 +180,22 @@ static func winner_label(w: String) -> String:
 	if w == "draw":
 		return "相打ち"
 	return "決着なし(タイムアウト)"
+
+# --- 単発のダメージ計算 (Phase 2 手動戦闘で再利用) ----------------------
+# 攻撃側の stats と目標の装甲から、単発のダメージを返す。
+# 戻り値: { damage: int, damage_type: "hard"|"soft", pierced: bool }
+static func compute_damage(soft_attack: int, hard_attack: int, piercing: int, target_armor: int) -> Dictionary:
+	var use_hard: bool = target_armor >= ARMOR_THRESHOLD
+	var attack_value: int = hard_attack if use_hard else soft_attack
+	var ratio: float = HARD_DAMAGE_RATIO if use_hard else SOFT_DAMAGE_RATIO
+	var pierced: bool = piercing >= target_armor
+	var damage_f: float
+	if pierced:
+		damage_f = float(attack_value) * ratio
+	else:
+		damage_f = float(soft_attack) * SOFT_DAMAGE_RATIO * RESIDUAL_FACTOR
+	return {
+		"damage": int(roundi(damage_f)),
+		"damage_type": "hard" if use_hard else "soft",
+		"pierced": pierced,
+	}

@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://b1arsenalplayer"]
+
+[ext_resource type="Script" path="res://scripts/player_tank.gd" id="1_player"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(40, 22)
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 1
+collision_mask = 16
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_player")
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -11, 18, -11, 22, 0, 18, 11, -20, 11)
+color = Color(0.25, 0.45, 0.85, 1)
+
+[node name="Cannon" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0, -3, 32, -3, 32, 3, 0, 3)
+color = Color(0.1, 0.18, 0.4, 1)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.85, 0.85)
+limit_left = -1200
+limit_right = 1200
+limit_top = -800
+limit_bottom = 800

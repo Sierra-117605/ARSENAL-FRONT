@@ -76,6 +76,7 @@ var _suppress_signals: bool = false    # UI 再構築中の連鎖イベント抑
 @onready var commander_produce_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/ProduceButton
 @onready var commander_inventory_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/InventoryList
 @onready var commander_next_day_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Footer/NextDayButton
+@onready var sortie_test_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Footer/SortieTestButton
 
 # 司令官タブ (任務エリア)
 @onready var available_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/AvailableList
@@ -410,6 +411,7 @@ func _setup_commander() -> void:
 	commander_design_selector.item_selected.connect(_on_commander_design_changed)
 	commander_produce_button.pressed.connect(_on_produce_pressed)
 	commander_next_day_button.pressed.connect(_on_next_day_pressed)
+	sortie_test_button.pressed.connect(_on_sortie_test_pressed)
 	dispatch_button.pressed.connect(_on_dispatch_pressed)
 	available_list.item_selected.connect(_on_available_mission_selected)
 	dispatch_units_list.multi_selected.connect(_on_dispatch_units_multi_selected)
@@ -502,6 +504,11 @@ func _on_produce_pressed() -> void:
 	game_state.save_to()
 	_refresh_commander_display()
 	print("[ARSENAL FRONT] produced %s (Day %d)" % [String(instance.get("name", "")), game_state.day()])
+
+func _on_sortie_test_pressed() -> void:
+	# Phase 2-1: 出撃テスト (固定パーティ vs 固定敵で手動操作の動作確認)
+	print("[ARSENAL FRONT] launching sortie test (combat_field)")
+	get_tree().change_scene_to_file("res://scenes/combat_field.tscn")
 
 func _on_next_day_pressed() -> void:
 	game_state.apply({ "type": "advance_day", "days": 1 })
