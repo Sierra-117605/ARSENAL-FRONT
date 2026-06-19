@@ -57,6 +57,7 @@ var catalog: PartsCatalog = null
 var saved_designs: Array = []     # 永続化される設計一覧 (Dictionary 配列)
 var editing_index: int = 0        # saved_designs のうちどれを編集中か
 var editing_design: Dictionary = {} # 編集中のバッファ (保存前)
+var game_state: GameState = null  # 司令官モードのゲーム状態
 
 # UI 参照
 var slot_dropdowns: Dictionary = {}    # slot_name -> OptionButton
@@ -65,6 +66,18 @@ var weight_value_label: Label = null
 var _suppress_signals: bool = false    # UI 再構築中の連鎖イベント抑止
 
 @onready var tabs: TabContainer = $Layout/VBox/Tabs
+
+# 司令官タブ
+@onready var commander_day_label: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Header/DayLabel
+@onready var commander_funds_label: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Header/FundsLabel
+@onready var commander_materials_label: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Header/MaterialsLabel
+@onready var commander_design_selector: OptionButton = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/DesignRow/DesignSelector
+@onready var commander_cost_label: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/CostLabel
+@onready var commander_produce_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/ProduceButton
+@onready var commander_inventory_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/InventoryList
+@onready var commander_next_day_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Footer/NextDayButton
+
+# アセンブルタブ
 @onready var design_list: ItemList = $Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/DesignList
 @onready var new_button: Button = $Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow/NewButton
 @onready var save_button: Button = $Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow/SaveButton
@@ -73,6 +86,8 @@ var _suppress_signals: bool = false    # UI 再構築中の連鎖イベント抑
 @onready var name_edit: LineEdit = $Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel/NameRow/NameEdit
 @onready var slots_container: VBoxContainer = $Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel/SlotsContainer
 @onready var stats_container: VBoxContainer = $Layout/VBox/Tabs/AssembleTab/HBox/StatsPanel/StatsContainer
+
+# 戦闘デモタブ
 @onready var battle_output: Label = $Layout/VBox/Tabs/BattleTab/Scroll/Output
 
 func _ready() -> void:
@@ -88,10 +103,19 @@ func _ready() -> void:
 	_load_or_seed_designs()
 	print("[ARSENAL FRONT] designs loaded: %d (%s)" % [saved_designs.size(), SaveIO.get_designs_absolute_path()])
 
-	tabs.set_tab_title(0, "アセンブル")
-	tabs.set_tab_title(1, "戦闘デモ")
+	game_state = GameState.new()
+	if game_state.load_from():
+		print("[ARSENAL FRONT] gamestate loaded (Day %d, funds %d, materials %d, inventory %d)" % [game_state.day(), game_state.funds(), game_state.materials(), game_state.inventory().size()])
+	else:
+		game_state.save_to()
+		print("[ARSENAL FRONT] gamestate created (default, %s)" % GameState.get_save_absolute_path())
+
+	tabs.set_tab_title(0, "司令官")
+	tabs.set_tab_title(1, "アセンブル")
+	tabs.set_tab_title(2, "戦闘デモ")
 
 	_setup_assembler()
+	_setup_commander()
 	_run_battles_and_display()
 
 # === セーブ/ロード ====================================================
@@ -109,6 +133,10 @@ func _load_or_seed_designs() -> void:
 func _persist_and_refresh_battles() -> void:
 	SaveIO.save_designs(saved_designs)
 	_run_battles_and_display()
+	# 設計が変わったら司令官タブの設計セレクタも更新
+	if commander_design_selector != null:
+		_populate_commander_design_selector()
+		_refresh_commander_display()
 
 # === アセンブル画面 ===================================================
 
@@ -367,3 +395,83 @@ func _run_battles_and_display() -> void:
 		sections.append(Combat.format_log(res.get("log", [])))
 
 	battle_output.text = "\n".join(sections)
+
+# === 司令官モード (T7-1/2/4) ============================================
+
+func _setup_commander() -> void:
+	_populate_commander_design_selector()
+	commander_design_selector.item_selected.connect(_on_commander_design_changed)
+	commander_produce_button.pressed.connect(_on_produce_pressed)
+	commander_next_day_button.pressed.connect(_on_next_day_pressed)
+	_refresh_commander_display()
+
+func _populate_commander_design_selector() -> void:
+	commander_design_selector.clear()
+	for i in saved_designs.size():
+		var d: Dictionary = saved_designs[i]
+		commander_design_selector.add_item("[%s] %s" % [String(d.get("category", "")), String(d.get("name", ""))], i)
+	if saved_designs.size() > 0:
+		commander_design_selector.select(0)
+
+func _refresh_commander_display() -> void:
+	commander_day_label.text = "Day %d" % game_state.day()
+	commander_funds_label.text = "資金: %d" % game_state.funds()
+	commander_materials_label.text = "素材: %d" % game_state.materials()
+
+	# 製造コスト表示と「製造する」ボタンの有効/無効
+	var sel_idx: int = commander_design_selector.selected
+	if sel_idx >= 0 and sel_idx < saved_designs.size():
+		var design: Dictionary = saved_designs[sel_idx]
+		var weight: int = Unit.total_weight(design, catalog)
+		var cost: Dictionary = GameState.production_cost_for(weight)
+		commander_cost_label.text = "重量 %d  →  製造コスト: 資金 %d / 素材 %d" % [
+			weight, int(cost.get("funds", 0)), int(cost.get("materials", 0)),
+		]
+		commander_produce_button.disabled = not game_state.can_afford(cost)
+	else:
+		commander_cost_label.text = "(設計が選択されていません)"
+		commander_produce_button.disabled = true
+
+	# 在庫リスト
+	commander_inventory_list.clear()
+	var inv: Array = game_state.inventory()
+	for unit in inv:
+		var u: Dictionary = unit
+		var line: String = "%s  (Day %d 製造)" % [
+			String(u.get("name", "?")),
+			int(u.get("produced_day", 0)),
+		]
+		commander_inventory_list.add_item(line)
+
+func _on_commander_design_changed(_idx: int) -> void:
+	_refresh_commander_display()
+
+func _on_produce_pressed() -> void:
+	var sel_idx: int = commander_design_selector.selected
+	if sel_idx < 0 or sel_idx >= saved_designs.size():
+		return
+	var design: Dictionary = saved_designs[sel_idx]
+	var weight: int = Unit.total_weight(design, catalog)
+	var cost: Dictionary = GameState.production_cost_for(weight)
+	if not game_state.can_afford(cost):
+		return
+
+	# 資源消費 + 在庫追加 をイベントで適用
+	game_state.apply({ "type": "add_funds", "delta": -int(cost.get("funds", 0)) })
+	game_state.apply({ "type": "add_materials", "delta": -int(cost.get("materials", 0)) })
+
+	# 製造ユニットを Combat.make_instance 形式で生成 (戦闘でそのまま使える形)
+	var unit_id: String = "u_d%d_%03d" % [game_state.day(), game_state.inventory().size() + 1]
+	var instance: Dictionary = Combat.make_instance(design, "player", unit_id, catalog)
+	instance["produced_day"] = game_state.day()
+	game_state.apply({ "type": "produce_unit", "unit": instance })
+
+	game_state.save_to()
+	_refresh_commander_display()
+	print("[ARSENAL FRONT] produced %s (Day %d)" % [String(instance.get("name", "")), game_state.day()])
+
+func _on_next_day_pressed() -> void:
+	game_state.apply({ "type": "advance_day", "days": 1 })
+	# Phase 1 のこの版では、日進行で起きるイベントはまだ無し (任務は次イテレーション)
+	game_state.save_to()
+	_refresh_commander_display()
