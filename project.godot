@@ -12,6 +12,8 @@ config_version=5
 
 config/name="ARSENAL FRONT"
 config/description="多兵科ミリタリー運営シム × アセンブル系メカアクション (Phase 1: 装甲戦闘車両)"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="ArsenalFront"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"

@@ -439,12 +439,27 @@ func _refresh_commander_display() -> void:
 		var design: Dictionary = saved_designs[sel_idx]
 		var weight: int = Unit.total_weight(design, catalog)
 		var cost: Dictionary = GameState.production_cost_for(weight)
-		commander_cost_label.text = "重量 %d  →  製造コスト: 資金 %d / 素材 %d" % [
-			weight, int(cost.get("funds", 0)), int(cost.get("materials", 0)),
-		]
-		commander_produce_button.disabled = not game_state.can_afford(cost)
+		var cost_funds: int = int(cost.get("funds", 0))
+		var cost_mat: int = int(cost.get("materials", 0))
+		var can: bool = game_state.can_afford(cost)
+		var base_text: String = "重量 %d  →  製造コスト: 資金 %d / 素材 %d" % [weight, cost_funds, cost_mat]
+		if can:
+			commander_cost_label.text = base_text
+			commander_cost_label.modulate = Color(1.0, 1.0, 1.0)  # 白
+		else:
+			var miss_funds: int = max(0, cost_funds - game_state.funds())
+			var miss_mat: int = max(0, cost_mat - game_state.materials())
+			var miss_parts: Array[String] = []
+			if miss_funds > 0:
+				miss_parts.append("資金 -%d" % miss_funds)
+			if miss_mat > 0:
+				miss_parts.append("素材 -%d" % miss_mat)
+			commander_cost_label.text = "%s\n⚠ 資源不足 (%s)" % [base_text, " / ".join(miss_parts)]
+			commander_cost_label.modulate = Color(1.0, 0.45, 0.45)  # 薄赤
+		commander_produce_button.disabled = not can
 	else:
 		commander_cost_label.text = "(設計が選択されていません)"
+		commander_cost_label.modulate = Color(1.0, 1.0, 1.0)
 		commander_produce_button.disabled = true
 
 	# 在庫リスト

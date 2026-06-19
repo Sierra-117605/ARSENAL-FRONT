@@ -21,13 +21,15 @@ func _init() -> void:
 	state = default_state()
 
 static func default_state() -> Dictionary:
+	# 開始リソースは MBT 1 機を初日から作れる量 (重量 135 → 資金 1350 / 素材 675 必要)
+	# あと数機分の余裕を持たせて Phase 1 暫定値とする。
 	return {
 		"day": 1,
-		"funds": 1000,
-		"materials": 500,
+		"funds": 2500,
+		"materials": 1500,
 		"inventory": [],          # 製造済みユニット (Combat.make_instance 形式) の配列
 		"available_missions": [], # 受注可能な任務 (Dictionary 配列)
-		"active_missions": [],    # 派遣中の任務 [{mission, unit, dispatch_day, return_day}]
+		"active_missions": [],    # 派遣中の任務 [{mission, units, dispatch_day, return_day}]
 		"mission_log": [],        # 直近の任務結果ログ (最新が先頭)
 	}
 
