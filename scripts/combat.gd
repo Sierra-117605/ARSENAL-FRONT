@@ -11,7 +11,7 @@ extends RefCounted
 const ARMOR_THRESHOLD: int = 25          # 装甲がこの値以上なら対装甲攻撃を選択
 const SOFT_DAMAGE_RATIO: float = 0.5     # 対人攻撃の実ダメージ係数
 const HARD_DAMAGE_RATIO: float = 0.4     # 対装甲攻撃の実ダメージ係数
-const PIERCING_FAIL_PENALTY: float = 0.25 # 貫通失敗時のさらなる減衰
+const RESIDUAL_FACTOR: float = 0.25      # 貫通失敗時、soft_attack の一部が掃射ダメで通る係数
 const MAX_ROUNDS: int = 30               # 決着がつかない場合の打ち切り
 
 # --- 戦闘インスタンス生成 ---------------------------------------------
@@ -100,9 +100,14 @@ static func _attack(attacker: Dictionary, target: Dictionary, log: Array, round_
 		ratio = SOFT_DAMAGE_RATIO
 
 	var pierced: bool = int(atk.get("piercing", 0)) >= target_armor
-	var damage_f: float = float(attack_value) * ratio
-	if not pierced:
-		damage_f = damage_f * PIERCING_FAIL_PENALTY
+	var damage_f: float
+	if pierced:
+		damage_f = float(attack_value) * ratio
+	else:
+		# 貫通失敗時の残存ダメージ: 機銃等の副武装による掃射として
+		# soft_attack の一部 (RESIDUAL_FACTOR) が通る。Scout 等の対人特化機が
+		# 重装甲相手にも僅かに継続火力を発揮できるための仕組み。
+		damage_f = float(int(atk.get("soft_attack", 0))) * SOFT_DAMAGE_RATIO * RESIDUAL_FACTOR
 	var damage: int = int(roundi(damage_f))
 	var before_hp: int = int(target.get("hp", 0))
 	var after_hp: int = max(0, before_hp - damage)
@@ -141,13 +146,15 @@ static func format_log(log: Array) -> String:
 			var side_a: String = side_label(String(ev.get("attacker_side", "")))
 			var side_t: String = side_label(String(ev.get("target_side", "")))
 			var dmg_type: String = "対装甲" if String(ev.get("damage_type", "")) == "hard" else "対人  "
-			var pierce: String = "貫通◎" if bool(ev.get("pierced", false)) else "貫通×"
-			var line: String = "  %s(%s) → %s(%s)  %s%d  %s  →  %dダメ  残HP %d/%d" % [
+			var pierced_b: bool = bool(ev.get("pierced", false))
+			var pierce: String = "貫通◎" if pierced_b else "貫通×"
+			var dmg_suffix: String = "ダメ" if pierced_b else "ダメ(残存)"
+			var line: String = "  %s(%s) → %s(%s)  %s%d  %s  →  %d%s  残HP %d/%d" % [
 				String(ev.get("attacker_name", "")), side_a,
 				String(ev.get("target_name", "")), side_t,
 				dmg_type, int(ev.get("attack_value", 0)),
 				pierce,
-				int(ev.get("damage", 0)),
+				int(ev.get("damage", 0)), dmg_suffix,
 				int(ev.get("after_hp", 0)),
 				int(ev.get("target_hp_max", 0)),
 			]
