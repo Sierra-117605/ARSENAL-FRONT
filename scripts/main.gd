@@ -77,6 +77,13 @@ var _suppress_signals: bool = false    # UI 再構築中の連鎖イベント抑
 @onready var commander_inventory_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/ProductionPanel/InventoryList
 @onready var commander_next_day_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Footer/NextDayButton
 
+# 司令官タブ (任務エリア)
+@onready var available_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/AvailableList
+@onready var dispatch_unit_selector: OptionButton = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow/DispatchUnitSelector
+@onready var dispatch_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow/DispatchButton
+@onready var active_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/ActiveList
+@onready var mission_log_text: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/LogScroll/LogText
+
 # アセンブルタブ
 @onready var design_list: ItemList = $Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/DesignList
 @onready var new_button: Button = $Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow/NewButton
@@ -403,6 +410,12 @@ func _setup_commander() -> void:
 	commander_design_selector.item_selected.connect(_on_commander_design_changed)
 	commander_produce_button.pressed.connect(_on_produce_pressed)
 	commander_next_day_button.pressed.connect(_on_next_day_pressed)
+	dispatch_button.pressed.connect(_on_dispatch_pressed)
+	available_list.item_selected.connect(_on_available_mission_selected)
+	# 起動時に受注可能任務が無ければ 3 件補充
+	if game_state.available_missions().is_empty():
+		_replenish_available_missions(3)
+		game_state.save_to()
 	_refresh_commander_display()
 
 func _populate_commander_design_selector() -> void:
@@ -443,6 +456,9 @@ func _refresh_commander_display() -> void:
 		]
 		commander_inventory_list.add_item(line)
 
+	# 任務エリア更新
+	_refresh_missions_display()
+
 func _on_commander_design_changed(_idx: int) -> void:
 	_refresh_commander_display()
 
@@ -472,6 +488,135 @@ func _on_produce_pressed() -> void:
 
 func _on_next_day_pressed() -> void:
 	game_state.apply({ "type": "advance_day", "days": 1 })
-	# Phase 1 のこの版では、日進行で起きるイベントはまだ無し (任務は次イテレーション)
+	# 日進行で解決日に達した任務を自動戦闘で解決
+	_resolve_due_missions()
+	# 受注可能が枯れていたら補充
+	if game_state.available_missions().size() < 3:
+		_replenish_available_missions(3 - game_state.available_missions().size())
 	game_state.save_to()
 	_refresh_commander_display()
+
+# === 任務システム (T7-3) ================================================
+
+func _replenish_available_missions(count: int) -> void:
+	for i in count:
+		var mid: String = "m_d%d_%03d" % [game_state.day(), randi() % 1000]
+		var mission: Dictionary = Missions.generate_one(mid)
+		game_state.apply({ "type": "add_available_mission", "mission": mission })
+
+func _refresh_missions_display() -> void:
+	# 受注可能リスト
+	available_list.clear()
+	for m in game_state.available_missions():
+		var md: Dictionary = m
+		var line: String = "[%s] %s  (%d 日)  報酬: 資金 %d / 素材 %d" % [
+			Missions.difficulty_label(String(md.get("difficulty", ""))),
+			String(md.get("name", "?")),
+			int(md.get("duration_days", 0)),
+			int(md.get("reward_funds", 0)),
+			int(md.get("reward_materials", 0)),
+		]
+		available_list.add_item(line)
+
+	# 派遣機体セレクタ
+	dispatch_unit_selector.clear()
+	for i in game_state.inventory().size():
+		var u: Dictionary = game_state.inventory()[i]
+		dispatch_unit_selector.add_item(String(u.get("name", "?")), i)
+	if game_state.inventory().size() > 0:
+		dispatch_unit_selector.select(0)
+
+	# 派遣ボタンの活性条件: 任務が選ばれていて、派遣可能ユニットがいる
+	dispatch_button.disabled = (
+		available_list.get_selected_items().size() == 0
+		or game_state.inventory().size() == 0
+	)
+
+	# 派遣中リスト
+	active_list.clear()
+	for entry in game_state.active_missions():
+		var ed: Dictionary = entry
+		var m2: Dictionary = ed.get("mission", {})
+		var u2: Dictionary = ed.get("unit", {})
+		var line2: String = "[%s] %s  (%s)  Day %d 帰還" % [
+			Missions.difficulty_label(String(m2.get("difficulty", ""))),
+			String(m2.get("name", "?")),
+			String(u2.get("name", "?")),
+			int(ed.get("return_day", 0)),
+		]
+		active_list.add_item(line2)
+
+	# 任務結果ログ
+	var log_lines: Array[String] = []
+	for entry2 in game_state.mission_log():
+		var le: Dictionary = entry2
+		log_lines.append(String(le.get("text", "")))
+	if log_lines.is_empty():
+		mission_log_text.text = "(まだ任務結果はありません)"
+	else:
+		mission_log_text.text = "\n".join(log_lines)
+
+func _on_available_mission_selected(_idx: int) -> void:
+	dispatch_button.disabled = (game_state.inventory().size() == 0)
+
+func _on_dispatch_pressed() -> void:
+	var sel_missions: PackedInt32Array = available_list.get_selected_items()
+	if sel_missions.size() == 0:
+		return
+	var mission_idx: int = sel_missions[0]
+	var avail: Array = game_state.available_missions()
+	if mission_idx >= avail.size():
+		return
+	var mission: Dictionary = avail[mission_idx]
+
+	var unit_sel: int = dispatch_unit_selector.selected
+	var inv: Array = game_state.inventory()
+	if unit_sel < 0 or unit_sel >= inv.size():
+		return
+	var unit: Dictionary = inv[unit_sel]
+
+	game_state.apply({
+		"type": "dispatch_mission",
+		"mission": mission,
+		"unit": unit,
+		"dispatch_day": game_state.day(),
+	})
+	game_state.save_to()
+	_refresh_commander_display()
+
+# active_missions のうち return_day を迎えたものを自動戦闘で解決する。
+func _resolve_due_missions() -> void:
+	var active_snapshot: Array = game_state.active_missions().duplicate()
+	for entry in active_snapshot:
+		var ed: Dictionary = entry
+		if game_state.day() < int(ed.get("return_day", 0)):
+			continue
+		var mission: Dictionary = ed.get("mission", {})
+		var unit: Dictionary = ed.get("unit", {})
+		var result: Dictionary = Missions.resolve(mission, unit, catalog)
+		var winner: String = String(result.get("winner", ""))
+		var won: bool = (winner == "red")
+		var reward_funds: int = int(mission.get("reward_funds", 0)) if won else 0
+		var reward_materials: int = int(mission.get("reward_materials", 0)) if won else 0
+
+		if reward_funds > 0:
+			game_state.apply({ "type": "add_funds", "delta": reward_funds })
+		if reward_materials > 0:
+			game_state.apply({ "type": "add_materials", "delta": reward_materials })
+
+		var verdict: String = "勝利" if won else "敗北"
+		var text: String = "Day %d  [%s] %s (%s)  → %s  | %s  報酬: 資金 +%d / 素材 +%d" % [
+			game_state.day(),
+			Missions.difficulty_label(String(mission.get("difficulty", ""))),
+			String(mission.get("name", "?")),
+			String(unit.get("name", "?")),
+			verdict,
+			Combat.winner_label(winner),
+			reward_funds, reward_materials,
+		]
+		game_state.apply({
+			"type": "complete_mission",
+			"mission_id": String(mission.get("id", "")),
+			"log_entry": { "text": text, "result": result, "day": game_state.day() },
+		})
+		print("[ARSENAL FRONT] mission completed: " + text)

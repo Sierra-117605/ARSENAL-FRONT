@@ -146,10 +146,58 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "任務"
 
-[node name="MissionStatus" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+[node name="AvailableLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-text = "(任務システムは次のイテレーションで実装予定)\n\n現状: ユニットを製造して在庫に並べるところまで。"
+text = "受注可能 (クリックで選択)"
+
+[node name="AvailableList" type="ItemList" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="DispatchRow" type="HBoxContainer" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+
+[node name="DispatchUnitLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+text = "派遣機体:"
+
+[node name="DispatchUnitSelector" type="OptionButton" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DispatchButton" type="Button" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
+layout_mode = 2
+text = "派遣"
+
+[node name="ActiveLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "派遣中"
+
+[node name="ActiveList" type="ItemList" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="LogLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "最近の任務結果"
+
+[node name="LogScroll" type="ScrollContainer" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 3.0
+horizontal_scroll_mode = 0
+
+[node name="LogText" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/LogScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "(まだ任務結果はありません)"
 autowrap_mode = 3
 
 [node name="Footer" type="HBoxContainer" parent="Layout/VBox/Tabs/CommanderTab/VBox"]

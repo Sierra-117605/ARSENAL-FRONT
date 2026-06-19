@@ -25,7 +25,10 @@ static func default_state() -> Dictionary:
 		"day": 1,
 		"funds": 1000,
 		"materials": 500,
-		"inventory": [],  # 製造済みユニット (Combat.make_instance 形式) の配列
+		"inventory": [],          # 製造済みユニット (Combat.make_instance 形式) の配列
+		"available_missions": [], # 受注可能な任務 (Dictionary 配列)
+		"active_missions": [],    # 派遣中の任務 [{mission, unit, dispatch_day, return_day}]
+		"mission_log": [],        # 直近の任務結果ログ (最新が先頭)
 	}
 
 # --- イベント適用 (状態更新の唯一の入り口) ----------------------------
@@ -53,6 +56,63 @@ func apply(event: Dictionary) -> void:
 					inv2.remove_at(i)
 					break
 			state["inventory"] = inv2
+		"add_available_mission":
+			var avail: Array = state.get("available_missions", [])
+			avail.append(event.get("mission", {}))
+			state["available_missions"] = avail
+		"dispatch_mission":
+			# 任務を受注 -> available から削除して active に追加、ユニットを在庫から外す
+			var mission: Dictionary = event.get("mission", {})
+			var unit: Dictionary = event.get("unit", {})
+			var dispatch_day: int = int(event.get("dispatch_day", day()))
+			var avail2: Array = state.get("available_missions", [])
+			var mid: String = String(mission.get("id", ""))
+			for i in avail2.size():
+				if String((avail2[i] as Dictionary).get("id", "")) == mid:
+					avail2.remove_at(i)
+					break
+			state["available_missions"] = avail2
+			# 在庫から該当 unit を取り除く
+			var inv3: Array = state.get("inventory", [])
+			var uid: String = String(unit.get("id", ""))
+			for i in inv3.size():
+				if String((inv3[i] as Dictionary).get("id", "")) == uid:
+					inv3.remove_at(i)
+					break
+			state["inventory"] = inv3
+			# active_missions へ
+			var active: Array = state.get("active_missions", [])
+			active.append({
+				"mission": mission,
+				"unit": unit,
+				"dispatch_day": dispatch_day,
+				"return_day": dispatch_day + int(mission.get("duration_days", 1)),
+			})
+			state["active_missions"] = active
+		"complete_mission":
+			# 任務完了 -> active から削除、勝敗ログを mission_log に追加、ユニットを在庫へ戻す
+			var active2: Array = state.get("active_missions", [])
+			var mid2: String = String(event.get("mission_id", ""))
+			for i in active2.size():
+				if String(((active2[i] as Dictionary).get("mission", {}) as Dictionary).get("id", "")) == mid2:
+					var entry: Dictionary = active2[i]
+					var unit2: Dictionary = entry.get("unit", {})
+					# Phase 1 は勝敗に関わらずユニットを在庫に戻す (HP は満タンに戻す)
+					if not unit2.is_empty():
+						unit2 = unit2.duplicate(true)
+						unit2["hp"] = int(unit2.get("hp_max", unit2.get("hp", 0)))
+						unit2["alive"] = true
+						(state["inventory"] as Array).append(unit2)
+					active2.remove_at(i)
+					break
+			state["active_missions"] = active2
+			# ログに追加 (最新を先頭)
+			var log: Array = state.get("mission_log", [])
+			log.push_front(event.get("log_entry", {}))
+			# 直近 20 件に制限
+			while log.size() > 20:
+				log.pop_back()
+			state["mission_log"] = log
 		_:
 			push_warning("[GameState] 未知のイベント type: " + t)
 
@@ -69,6 +129,15 @@ func materials() -> int:
 
 func inventory() -> Array:
 	return state.get("inventory", [])
+
+func available_missions() -> Array:
+	return state.get("available_missions", [])
+
+func active_missions() -> Array:
+	return state.get("active_missions", [])
+
+func mission_log() -> Array:
+	return state.get("mission_log", [])
 
 # 重量 → 製造コスト (SPEC §2.4 暫定式)
 static func production_cost_for(weight: int) -> Dictionary:
