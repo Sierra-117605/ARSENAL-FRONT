@@ -156,21 +156,20 @@ layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
-[node name="DispatchRow" type="HBoxContainer" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
+[node name="DispatchUnitsLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "派遣する機体 (Ctrl/Shift クリックで複数選択)"
 
-[node name="DispatchUnitLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
+[node name="DispatchUnitsList" type="ItemList" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
 layout_mode = 2
-custom_minimum_size = Vector2(80, 0)
-text = "派遣機体:"
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+select_mode = 1
 
-[node name="DispatchUnitSelector" type="OptionButton" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
+[node name="DispatchButton" type="Button" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
 layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="DispatchButton" type="Button" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow"]
-layout_mode = 2
-text = "派遣"
+text = "派遣する"
 
 [node name="ActiveLabel" type="Label" parent="Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel"]
 layout_mode = 2

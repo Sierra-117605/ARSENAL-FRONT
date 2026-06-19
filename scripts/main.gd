@@ -79,8 +79,8 @@ var _suppress_signals: bool = false    # UI 再構築中の連鎖イベント抑
 
 # 司令官タブ (任務エリア)
 @onready var available_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/AvailableList
-@onready var dispatch_unit_selector: OptionButton = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow/DispatchUnitSelector
-@onready var dispatch_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchRow/DispatchButton
+@onready var dispatch_units_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchUnitsList
+@onready var dispatch_button: Button = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/DispatchButton
 @onready var active_list: ItemList = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/ActiveList
 @onready var mission_log_text: Label = $Layout/VBox/Tabs/CommanderTab/VBox/Main/MissionPanel/LogScroll/LogText
 
@@ -412,6 +412,8 @@ func _setup_commander() -> void:
 	commander_next_day_button.pressed.connect(_on_next_day_pressed)
 	dispatch_button.pressed.connect(_on_dispatch_pressed)
 	available_list.item_selected.connect(_on_available_mission_selected)
+	dispatch_units_list.multi_selected.connect(_on_dispatch_units_multi_selected)
+	dispatch_units_list.item_selected.connect(_on_dispatch_units_selected)
 	# 起動時に受注可能任務が無ければ 3 件補充
 	if game_state.available_missions().is_empty():
 		_replenish_available_missions(3)
@@ -509,27 +511,30 @@ func _refresh_missions_display() -> void:
 	available_list.clear()
 	for m in game_state.available_missions():
 		var md: Dictionary = m
-		var line: String = "[%s] %s  (%d 日)  報酬: 資金 %d / 素材 %d" % [
+		var enemy_count: int = (md.get("enemy_design_ids", []) as Array).size()
+		var line: String = "[%s] %s  (敵 %d 機 / %d 日)  報酬: 資金 %d / 素材 %d" % [
 			Missions.difficulty_label(String(md.get("difficulty", ""))),
 			String(md.get("name", "?")),
+			enemy_count,
 			int(md.get("duration_days", 0)),
 			int(md.get("reward_funds", 0)),
 			int(md.get("reward_materials", 0)),
 		]
 		available_list.add_item(line)
 
-	# 派遣機体セレクタ
-	dispatch_unit_selector.clear()
+	# 派遣機体リスト (在庫を複数選択可能に並べる)
+	dispatch_units_list.clear()
 	for i in game_state.inventory().size():
 		var u: Dictionary = game_state.inventory()[i]
-		dispatch_unit_selector.add_item(String(u.get("name", "?")), i)
-	if game_state.inventory().size() > 0:
-		dispatch_unit_selector.select(0)
+		dispatch_units_list.add_item("%s  (Day %d 製造)" % [
+			String(u.get("name", "?")),
+			int(u.get("produced_day", 0)),
+		])
 
-	# 派遣ボタンの活性条件: 任務が選ばれていて、派遣可能ユニットがいる
+	# 派遣ボタンの活性条件: 任務 1 つと機体 1 機以上が選ばれていること
 	dispatch_button.disabled = (
 		available_list.get_selected_items().size() == 0
-		or game_state.inventory().size() == 0
+		or dispatch_units_list.get_selected_items().size() == 0
 	)
 
 	# 派遣中リスト
@@ -537,27 +542,52 @@ func _refresh_missions_display() -> void:
 	for entry in game_state.active_missions():
 		var ed: Dictionary = entry
 		var m2: Dictionary = ed.get("mission", {})
-		var u2: Dictionary = ed.get("unit", {})
+		var units2: Array = ed.get("units", [])
+		var unit_names: Array[String] = []
+		for uu in units2:
+			unit_names.append(String((uu as Dictionary).get("name", "?")))
 		var line2: String = "[%s] %s  (%s)  Day %d 帰還" % [
 			Missions.difficulty_label(String(m2.get("difficulty", ""))),
 			String(m2.get("name", "?")),
-			String(u2.get("name", "?")),
+			", ".join(unit_names),
 			int(ed.get("return_day", 0)),
 		]
 		active_list.add_item(line2)
 
-	# 任務結果ログ
+	# 任務結果ログ + 最新の戦闘詳細
 	var log_lines: Array[String] = []
+	var latest_combat_log: String = ""
 	for entry2 in game_state.mission_log():
 		var le: Dictionary = entry2
 		log_lines.append(String(le.get("text", "")))
+		if latest_combat_log == "":
+			latest_combat_log = String(le.get("combat_log", ""))
+	var display_parts: Array[String] = []
 	if log_lines.is_empty():
-		mission_log_text.text = "(まだ任務結果はありません)"
+		display_parts.append("(まだ任務結果はありません)")
 	else:
-		mission_log_text.text = "\n".join(log_lines)
+		display_parts.append("===== サマリ =====")
+		display_parts.append_array(log_lines)
+		if latest_combat_log != "":
+			display_parts.append("")
+			display_parts.append("===== 最新の戦闘詳細 =====")
+			display_parts.append(latest_combat_log)
+	mission_log_text.text = "\n".join(display_parts)
 
 func _on_available_mission_selected(_idx: int) -> void:
-	dispatch_button.disabled = (game_state.inventory().size() == 0)
+	_update_dispatch_button_state()
+
+func _on_dispatch_units_multi_selected(_idx: int, _selected: bool) -> void:
+	_update_dispatch_button_state()
+
+func _on_dispatch_units_selected(_idx: int) -> void:
+	_update_dispatch_button_state()
+
+func _update_dispatch_button_state() -> void:
+	dispatch_button.disabled = (
+		available_list.get_selected_items().size() == 0
+		or dispatch_units_list.get_selected_items().size() == 0
+	)
 
 func _on_dispatch_pressed() -> void:
 	var sel_missions: PackedInt32Array = available_list.get_selected_items()
@@ -569,16 +599,21 @@ func _on_dispatch_pressed() -> void:
 		return
 	var mission: Dictionary = avail[mission_idx]
 
-	var unit_sel: int = dispatch_unit_selector.selected
-	var inv: Array = game_state.inventory()
-	if unit_sel < 0 or unit_sel >= inv.size():
+	var sel_units: PackedInt32Array = dispatch_units_list.get_selected_items()
+	if sel_units.size() == 0:
 		return
-	var unit: Dictionary = inv[unit_sel]
+	var inv: Array = game_state.inventory()
+	var units_to_send: Array = []
+	for i in sel_units:
+		if i >= 0 and i < inv.size():
+			units_to_send.append(inv[i])
+	if units_to_send.is_empty():
+		return
 
 	game_state.apply({
 		"type": "dispatch_mission",
 		"mission": mission,
-		"unit": unit,
+		"units": units_to_send,
 		"dispatch_day": game_state.day(),
 	})
 	game_state.save_to()
@@ -592,8 +627,8 @@ func _resolve_due_missions() -> void:
 		if game_state.day() < int(ed.get("return_day", 0)):
 			continue
 		var mission: Dictionary = ed.get("mission", {})
-		var unit: Dictionary = ed.get("unit", {})
-		var result: Dictionary = Missions.resolve(mission, unit, catalog)
+		var units: Array = ed.get("units", [])
+		var result: Dictionary = Missions.resolve(mission, units, catalog)
 		var winner: String = String(result.get("winner", ""))
 		var won: bool = (winner == "red")
 		var reward_funds: int = int(mission.get("reward_funds", 0)) if won else 0
@@ -605,18 +640,28 @@ func _resolve_due_missions() -> void:
 			game_state.apply({ "type": "add_materials", "delta": reward_materials })
 
 		var verdict: String = "勝利" if won else "敗北"
-		var text: String = "Day %d  [%s] %s (%s)  → %s  | %s  報酬: 資金 +%d / 素材 +%d" % [
+		var unit_name_list: Array[String] = []
+		for u in units:
+			unit_name_list.append(String((u as Dictionary).get("name", "?")))
+		var unit_names: String = ", ".join(unit_name_list)
+		var text: String = "Day %d  [%s] %s  (%d 機: %s)  → %s  | %s  報酬: 資金 +%d / 素材 +%d" % [
 			game_state.day(),
 			Missions.difficulty_label(String(mission.get("difficulty", ""))),
 			String(mission.get("name", "?")),
-			String(unit.get("name", "?")),
+			units.size(), unit_names,
 			verdict,
 			Combat.winner_label(winner),
 			reward_funds, reward_materials,
 		]
+		var combat_log_text: String = Combat.format_log(result.get("log", []))
 		game_state.apply({
 			"type": "complete_mission",
 			"mission_id": String(mission.get("id", "")),
-			"log_entry": { "text": text, "result": result, "day": game_state.day() },
+			"log_entry": {
+				"text": text,
+				"combat_log": combat_log_text,
+				"day": game_state.day(),
+			},
 		})
 		print("[ARSENAL FRONT] mission completed: " + text)
+		print(combat_log_text)

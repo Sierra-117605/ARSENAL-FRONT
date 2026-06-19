@@ -90,9 +90,10 @@ static func generate_one(id: String) -> Dictionary:
 	m["id"] = id
 	return m
 
-# 任務をプレイヤーユニット 1 機 vs 敵チームで解決する。
+# 任務を「プレイヤー機体の配列 vs 敵チーム」で解決する。
+# Phase 1 は機体数の上限なし (在庫からの選択で制御)。
 # 戻り値は Combat.run の結果 Dictionary。
-static func resolve(mission: Dictionary, player_unit: Dictionary, catalog: PartsCatalog) -> Dictionary:
+static func resolve(mission: Dictionary, player_units: Array, catalog: PartsCatalog) -> Dictionary:
 	var enemies: Array = []
 	var idx: int = 0
 	for enemy_did in mission.get("enemy_design_ids", []):
@@ -101,13 +102,16 @@ static func resolve(mission: Dictionary, player_unit: Dictionary, catalog: Parts
 		if enemy_design.is_empty():
 			continue
 		enemies.append(Combat.make_instance(enemy_design, "blue", "e_%d" % idx, catalog))
-	# プレイヤーユニットは在庫のものをそのまま使う (side=red にして敵対関係に)
-	var player_copy: Dictionary = player_unit.duplicate(true)
-	player_copy["side"] = "red"
-	# HP は満タンに戻す (出撃時の状態)
-	player_copy["hp"] = int(player_copy.get("hp_max", player_copy.get("hp", 0)))
-	player_copy["alive"] = true
-	return Combat.run([player_copy], enemies)
+
+	# プレイヤー機体は出撃時に side=red, HP満タン, alive=true へ正規化
+	var player_team: Array = []
+	for unit in player_units:
+		var p: Dictionary = (unit as Dictionary).duplicate(true)
+		p["side"] = "red"
+		p["hp"] = int(p.get("hp_max", p.get("hp", 0)))
+		p["alive"] = true
+		player_team.append(p)
+	return Combat.run(player_team, enemies)
 
 # 難易度ラベル
 static func difficulty_label(d: String) -> String:

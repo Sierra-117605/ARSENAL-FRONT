@@ -61,9 +61,9 @@ func apply(event: Dictionary) -> void:
 			avail.append(event.get("mission", {}))
 			state["available_missions"] = avail
 		"dispatch_mission":
-			# 任務を受注 -> available から削除して active に追加、ユニットを在庫から外す
+			# 任務を受注 -> available から削除して active に追加、ユニット群を在庫から外す
 			var mission: Dictionary = event.get("mission", {})
-			var unit: Dictionary = event.get("unit", {})
+			var units_to_dispatch: Array = event.get("units", [])
 			var dispatch_day: int = int(event.get("dispatch_day", day()))
 			var avail2: Array = state.get("available_missions", [])
 			var mid: String = String(mission.get("id", ""))
@@ -72,37 +72,38 @@ func apply(event: Dictionary) -> void:
 					avail2.remove_at(i)
 					break
 			state["available_missions"] = avail2
-			# 在庫から該当 unit を取り除く
+			# 在庫から該当 units を取り除く
 			var inv3: Array = state.get("inventory", [])
-			var uid: String = String(unit.get("id", ""))
-			for i in inv3.size():
-				if String((inv3[i] as Dictionary).get("id", "")) == uid:
-					inv3.remove_at(i)
-					break
+			for unit_to_remove in units_to_dispatch:
+				var uid: String = String((unit_to_remove as Dictionary).get("id", ""))
+				for i in inv3.size():
+					if String((inv3[i] as Dictionary).get("id", "")) == uid:
+						inv3.remove_at(i)
+						break
 			state["inventory"] = inv3
 			# active_missions へ
 			var active: Array = state.get("active_missions", [])
 			active.append({
 				"mission": mission,
-				"unit": unit,
+				"units": units_to_dispatch,
 				"dispatch_day": dispatch_day,
 				"return_day": dispatch_day + int(mission.get("duration_days", 1)),
 			})
 			state["active_missions"] = active
 		"complete_mission":
-			# 任務完了 -> active から削除、勝敗ログを mission_log に追加、ユニットを在庫へ戻す
+			# 任務完了 -> active から削除、勝敗ログを mission_log に追加、ユニット群を在庫へ戻す
 			var active2: Array = state.get("active_missions", [])
 			var mid2: String = String(event.get("mission_id", ""))
 			for i in active2.size():
 				if String(((active2[i] as Dictionary).get("mission", {}) as Dictionary).get("id", "")) == mid2:
 					var entry: Dictionary = active2[i]
-					var unit2: Dictionary = entry.get("unit", {})
-					# Phase 1 は勝敗に関わらずユニットを在庫に戻す (HP は満タンに戻す)
-					if not unit2.is_empty():
-						unit2 = unit2.duplicate(true)
-						unit2["hp"] = int(unit2.get("hp_max", unit2.get("hp", 0)))
-						unit2["alive"] = true
-						(state["inventory"] as Array).append(unit2)
+					var entry_units: Array = entry.get("units", [])
+					# Phase 1 は勝敗に関わらずユニット群を在庫に戻す (HP は満タンに戻す)
+					for u_to_return in entry_units:
+						var u_dup: Dictionary = (u_to_return as Dictionary).duplicate(true)
+						u_dup["hp"] = int(u_dup.get("hp_max", u_dup.get("hp", 0)))
+						u_dup["alive"] = true
+						(state["inventory"] as Array).append(u_dup)
 					active2.remove_at(i)
 					break
 			state["active_missions"] = active2
@@ -175,6 +176,12 @@ func load_from(path: String = SAVE_PATH) -> bool:
 		for k in d.keys():
 			if not (parsed as Dictionary).has(k):
 				(parsed as Dictionary)[k] = d[k]
+		# 互換マイグレーション: 旧形式 active_missions の "unit" を "units" 配列に変換
+		var actives: Array = (parsed as Dictionary).get("active_missions", [])
+		for entry in actives:
+			if (entry as Dictionary).has("unit") and not (entry as Dictionary).has("units"):
+				(entry as Dictionary)["units"] = [(entry as Dictionary)["unit"]]
+				(entry as Dictionary).erase("unit")
 		state = parsed
 		return true
 	push_warning("[GameState] gamestate.json の中身が辞書ではありません")
