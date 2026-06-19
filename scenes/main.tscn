@@ -27,24 +27,24 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 12
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 10
 
 [node name="VBox" type="VBoxContainer" parent="Layout"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="Title" type="Label" parent="Layout/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 text = "ARSENAL FRONT"
 
 [node name="Subtitle" type="Label" parent="Layout/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Phase 1 - 装甲戦闘車両 / アセンブル + 戦闘デモ"
+theme_override_font_sizes/font_size = 11
+text = "Phase 1 - 装甲戦闘車両"
 
 [node name="Tabs" type="TabContainer" parent="Layout/VBox"]
 layout_mode = 2
@@ -52,66 +52,107 @@ size_flags_vertical = 3
 
 [node name="AssembleTab" type="MarginContainer" parent="Layout/VBox/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="HBox" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 12
 
-[node name="LeftPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
+[node name="SavedPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+size_flags_stretch_ratio = 2.0
+theme_override_constants/separation = 4
 
-[node name="LeftTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+[node name="SavedTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "設計 (パーツを変更するとステータスが更新されます)"
+theme_override_font_sizes/font_size = 13
+text = "保存済み設計"
 
-[node name="NameRow" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+[node name="DesignList" type="ItemList" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonsRow" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="NewButton" type="Button" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "新規"
+
+[node name="SaveButton" type="Button" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "保存"
+
+[node name="DuplicateButton" type="Button" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "複製"
+
+[node name="DeleteButton" type="Button" parent="Layout/VBox/Tabs/AssembleTab/HBox/SavedPanel/ButtonsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "削除"
+
+[node name="EditorPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_constants/separation = 4
+
+[node name="EditorTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "設計を編集 (保存ボタンで確定)"
+
+[node name="NameRow" type="HBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel"]
 layout_mode = 2
 
-[node name="NameLabel" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel/NameRow"]
+[node name="NameLabel" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel/NameRow"]
 layout_mode = 2
 custom_minimum_size = Vector2(80, 0)
 text = "設計名 :"
 
-[node name="NameEdit" type="LineEdit" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel/NameRow"]
+[node name="NameEdit" type="LineEdit" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel/NameRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SlotsTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+[node name="SlotsTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 12
 text = "スロット (固定6種)"
 
-[node name="SlotsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/LeftPanel"]
+[node name="SlotsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/EditorPanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="RightPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
+[node name="StatsPanel" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+size_flags_stretch_ratio = 2.0
+theme_override_constants/separation = 4
 
-[node name="RightTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/RightPanel"]
+[node name="StatsTitle" type="Label" parent="Layout/VBox/Tabs/AssembleTab/HBox/StatsPanel"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 13
 text = "算出ステータス (リアルタイム)"
 
-[node name="StatsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/RightPanel"]
+[node name="StatsContainer" type="VBoxContainer" parent="Layout/VBox/Tabs/AssembleTab/HBox/StatsPanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="BattleTab" type="MarginContainer" parent="Layout/VBox/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="Scroll" type="ScrollContainer" parent="Layout/VBox/Tabs/BattleTab"]
 layout_mode = 2
@@ -126,5 +167,5 @@ autowrap_mode = 0
 
 [node name="Status" type="Label" parent="Layout/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
-text = "T5 アセンブル + T6 自動戦闘 ready"
+theme_override_font_sizes/font_size = 10
+text = "T5 アセンブル + T6 戦闘 + T8 セーブ ready"

@@ -75,6 +75,17 @@
 - Codex 契約タイミング：他兵科追加やマルチプレイ実装など、Phase 1 より複雑な領域に入る前を推奨
 - 関連 TODO：T1-3
 
+### 2026-06-19 セーブデータの保存先は user:// (res:// ではない)
+- 状況：プレイヤーが組んだ設計を JSON で保存するために最初は `res://saves/designs.json` に書く案を検討
+- 落とし穴：**`res://` 配下はエクスポートしたゲームでは読み取り専用**。ローカル開発時しか書き込めず、配信版でセーブが壊れる
+- 解決：**`user://` を使う** (`user://designs.json`)。Godot が OS ごとに適切な永続フォルダにマップしてくれる
+  - Windows: `%APPDATA%\Godot\app_userdata\<project_name>\`
+  - Linux: `~/.local/share/godot/app_userdata/<project_name>/`
+  - macOS: `~/Library/Application Support/Godot/app_userdata/<project_name>/`
+- 教訓：**プレイヤー固有データ (セーブ・設定) は user://、ゲーム同梱データ (パーツ JSON・画像) は res://** と覚える
+- 関連 TODO: T5-3, T8
+- 関連: docs/DATA_STRUCTURE.md の方針 (シリアライズ可能・イベント駆動) はこの選択でも問題なく成立
+
 ### 2026-06-19 Phase 1 自動戦闘のバランス係数（暫定値、要調整）
 - 仮係数：対人ダメ ×0.5, 対装甲ダメ ×0.4, 貫通失敗時さらに ×0.25, 装甲閾値=25
 - 3 戦闘デモでの結果:
