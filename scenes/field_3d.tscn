@@ -1,0 +1,70 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
+sky_top_color = Color(0.32, 0.45, 0.62, 1)
+sky_horizon_color = Color(0.68, 0.72, 0.76, 1)
+ground_bottom_color = Color(0.2, 0.2, 0.2, 1)
+ground_horizon_color = Color(0.68, 0.72, 0.76, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("SkyMat")
+
+[sub_resource type="Environment" id="Env_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+tonemap_mode = 2
+
+[sub_resource type="Shader" id="GridShader"]
+code = "shader_type spatial;
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec2 cell = abs(fract(world_pos.xz / 4.0) - 0.5);
+	float line = step(0.475, max(cell.x, cell.y));
+	ALBEDO = mix(vec3(0.34, 0.36, 0.33), vec3(0.22, 0.24, 0.22), line);
+	ROUGHNESS = 0.95;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="GroundMat"]
+shader = SubResource("GridShader")
+
+[sub_resource type="PlaneMesh" id="GroundMesh"]
+size = Vector2(400, 400)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(400, 1, 400)
+
+[node name="Field3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.383, 0.3214, 0, 0.6428, 0.766, -0.5, -0.6634, 0.5567, 0, 20, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("GroundMesh")
+surface_material_override/0 = SubResource("GroundMat")
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("GroundShape")
+
+[node name="Robot" parent="." instance=ExtResource("1_robot")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9659, 0.2588, 0, -0.2588, 0.9659, 0, 5.5, 9)
+current = true
+fov = 70.0
