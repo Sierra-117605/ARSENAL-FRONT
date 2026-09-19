@@ -3,18 +3,18 @@
 [ext_resource type="Script" path="res://scripts/action/target.gd" id="1_target"]
 
 [sub_resource type="BoxMesh" id="Mesh_target"]
-size = Vector3(7.5, 11.25, 7.5)
+size = Vector3(6, 9, 6)
 
 [sub_resource type="BoxShape3D" id="Shape_target"]
-size = Vector3(7.5, 11.25, 7.5)
+size = Vector3(6, 9, 6)
 
 [node name="Target" type="StaticBody3D"]
 script = ExtResource("1_target")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.625, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
 mesh = SubResource("Mesh_target")
 
 [node name="Collision" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.625, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
 shape = SubResource("Shape_target")

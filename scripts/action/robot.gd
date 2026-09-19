@@ -1,12 +1,12 @@
 class_name Robot
 extends Pilotable
 ## 二足歩行ロボット。操縦入力に従って歩く。
-## Phase 1 の自機は多用途歩行機（全高 約 15m、SPEC §0.9）。
+## Phase 1 の自機は多用途歩行機（全高 約 12m、SPEC §0.9）。
 
 ## 機種（SPEC §0.9 の機種区分。保存用の文字列）
 @export var machine_type: String = "multirole_walker"
 ## 歩く速さ（メートル/秒）
-@export var walk_speed: float = 12.0
+@export var walk_speed: float = 10.0
 ## 歩き出し・止まりの滑らかさ（大きいほどキビキビ）
 @export var acceleration: float = 40.0
 
