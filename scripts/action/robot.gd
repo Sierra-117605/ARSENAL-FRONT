@@ -12,6 +12,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
 func _physics_process(delta: float) -> void:
+	# 機体をカメラの向き（操縦入力の yaw）に合わせる（SPEC §0.7）
+	rotation.y = control["yaw"]
 	# 入力を機体の向き基準の方向に直す（前 = 機体の正面）
 	var input_dir := Vector3(control["move_x"], 0.0, control["move_z"])
 	if input_dir.length() > 1.0:

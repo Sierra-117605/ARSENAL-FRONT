@@ -89,6 +89,12 @@
 - 教訓：.tscn を手書きしてノード参照の設定を入れたら、必ず node_paths を付ける。自動テストで「参照が空でないか」まで確認する
 - 関連 TODO：N1-2
 
+### 2026-09-20 マウスでカメラを回すときは screen_relative を使う
+- Godot 4.6 公式ドキュメント（InputEventMouseMotion）：`relative` は画面の拡大縮小設定（本プロジェクトは stretch_mode=viewport）の影響を受け、解像度で感度が変わる。マウス照準には `screen_relative` が推奨されている
+- 採用：`scripts/action/player_input.gd` は `screen_relative` を使用
+- マウスの動きの自動テストは `Input.parse_input_event()` で InputEventMouseMotion を送れば、ヘッドレスでも `_unhandled_input` に届く（`tests/test_n1_3_look.gd` で確認済み）
+- 関連 TODO：N1-3
+
 ### 2026-09-20 キー操作の自動テストのやり方
 - `tests/` に `extends SceneTree` のスクリプトを置き、`Input.action_press("move_forward")` で「キーを押した」ことにして結果を調べる
 - 実行：`Godot_v4.6.3-stable_win64_console.exe --headless --path . --script res://tests/test_n1_2_walk.gd` → 最後に `RESULT: PASS` / `FAIL`

@@ -1,9 +1,10 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
 [ext_resource type="Script" path="res://scripts/action/occupant.gd" id="3_occ"]
 [ext_resource type="Script" path="res://scripts/action/player_input.gd" id="4_input"]
+[ext_resource type="Script" path="res://scripts/action/third_person_view.gd" id="5_tpv"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -71,9 +72,10 @@ shape = SubResource("GroundShape")
 script = ExtResource("3_occ")
 start_seat = NodePath("../Robot/DriverSeat")
 
-[node name="PlayerInput" type="Node" parent="." node_paths=PackedStringArray("occupant")]
+[node name="PlayerInput" type="Node" parent="." node_paths=PackedStringArray("occupant", "camera_rig")]
 script = ExtResource("4_input")
 occupant = NodePath("../Pilot")
+camera_rig = NodePath("../CameraRig")
 
 [node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("2_rig")
@@ -83,3 +85,7 @@ target = NodePath("../Robot")
 transform = Transform3D(1, 0, 0, 0, 0.9659, 0.2588, 0, -0.2588, 0.9659, 0, 5.5, 9)
 current = true
 fov = 70.0
+
+[node name="ThirdPersonView" type="Node" parent="CameraRig"]
+script = ExtResource("5_tpv")
+view_name = "三人称"
