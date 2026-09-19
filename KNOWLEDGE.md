@@ -82,6 +82,19 @@
 - 教訓：回転を手書きしたら **必ず画像で見え方を確認する**（下の「画像で確認する方法」）
 - 関連 TODO：N1-1
 
+### 2026-09-20 .tscn でノードを指す設定には node_paths の印が要る（ハマりポイント）
+- 状況：N1-2 で乗員(Pilot)に「座る操縦席」を `start_seat = NodePath("../Robot/DriverSeat")` と手書きしたら、実行時に空(null)のままでロボットが動かなかった
+- 原因：Godot 4 の .tscn では、ノード型の設定値を持つノードの見出しに `node_paths=PackedStringArray("start_seat")` が無いと、NodePath がノードに変換されない（エディタで保存すると自動で付くが、手書きでは付かない）
+- 解決：`[node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]` のように見出しへ追加
+- 教訓：.tscn を手書きしてノード参照の設定を入れたら、必ず node_paths を付ける。自動テストで「参照が空でないか」まで確認する
+- 関連 TODO：N1-2
+
+### 2026-09-20 キー操作の自動テストのやり方
+- `tests/` に `extends SceneTree` のスクリプトを置き、`Input.action_press("move_forward")` で「キーを押した」ことにして結果を調べる
+- 実行：`Godot_v4.6.3-stable_win64_console.exe --headless --path . --script res://tests/test_n1_2_walk.gd` → 最後に `RESULT: PASS` / `FAIL`
+- 新しい class_name を足した直後は先に `--import` を 1 回走らせる（上の項目参照）
+- 関連 TODO：N1-2 以降
+
 ### 2026-09-20 画面を画像に保存して見え方を確認する方法
 - `Godot_v4.6.3-stable_win64_console.exe --path . --write-movie <保存先>/frame.png --quit-after 20`
   - ゲームを 20 フレーム動かし、各フレームを `frame00000000.png` 〜 として保存して終了する（Godot 標準のムービー書き出し機能）
