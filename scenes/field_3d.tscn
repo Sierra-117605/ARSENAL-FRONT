@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -49,6 +49,33 @@ size = Vector2(1500, 1500)
 [sub_resource type="BoxShape3D" id="GroundShape"]
 size = Vector3(1500, 1, 1500)
 
+[sub_resource type="StandardMaterial3D" id="Mat_human"]
+albedo_color = Color(0.9, 0.5, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_tank"]
+albedo_color = Color(0.3, 0.33, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_house"]
+albedo_color = Color(0.8, 0.72, 0.58, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_human"]
+radius = 0.3
+height = 1.8
+
+[sub_resource type="BoxMesh" id="Mesh_tank_hull"]
+size = Vector3(3.6, 1.6, 7.5)
+
+[sub_resource type="BoxMesh" id="Mesh_tank_turret"]
+size = Vector3(2.6, 0.9, 3.2)
+
+[sub_resource type="CylinderMesh" id="Mesh_tank_gun"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 5.0
+
+[sub_resource type="BoxMesh" id="Mesh_house"]
+size = Vector3(8, 6.5, 8)
+
 [node name="Field3D" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -91,6 +118,54 @@ target_id = "target_04"
 [node name="Target5" parent="Targets" instance=ExtResource("7_target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -300)
 target_id = "target_05"
+
+[node name="ScaleRefs" type="Node3D" parent="."]
+
+[node name="Human" type="MeshInstance3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.9, -12)
+mesh = SubResource("Mesh_human")
+surface_material_override/0 = SubResource("Mat_human")
+
+[node name="HumanLabel" type="Label3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 2.6, -12)
+billboard = 1
+pixel_size = 0.02
+text = "HUMAN 1.8m"
+font_size = 48
+
+[node name="TankHull" type="MeshInstance3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.8, -14)
+mesh = SubResource("Mesh_tank_hull")
+surface_material_override/0 = SubResource("Mat_tank")
+
+[node name="TankTurret" type="MeshInstance3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.05, -14.5)
+mesh = SubResource("Mesh_tank_turret")
+surface_material_override/0 = SubResource("Mat_tank")
+
+[node name="TankGun" type="MeshInstance3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 16, 2.1, -18.5)
+mesh = SubResource("Mesh_tank_gun")
+surface_material_override/0 = SubResource("Mat_tank")
+
+[node name="TankLabel" type="Label3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 4.5, -14)
+billboard = 1
+pixel_size = 0.02
+text = "TANK 7.5m"
+font_size = 96
+
+[node name="House" type="MeshInstance3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3.25, -20)
+mesh = SubResource("Mesh_house")
+surface_material_override/0 = SubResource("Mat_house")
+
+[node name="HouseLabel" type="Label3D" parent="ScaleRefs"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 8.5, -20)
+billboard = 1
+pixel_size = 0.02
+text = "2F HOUSE 6.5m"
+font_size = 128
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")
