@@ -1,10 +1,11 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
 [ext_resource type="Script" path="res://scripts/action/occupant.gd" id="3_occ"]
 [ext_resource type="Script" path="res://scripts/action/player_input.gd" id="4_input"]
 [ext_resource type="Script" path="res://scripts/action/third_person_view.gd" id="5_tpv"]
+[ext_resource type="Script" path="res://scripts/action/crosshair.gd" id="6_cross"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -89,3 +90,15 @@ fov = 70.0
 [node name="ThirdPersonView" type="Node" parent="CameraRig"]
 script = ExtResource("5_tpv")
 view_name = "三人称"
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("6_cross")

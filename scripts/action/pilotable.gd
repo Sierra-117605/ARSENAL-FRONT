@@ -19,7 +19,14 @@ static func empty_control() -> Dictionary:
 		"yaw": 0.0,      # 向きたい方向の水平角（ラジアン）
 		"pitch": 0.0,    # 向きたい方向の上下角（ラジアン）
 		"fire": false,   # 射撃ボタン
+		"aim": {"x": 0.0, "y": 0.0, "z": 0.0},  # 狙っている地点（照準の先）
 	}
+
+
+## 操縦入力の "aim" を Vector3 にして返す
+static func aim_point(ctrl: Dictionary) -> Vector3:
+	var a: Dictionary = ctrl.get("aim", {})
+	return Vector3(a.get("x", 0.0), a.get("y", 0.0), a.get("z", 0.0))
 
 
 ## 操縦席の乗員から操縦入力を受け取る（操縦席の「運転手席」からのみ呼ばれる）

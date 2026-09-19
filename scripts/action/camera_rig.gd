@@ -13,7 +13,7 @@ extends Node3D
 ## 見ている方向の水平角（ラジアン。0 = 最初の正面、+ で左回り）
 var yaw: float = 0.0
 ## 見ている方向の上下角（ラジアン。- で下向き）
-var pitch: float = deg_to_rad(-15.0)
+var pitch: float = deg_to_rad(-3.0)
 ## 今使っている視点の番号
 var view_index: int = 0
 

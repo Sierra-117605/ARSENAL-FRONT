@@ -10,6 +10,9 @@ extends Pilotable
 ## 重力の強さ（プロジェクト設定の値を使う）
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+## 腕の武器（Phase 1 は 1 種類）
+@onready var weapon: Weapon = get_node_or_null("Weapon")
+
 
 func _physics_process(delta: float) -> void:
 	# 機体をカメラの向き（操縦入力の yaw）に合わせる（SPEC §0.7）
@@ -27,3 +30,7 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	move_and_slide()
+
+	# 射撃ボタンが押されていれば、照準の先へ撃つ
+	if control["fire"] and weapon != null:
+		weapon.try_fire(Pilotable.aim_point(control), self)

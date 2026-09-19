@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/action/bullet.gd" id="1_bullet"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_tracer"]
+shading_mode = 0
+albedo_color = Color(1, 0.85, 0.3, 1)
+emission_enabled = true
+emission = Color(1, 0.7, 0.2, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxMesh" id="Mesh_tracer"]
+size = Vector3(0.2, 0.2, 2.5)
+
+[node name="Bullet" type="Node3D"]
+script = ExtResource("1_bullet")
+
+[node name="Tracer" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_tracer")
+surface_material_override/0 = SubResource("Mat_tracer")

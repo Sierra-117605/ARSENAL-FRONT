@@ -95,6 +95,16 @@
 - マウスの動きの自動テストは `Input.parse_input_event()` で InputEventMouseMotion を送れば、ヘッドレスでも `_unhandled_input` に届く（`tests/test_n1_3_look.gd` で確認済み）
 - 関連 TODO：N1-3
 
+### 2026-09-20 テスト用スクリプトの _initialize では、まだ世界に置かれていない
+- 状況：`extends SceneTree` のテストの `_initialize()` で `root.add_child()` した直後に `global_position` を設定したら「!is_inside_tree()」エラーで位置が反映されなかった
+- 解決：`_initialize()` の中では `global_position` ではなく `position`（親からの相対位置）を使う。親が原点なら同じ値になる
+- 関連 TODO：N1-4
+
+### 2026-09-20 照準の先は「カメラから見た画面中央」の地点で決める
+- 弾は銃口から「カメラの画面中央の先にある地点」へ向けて飛ばす（肩越し視点でも照準と着弾が一致する）。計算は `scripts/action/player_input.gd` の `_find_aim_point()`
+- ハマり：カメラの初期の下向き角度が 8° だと、照準の先が約 25m 先の地面になり、それより遠い物に当たらなかった。初期角度を 3° に変更（地面に当たるのは約 75m 先）
+- 関連 TODO：N1-4
+
 ### 2026-09-20 キー操作の自動テストのやり方
 - `tests/` に `extends SceneTree` のスクリプトを置き、`Input.action_press("move_forward")` で「キーを押した」ことにして結果を調べる
 - 実行：`Godot_v4.6.3-stable_win64_console.exe --headless --path . --script res://tests/test_n1_2_walk.gd` → 最後に `RESULT: PASS` / `FAIL`
