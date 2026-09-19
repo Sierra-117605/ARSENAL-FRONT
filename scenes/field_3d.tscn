@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/action/player_input.gd" id="4_input"]
 [ext_resource type="Script" path="res://scripts/action/third_person_view.gd" id="5_tpv"]
 [ext_resource type="Script" path="res://scripts/action/crosshair.gd" id="6_cross"]
+[ext_resource type="PackedScene" path="res://scenes/target.tscn" id="7_target"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -68,6 +69,28 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("GroundShape")
 
 [node name="Robot" parent="." instance=ExtResource("1_robot")]
+
+[node name="Targets" type="Node3D" parent="."]
+
+[node name="Target1" parent="Targets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -25)
+target_id = "target_01"
+
+[node name="Target2" parent="Targets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -40)
+target_id = "target_02"
+
+[node name="Target3" parent="Targets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, -50)
+target_id = "target_03"
+
+[node name="Target4" parent="Targets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -30)
+target_id = "target_04"
+
+[node name="Target5" parent="Targets" instance=ExtResource("7_target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -80)
+target_id = "target_05"
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")
