@@ -96,7 +96,7 @@ func _finish() -> bool:
 
 ## 照準（画面中央）が標的の中心に重なるようにカメラの向きを合わせる
 func _aim_at(t: Target) -> void:
-	var center := t.global_position + Vector3(0, 1.5, 0)
+	var center: Vector3 = t.get_node("Collision").global_position
 	var dir := center - camera.global_position
 	rig.yaw = atan2(-dir.x, -dir.z)
 	rig.pitch = atan2(dir.y, Vector2(dir.x, dir.z).length())

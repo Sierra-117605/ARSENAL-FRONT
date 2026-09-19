@@ -10,7 +10,7 @@ emission = Color(1, 0.7, 0.2, 1)
 emission_energy_multiplier = 3.0
 
 [sub_resource type="BoxMesh" id="Mesh_tracer"]
-size = Vector3(0.2, 0.2, 2.5)
+size = Vector3(0.6, 0.6, 8)
 
 [node name="Bullet" type="Node3D"]
 script = ExtResource("1_bullet")

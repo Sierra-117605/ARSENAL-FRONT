@@ -1,5 +1,5 @@
 extends SceneTree
-## N1-4 の自動確認：左クリックで弾が照準の方向へ飛び、物に当たると消えるか調べる。
+## N1-4 の自動確認（N1-5b で自機 15m に合わせて壁を拡大）：左クリックで弾が照準の方向へ飛び、物に当たると消えるか調べる。
 ## 実行：Godot_console.exe --headless --path . --script res://tests/test_n1_4_fire.gd
 ## 画像も撮る場合（--headless を外す）：... --script res://tests/test_n1_4_fire.gd -- --shot=<保存先.png>
 
@@ -26,7 +26,7 @@ func _initialize() -> void:
 	_add_test_wall()
 
 
-## 試験用の壁：正面 30m 先。当たった回数を数える
+## 試験用の壁：正面 100m 先。当たった回数を数える
 func _add_test_wall() -> void:
 	var script := GDScript.new()
 	script.source_code = "extends StaticBody3D\nvar hits := 0\nfunc take_hit(d: int) -> void:\n\thits += d\n"
@@ -35,7 +35,7 @@ func _add_test_wall() -> void:
 	wall.set_script(script)
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(10, 10, 1)
+	box.size = Vector3(40, 40, 2)
 	shape.shape = box
 	wall.add_child(shape)
 	var mesh := MeshInstance3D.new()
@@ -44,7 +44,7 @@ func _add_test_wall() -> void:
 	mesh.mesh = bm
 	wall.add_child(mesh)
 	field.add_child(wall)
-	wall.position = Vector3(0, 3, -30)  # フィールドは原点にあるので位置＝世界座標
+	wall.position = Vector3(0, 20, -100)  # フィールドは原点にあるので位置＝世界座標
 
 
 func _physics_process(_delta: float) -> bool:

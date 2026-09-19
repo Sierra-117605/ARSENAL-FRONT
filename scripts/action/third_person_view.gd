@@ -4,13 +4,13 @@ extends CameraView
 ## 機体が画面のやや左に映り、画面中央の照準が機体に隠れない（SPEC §0.7）。
 
 ## 回転の中心の高さ（機体の足元から。胸〜頭のあたり）
-@export var pivot_height: float = 3.5
+@export var pivot_height: float = 13.0
 ## 回転の中心からカメラまでの距離
-@export var distance: float = 9.0
+@export var distance: float = 34.0
 ## カメラを右にずらす量（肩越し）
-@export var shoulder_offset: float = 2.5
+@export var shoulder_offset: float = 9.5
 ## カメラが地面に潜らないための最低の高さ
-@export var min_camera_height: float = 0.5
+@export var min_camera_height: float = 2.0
 
 
 func update_camera(camera: Camera3D, target: Node3D, yaw: float, pitch: float) -> void:

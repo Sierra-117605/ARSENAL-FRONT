@@ -12,7 +12,7 @@ extends Node
 @export var mouse_sensitivity: float = 0.003
 
 ## 照準の先を探す最大距離（メートル）
-@export var aim_range: float = 500.0
+@export var aim_range: float = 2000.0
 
 ## マウスでカメラを回せる状態か（Esc で解除、画面クリックで再開）
 var look_enabled: bool = true

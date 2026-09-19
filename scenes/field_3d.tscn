@@ -33,7 +33,7 @@ void vertex() {
 }
 
 void fragment() {
-	vec2 cell = abs(fract(world_pos.xz / 4.0) - 0.5);
+	vec2 cell = abs(fract(world_pos.xz / 15.0) - 0.5);
 	float line = step(0.475, max(cell.x, cell.y));
 	ALBEDO = mix(vec3(0.34, 0.36, 0.33), vec3(0.22, 0.24, 0.22), line);
 	ROUGHNESS = 0.95;
@@ -44,10 +44,10 @@ void fragment() {
 shader = SubResource("GridShader")
 
 [sub_resource type="PlaneMesh" id="GroundMesh"]
-size = Vector2(400, 400)
+size = Vector2(1500, 1500)
 
 [sub_resource type="BoxShape3D" id="GroundShape"]
-size = Vector3(400, 1, 400)
+size = Vector3(1500, 1, 1500)
 
 [node name="Field3D" type="Node3D"]
 
@@ -73,23 +73,23 @@ shape = SubResource("GroundShape")
 [node name="Targets" type="Node3D" parent="."]
 
 [node name="Target1" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -94)
 target_id = "target_01"
 
 [node name="Target2" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -40)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.5, 0, -150)
 target_id = "target_02"
 
 [node name="Target3" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, -50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94, 0, -187.5)
 target_id = "target_03"
 
 [node name="Target4" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -30)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82.5, 0, -112.5)
 target_id = "target_04"
 
 [node name="Target5" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -80)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -300)
 target_id = "target_05"
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]

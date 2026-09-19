@@ -5,9 +5,9 @@ extends Node3D
 ## 当たった相手が take_hit を持っていれば呼ぶ（標的などが受け取る）。
 
 ## 飛ぶ速さ（メートル/秒）
-@export var speed: float = 100.0
+@export var speed: float = 300.0
 ## これだけ飛んだら消える（メートル）
-@export var max_distance: float = 300.0
+@export var max_distance: float = 1200.0
 ## 1 発のダメージ（標的の耐久を減らす量）
 @export var damage: int = 1
 
