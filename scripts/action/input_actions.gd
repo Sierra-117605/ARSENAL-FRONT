@@ -10,6 +10,7 @@ const MOVE_RIGHT := "move_right"
 const FIRE := "fire"
 const RESTART := "restart"
 const GARAGE := "garage"
+const BOARD := "board"
 
 ## 操作名 → キー（キーボード上の物理位置で指定するので配列が違っても同じ場所）
 const KEYS := {
@@ -19,6 +20,7 @@ const KEYS := {
 	MOVE_RIGHT: KEY_D,
 	RESTART: KEY_R,
 	GARAGE: KEY_G,
+	BOARD: KEY_F,
 }
 
 ## 操作名 → マウスボタン

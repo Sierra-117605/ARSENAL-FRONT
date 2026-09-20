@@ -8,6 +8,10 @@ extends Node
 @export var occupant: Occupant
 ## 見ている方向を持つカメラ土台
 @export var camera_rig: CameraRig
+## 耐久バー（乗り換えたら表示先も切り替える）
+@export var health_bar: Control
+## この距離まで近づけば乗り換えられる（メートル）
+@export var board_distance: float = 40.0
 ## マウス感度（1 ピクセル動かしたときに回る角度・ラジアン）
 @export var mouse_sensitivity: float = 0.003
 
@@ -26,6 +30,11 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# F：近くの空いている機体に乗り換える
+	if event is InputEventKey and event.pressed and not event.echo:
+		if (event as InputEventKey).physical_keycode == InputActions.KEYS[InputActions.BOARD]:
+			try_board_nearby()
+			return
 	# Esc：マウスカーソルを戻す
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
 		_set_look_enabled(false)
@@ -83,6 +92,41 @@ func _find_aim_point() -> Vector3:
 	if hit.is_empty():
 		return to
 	return hit["position"]
+
+
+## 近くの空いている操縦席へ乗り移る。乗り換えたら true
+func try_board_nearby() -> bool:
+	if occupant == null:
+		return false
+	var current := occupant.get_vehicle()
+	if current == null:
+		return false
+	var best_seat: Seat = null
+	var best_distance := board_distance
+	for node in get_tree().get_nodes_in_group("pilotable"):
+		var other := node as Pilotable
+		if other == null or other == current or not other.is_alive():
+			continue
+		var distance := current.global_position.distance_to(other.global_position)
+		if distance > best_distance:
+			continue
+		for seat in other.get_seats():
+			if seat.is_driver and seat.occupant == null:
+				best_seat = seat
+				best_distance = distance
+	if best_seat == null:
+		return false
+	# 今の席を降りて、新しい席に座る
+	if occupant.seat != null:
+		occupant.seat.leave()
+	best_seat.sit(occupant)
+	var new_vehicle := best_seat.get_vehicle()
+	# カメラと耐久バーの見る相手も切り替える
+	if camera_rig != null:
+		camera_rig.target = new_vehicle
+	if health_bar != null:
+		health_bar.target = new_vehicle
+	return true
 
 
 ## カメラ操作の有効/無効を切り替え、マウスカーソルの表示を合わせる

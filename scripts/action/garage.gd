@@ -128,7 +128,7 @@ func _build_ui() -> void:
 	sortie.pressed.connect(_on_sortie)
 	bottom.add_child(sortie)
 	var help := Label.new()
-	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／Esc カーソル／R やり直し／G ガレージへ戻る"
+	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 近くの機体に乗り換え／Esc カーソル／R やり直し／G ガレージへ戻る"
 	help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
 	help.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bottom.add_child(help)

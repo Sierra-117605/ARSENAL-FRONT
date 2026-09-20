@@ -41,6 +41,7 @@ static func aim_point(ctrl: Dictionary) -> Vector3:
 
 func _ready() -> void:
 	hp = max_hp
+	add_to_group("pilotable")  # 乗り換え先を探すときに使う
 
 
 ## 弾などが当たった時に呼ばれる（Bullet から）

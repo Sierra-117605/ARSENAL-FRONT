@@ -176,6 +176,13 @@ pixel_size = 0.02
 text = "2F HOUSE 6.5m"
 font_size = 128
 
+[node name="SpareRobot" parent="." instance=ExtResource("1_robot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 0, -22)
+pilotable_id = "spare_01"
+machine_type = "scout_walker"
+max_hp = 200
+body_color = Color(0.25, 0.35, 0.5, 1)
+
 [node name="Covers" type="Node3D" parent="."]
 
 [node name="Cover1" parent="Covers" instance=ExtResource("12_cover")]
@@ -224,10 +231,11 @@ chase_target = NodePath("../../../Robot")
 script = ExtResource("3_occ")
 start_seat = NodePath("../Robot/DriverSeat")
 
-[node name="PlayerInput" type="Node" parent="." node_paths=PackedStringArray("occupant", "camera_rig")]
+[node name="PlayerInput" type="Node" parent="." node_paths=PackedStringArray("occupant", "camera_rig", "health_bar")]
 script = ExtResource("4_input")
 occupant = NodePath("../Pilot")
 camera_rig = NodePath("../CameraRig")
+health_bar = NodePath("../HUD/HealthBar")
 
 [node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("2_rig")
