@@ -9,8 +9,17 @@ extends Node3D
 ## 敵をまとめている入れ物
 @export var enemies_root: Node3D
 
+## 敵 1 体を倒すごとに手に入る資材
+@export var materials_per_kill: int = 60
+## 勝った時に追加で手に入る資材
+@export var materials_for_win: int = 120
+
 ## 戦闘の結果（"" = まだ決着していない / "win" / "lose"）
 var outcome: String = ""
+## この戦闘で手に入れた資材
+var earned_materials: int = 0
+## この戦闘で手に入れた設計図
+var earned_blueprints: Array[String] = []
 
 ## 決着した時に知らせる（"win" か "lose"）
 signal finished(result: String)
@@ -87,7 +96,31 @@ func _on_player_destroyed() -> void:
 	_finish("lose")
 
 
+## 戦果（資材と設計図）を進行状況に足して保存する
+func _grant_rewards() -> void:
+	var progress := ProgressStore.load_progress()
+	progress["materials"] = int(progress.get("materials", 0)) + earned_materials
+	for part_id in earned_blueprints:
+		ProgressStore.add_blueprint(progress, part_id)
+	ProgressStore.save_progress(progress)
+
+
+## まだ持っていない設計図を 1 つ選ぶ（無ければ空文字）
+func _pick_blueprint() -> String:
+	var progress := ProgressStore.load_progress()
+	var candidates: Array[String] = []
+	for part in RobotParts.data().get("parts", []):
+		var part_id := str(part.get("id", ""))
+		if bool(part.get("locked", false)) and not ProgressStore.is_unlocked(progress, part_id) 				and not (progress.get("blueprints", []) as Array).has(part_id) 				and not earned_blueprints.has(part_id):
+			candidates.append(part_id)
+	if candidates.is_empty():
+		return ""
+	return candidates[randi() % candidates.size()]
+
+
 func _on_enemy_destroyed(enemy: Pilotable) -> void:
+	# 撃破で資材が手に入る
+	earned_materials += materials_per_kill
 	# 壊れた敵は少し置いてから消す
 	enemy.set_physics_process(false)
 	var timer := get_tree().create_timer(1.0)
@@ -100,5 +133,11 @@ func _finish(result: String) -> void:
 	if outcome != "":
 		return
 	outcome = result
+	if result == "win":
+		earned_materials += materials_for_win
+		var blueprint := _pick_blueprint()
+		if blueprint != "":
+			earned_blueprints.append(blueprint)
+	_grant_rewards()
 	Sounds.play_ui(self, Sounds.VICTORY if result == "win" else Sounds.DEFEAT)
 	finished.emit(result)
