@@ -13,8 +13,23 @@ extends Pilotable
 ## 重力の強さ（プロジェクト設定の値を使う）
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+## 脚の振り幅（度）。仮の歩き用（本番モデルに差し替える時に作り直す）
+@export var step_swing_deg: float = 22.0
+## 1 メートル進むごとに進む歩調の量（大きいほど脚を速く振る）
+@export var step_rate: float = 0.09
+## 歩調に合わせて機体が上下に揺れる量（メートル）
+@export var body_bob: float = 0.25
+
 ## 腕の武器（Phase 1 は 1 種類）
 @onready var weapon: Weapon = get_node_or_null("Weapon")
+@onready var visual: Node3D = $Visual
+@onready var leg_pivot_l: Node3D = $Visual/LegPivotL
+@onready var leg_pivot_r: Node3D = $Visual/LegPivotR
+
+## 歩調の進み具合（0〜1 で 1 歩分）
+var step_phase: float = 0.0
+## 見た目の揺れの強さ（止まると 0 に戻る）
+var step_amount: float = 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -37,6 +52,24 @@ func _physics_process(delta: float) -> void:
 	# 射撃ボタンが押されていれば、照準の先へ撃つ
 	if control["fire"] and weapon != null:
 		weapon.try_fire(Pilotable.aim_point(control), self)
+
+	_update_step_motion(delta)
+
+
+## 仮の歩き：脚を前後に振り、歩調に合わせて機体を上下に揺らす
+func _update_step_motion(delta: float) -> void:
+	var speed := Vector2(velocity.x, velocity.z).length()
+	# 実際に進んだ距離に応じて歩調を進める（速いほど脚が速く動く）
+	step_phase = fposmod(step_phase + speed * step_rate * delta, 1.0)
+	# 止まっている時は揺れを 0 に戻す
+	var wanted := clampf(speed / maxf(walk_speed, 0.01), 0.0, 1.0)
+	step_amount = move_toward(step_amount, wanted, 4.0 * delta)
+
+	var swing := sin(step_phase * TAU) * deg_to_rad(step_swing_deg) * step_amount
+	leg_pivot_l.rotation.x = swing
+	leg_pivot_r.rotation.x = -swing
+	# 1 歩で 2 回沈むので 2 倍の速さで上下させる
+	visual.position.y = -absf(sin(step_phase * TAU)) * body_bob * step_amount
 
 
 ## 保存用の状態に機種を加える
