@@ -36,10 +36,11 @@ func _initialize() -> void:
 	enemy = field.get_node("Enemies/Enemy1")
 	# このテストは「敵 1 体がプレイヤーを追う」ことだけを見るので、味方機は遠ざける
 	field.get_node("SpareRobot").position = Vector3(800, 0, 800)
-	# 味方の戦車が敵を倒してしまうと確認にならないので遠ざける
-	var tank := field.get_node_or_null("Tank")
-	if tank != null:
-		tank.position = Vector3(900, 0, 900)
+	# 味方の戦車・攻撃機がいると敵の狙いがそちらに向くので遠ざける
+	for node_name in ["Tank", "Aircraft"]:
+		var extra := field.get_node_or_null(node_name)
+		if extra != null:
+			extra.position = Vector3(900, 0, 900)
 	for other in ["Enemy2", "Enemy3"]:
 		field.get_node("Enemies/" + other).queue_free()
 	robot.damaged.connect(_on_player_damaged)

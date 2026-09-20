@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
 [ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
 [ext_resource type="PackedScene" path="res://scenes/tank.tscn" id="17_tank"]
+[ext_resource type="PackedScene" path="res://scenes/aircraft.tscn" id="18_air"]
 [ext_resource type="PackedScene" path="res://scenes/objective.tscn" id="14_obj"]
 [ext_resource type="Script" path="res://scripts/action/mission_hud.gd" id="15_mhud"]
 [ext_resource type="Theme" path="res://assets/ui_theme.tres" id="16_theme"]
@@ -216,6 +217,11 @@ start_seat = NodePath("../DriverSeat")
 preferred_distance = 85.0
 fire_range = 130.0
 strafe_strength = 0.35
+
+[node name="Aircraft" parent="." instance=ExtResource("18_air")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 6)
+pilotable_id = "aircraft_01"
+team = "player"
 
 [node name="Covers" type="Node3D" parent="."]
 

@@ -62,6 +62,13 @@ func _physics_process(_delta: float) -> void:
 		InputActions.MOVE_FORWARD, InputActions.MOVE_BACK)
 	control["move_x"] = move.x
 	control["move_z"] = move.y
+	# 上昇・下降（航空機だけが使う。他の機体は無視する）
+	var lift := 0.0
+	if Input.is_action_pressed(InputActions.ASCEND):
+		lift += 1.0
+	if Input.is_action_pressed(InputActions.DESCEND):
+		lift -= 1.0
+	control["lift"] = lift
 	if camera_rig != null:
 		control["yaw"] = camera_rig.yaw
 		control["pitch"] = camera_rig.pitch
@@ -126,6 +133,10 @@ func try_exit() -> bool:
 	var vehicle := occupant.get_vehicle()
 	var soldier := occupant.body
 	if vehicle == null or soldier == null:
+		return false
+	# 航空機は着陸するまで降りられない（空中で放り出されないように）
+	if vehicle.has_method("is_landed") and not vehicle.is_landed():
+		GameLog.write("乗降", "着陸していないので降りられない")
 		return false
 	var drop := vehicle.global_position + vehicle.global_transform.basis.x * (_machine_radius(vehicle) + 2.0)
 	drop.y = vehicle.global_position.y

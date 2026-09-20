@@ -35,10 +35,11 @@ func _initialize() -> void:
 	enemy_ai = field.get_node("Enemies/Enemy1/AIPilot")
 	# 味方 AI 機は今回の確認に関係ないので遠ざける
 	field.get_node("SpareRobot").position = Vector3(600, 0, 600)
-	# 味方の戦車も確認に関係ないので遠ざける
-	var tank := field.get_node_or_null("Tank")
-	if tank != null:
-		tank.position = Vector3(900, 0, 900)
+	# 味方の戦車・攻撃機も確認に関係ないので遠ざける
+	for node_name in ["Tank", "Aircraft"]:
+		var extra := field.get_node_or_null(node_name)
+		if extra != null:
+			extra.position = Vector3(900, 0, 900)
 
 
 ## 敵とプレイヤーの間に厚い壁を置く
