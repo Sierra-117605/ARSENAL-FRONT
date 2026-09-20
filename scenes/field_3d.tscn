@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/action/battle_message.gd" id="11_msg"]
 [ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
 [ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
+[ext_resource type="PackedScene" path="res://scenes/tank.tscn" id="17_tank"]
 [ext_resource type="PackedScene" path="res://scenes/objective.tscn" id="14_obj"]
 [ext_resource type="Script" path="res://scripts/action/mission_hud.gd" id="15_mhud"]
 [ext_resource type="Theme" path="res://assets/ui_theme.tres" id="16_theme"]
@@ -203,6 +204,18 @@ fire_range = 110.0
 
 [node name="Objective" parent="." instance=ExtResource("14_obj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -110)
+
+[node name="Tank" parent="." instance=ExtResource("17_tank")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -6)
+pilotable_id = "tank_01"
+team = "player"
+
+[node name="AIPilot" type="Node" parent="Tank" node_paths=PackedStringArray("start_seat")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
+preferred_distance = 85.0
+fire_range = 130.0
+strafe_strength = 0.35
 
 [node name="Covers" type="Node3D" parent="."]
 

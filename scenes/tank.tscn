@@ -1,0 +1,81 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/action/tank.gd" id="1_tank"]
+[ext_resource type="Script" path="res://scripts/action/seat.gd" id="2_seat"]
+[ext_resource type="Script" path="res://scripts/action/weapon.gd" id="3_weapon"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_hull"]
+albedo_color = Color(0.28, 0.32, 0.24, 1)
+roughness = 0.85
+metallic = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_track"]
+albedo_color = Color(0.14, 0.14, 0.13, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_hull"]
+size = Vector3(3.6, 1.4, 7.4)
+
+[sub_resource type="BoxMesh" id="Mesh_track"]
+size = Vector3(0.9, 1.0, 7.0)
+
+[sub_resource type="BoxMesh" id="Mesh_turret"]
+size = Vector3(2.6, 0.9, 3.2)
+
+[sub_resource type="CylinderMesh" id="Mesh_gun"]
+top_radius = 0.16
+bottom_radius = 0.16
+height = 4.6
+
+[sub_resource type="BoxShape3D" id="Shape_tank"]
+size = Vector3(4.4, 2.6, 7.6)
+
+[node name="Tank" type="CharacterBody3D"]
+script = ExtResource("1_tank")
+pilotable_id = "tank_01"
+max_hp = 260
+team = "player"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+shape = SubResource("Shape_tank")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Hull" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3, 0)
+mesh = SubResource("Mesh_hull")
+surface_material_override/0 = SubResource("Mat_hull")
+
+[node name="TrackL" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.6, 0)
+mesh = SubResource("Mesh_track")
+surface_material_override/0 = SubResource("Mat_track")
+
+[node name="TrackR" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.6, 0)
+mesh = SubResource("Mesh_track")
+surface_material_override/0 = SubResource("Mat_track")
+
+[node name="Turret" type="Node3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -0.4)
+
+[node name="TurretBody" type="MeshInstance3D" parent="Visual/Turret"]
+mesh = SubResource("Mesh_turret")
+surface_material_override/0 = SubResource("Mat_hull")
+
+[node name="Gun" type="MeshInstance3D" parent="Visual/Turret"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.1, -3.4)
+mesh = SubResource("Mesh_gun")
+surface_material_override/0 = SubResource("Mat_track")
+
+[node name="DriverSeat" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 1)
+script = ExtResource("2_seat")
+
+[node name="Weapon" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -5)
+script = ExtResource("3_weapon")
+fire_interval = 1.6
+damage = 60
+bullet_speed = 500.0
+spread = 0.4
