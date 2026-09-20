@@ -9,9 +9,16 @@ extends Node3D
 ## 敵をまとめている入れ物
 @export var enemies_root: Node3D
 
+## 任務の設定（SPEC §0.14）。空なら従来どおりの殲滅戦
+var mission: Dictionary = {}
+## 守る拠点／壊す目標（任務によって使う）
+var objective: Pilotable = null
+## 残り時間（秒。0 以下なら制限なし）
+var time_left: float = 0.0
+
 ## 敵 1 体を倒すごとに手に入る資材
 @export var materials_per_kill: int = 60
-## 勝った時に追加で手に入る資材
+## 勝った時に追加で手に入る資材（任務の報酬で上書きされる）
 @export var materials_for_win: int = 120
 ## 部位を壊してから倒すと手に入る希少素材（本命の入手方法）
 @export var rare_per_captured_part: int = 2
@@ -40,7 +47,11 @@ signal garage_requested
 
 func _ready() -> void:
 	InputActions.ensure_registered()
-	GameLog.write("開始", "戦闘開始（敵 %d 体）" % _enemies().size())
+	mission = MissionData.current_setup()
+	_setup_mission()
+	GameLog.write("開始", "%s（%s）開始：敵 %d 体%s" % [
+		mission.get("name", "戦闘"), mission.get("difficulty_name", ""), _enemies().size(),
+		"／制限 %.0f 秒" % time_left if time_left > 0.0 else ""])
 	if player_occupant != null:
 		_watch_player_machines()
 	if player != null and player_occupant == null:
@@ -51,9 +62,17 @@ func _ready() -> void:
 		enemy.part_broken.connect(_on_enemy_part_broken.bind(enemy))
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	if outcome != "":
+		return
+	# 制限時間のある任務（防衛は守り切れば勝ち、破壊は時間切れで負け）
+	if time_left > 0.0:
+		time_left = maxf(time_left - delta, 0.0)
+		if time_left <= 0.0:
+			_finish("win" if str(mission.get("type", "")) == "defend" else "lose")
+			return
 	# 乗り換えに対応するため、今乗っている機体が壊れたかを毎回見る
-	if outcome != "" or player_occupant == null:
+	if player_occupant == null:
 		return
 	var current := player_occupant.get_vehicle()
 	if current != null and not current.is_alive():
@@ -93,6 +112,77 @@ func _on_player_damaged(hp: int, max_hp: int, machine: Pilotable) -> void:
 
 func _on_player_part_broken(part: String, machine: Pilotable) -> void:
 	GameLog.write("被害", "%s の %s が破壊された" % [machine.name, part])
+
+
+## 任務に合わせて戦場を組み立てる
+func _setup_mission() -> void:
+	time_left = float(mission.get("time_limit", 0.0))
+	materials_for_win = int(mission.get("materials", 120))
+	rare_for_win = int(mission.get("rare", 1))
+	_setup_enemies()
+	_setup_objective()
+
+
+## 敵の数と強さを任務に合わせる
+func _setup_enemies() -> void:
+	if enemies_root == null:
+		return
+	var wanted := int(mission.get("enemy_count", 3))
+	var hp := int(mission.get("enemy_hp", 180))
+	var interval := float(mission.get("enemy_fire_interval", 2.6))
+	var existing := _enemies()
+	# 足りない分は既存の敵を複製して増やす
+	while existing.size() < wanted and not existing.is_empty():
+		var extra: Node = (existing[0] as Node).duplicate()
+		extra.name = "Enemy%d" % (existing.size() + 1)
+		enemies_root.add_child(extra)
+		# 元の敵から少しずらして配置する
+		(extra as Node3D).position = (existing[0] as Node3D).position + Vector3(
+			randf_range(-60.0, 60.0), 0.0, randf_range(-40.0, 40.0))
+		existing = _enemies()
+	# 多すぎる分は取り除く
+	while existing.size() > wanted:
+		var last: Node = existing.back()
+		enemies_root.remove_child(last)
+		last.queue_free()
+		existing = _enemies()
+	for enemy in _enemies():
+		enemy.max_hp = hp
+		enemy.hp = hp
+		var ai: AIPilot = enemy.get_node_or_null("AIPilot")
+		if ai != null:
+			ai.fire_interval = interval
+			if enemy.get("weapon") != null:
+				enemy.weapon.fire_interval = interval
+
+
+## 守る拠点／壊す目標を用意する
+func _setup_objective() -> void:
+	var node := get_node_or_null("Objective")
+	if node == null:
+		return
+	objective = node as Pilotable
+	var kind := str(mission.get("type", "annihilate"))
+	if kind == "annihilate" or objective == null:
+		node.queue_free()
+		objective = null
+		return
+	objective.max_hp = int(mission.get("objective_hp", 400))
+	objective.hp = objective.max_hp
+	objective.team = "player" if kind == "defend" else "enemy"
+	objective.destroyed.connect(_on_objective_destroyed)
+	GameLog.write("開始", "%s（耐久 %d）" % [
+		"守る拠点" if kind == "defend" else "破壊目標", objective.max_hp])
+
+
+## 拠点／目標が壊れた時
+func _on_objective_destroyed() -> void:
+	if str(mission.get("type", "")) == "defend":
+		GameLog.write("結果", "拠点が破壊された")
+		_finish("lose")
+	else:
+		GameLog.write("結果", "目標を破壊した")
+		_finish("win")
 
 
 ## ガレージ画面へ戻る
@@ -203,7 +293,7 @@ func _on_enemy_destroyed(enemy: Pilotable) -> void:
 	enemy.set_physics_process(false)
 	var timer := get_tree().create_timer(1.0)
 	timer.timeout.connect(enemy.queue_free)
-	if alive_enemy_count() == 0:
+	if alive_enemy_count() == 0 and str(mission.get("type", "annihilate")) == "annihilate":
 		_finish("win")
 
 

@@ -57,8 +57,10 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 40)
 	root_box.add_child(title)
 
+	var setup := MissionData.current_setup()
 	var subtitle := Label.new()
-	subtitle.text = "機種を選び、部位ごとにパーツを選んでください。"
+	subtitle.text = "任務：%s（%s）　／　機種とパーツを選んで出撃してください。" % [
+		setup.get("name", ""), setup.get("difficulty_name", "")]
 	subtitle.add_theme_color_override("font_color", Color(0.75, 0.78, 0.8))
 	root_box.add_child(subtitle)
 
@@ -144,6 +146,11 @@ func _build_ui() -> void:
 	bottom.custom_minimum_size = Vector2(0, 64)
 	bottom.size_flags_vertical = Control.SIZE_SHRINK_END
 	root_box.add_child(bottom)
+	var back := Button.new()
+	back.text = "任務選択へ"
+	back.custom_minimum_size = Vector2(160, 56)
+	back.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/mission_select.tscn"))
+	bottom.add_child(back)
 	var sortie := Button.new()
 	sortie.text = "出撃"
 	sortie.custom_minimum_size = Vector2(200, 56)

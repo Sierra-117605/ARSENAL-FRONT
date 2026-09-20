@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/action/objective_structure.gd" id="1_obj"]
+
+[sub_resource type="BoxMesh" id="Mesh_obj"]
+size = Vector3(26, 18, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_obj"]
+size = Vector3(26, 18, 26)
+
+[node name="Objective" type="CharacterBody3D"]
+script = ExtResource("1_obj")
+pilotable_id = "objective"
+max_hp = 400
+team = "player"
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9, 0)
+mesh = SubResource("Mesh_obj")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9, 0)
+shape = SubResource("Shape_obj")

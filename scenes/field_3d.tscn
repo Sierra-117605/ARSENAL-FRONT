@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/action/battle_message.gd" id="11_msg"]
 [ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
 [ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
+[ext_resource type="PackedScene" path="res://scenes/objective.tscn" id="14_obj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -196,6 +197,9 @@ script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
 preferred_distance = 70.0
 fire_range = 110.0
+
+[node name="Objective" parent="." instance=ExtResource("14_obj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -110)
 
 [node name="Covers" type="Node3D" parent="."]
 

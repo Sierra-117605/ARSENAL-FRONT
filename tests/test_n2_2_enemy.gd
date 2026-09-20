@@ -9,6 +9,7 @@ const MAX_FRAMES := 1800  # 30 秒で打ち切り
 var field: Node
 var robot: Robot
 var enemy: Robot
+var mission_before := ""
 var frame := 0
 var failed := false
 var shot_path := ""
@@ -23,6 +24,10 @@ func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shot="):
 			shot_path = arg.substr(7)
+	# 任務の設定に左右されないよう、基本の任務（殲滅・中）に固定する
+	if FileAccess.file_exists(MissionData.CHOICE_PATH):
+		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	MissionData.save_choice("sweep_plain", "normal")
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	robot = field.get_node("Robot")
@@ -69,6 +74,7 @@ func _finish() -> void:
 	_report(closest > 20.0, "近づきすぎず距離を保つ (最短 %.0fm)" % closest)
 	_report(first_hit_frame > 0, "敵が撃ってきて自機に当たる")
 	_report(robot.hp < robot.max_hp, "自機の耐久が減る (残り %d / %d)" % [robot.hp, robot.max_hp])
+	_restore_mission()
 	print("RESULT: ", "FAIL" if failed else "PASS")
 
 
@@ -87,3 +93,13 @@ func _report(ok: bool, msg: String) -> void:
 	print("[", "OK" if ok else "NG", "] ", msg)
 	if not ok:
 		failed = true
+
+
+## 任務の選択を元に戻す
+func _restore_mission() -> void:
+	if mission_before != "":
+		var f := FileAccess.open(MissionData.CHOICE_PATH, FileAccess.WRITE)
+		if f != null:
+			f.store_string(mission_before)
+	elif FileAccess.file_exists(MissionData.CHOICE_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionData.CHOICE_PATH))

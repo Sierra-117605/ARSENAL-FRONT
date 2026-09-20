@@ -1,0 +1,40 @@
+{
+  "_comment": "任務一覧（SPEC §0.14）。type=種類、difficulties=難易度ごとの敵数・強さ・報酬・制限時間(秒)",
+  "missions": [
+    {
+      "id": "sweep_plain",
+      "name": "平野の掃討",
+      "type": "annihilate",
+      "desc": "展開した敵部隊を全機撃破する。基本の任務",
+      "difficulties": {
+        "easy":   {"name": "易", "enemy_count": 2, "enemy_hp": 150, "enemy_fire_interval": 3.0, "materials": 180, "rare": 1},
+        "normal": {"name": "中", "enemy_count": 3, "enemy_hp": 180, "enemy_fire_interval": 2.6, "materials": 300, "rare": 1},
+        "hard":   {"name": "難", "enemy_count": 5, "enemy_hp": 220, "enemy_fire_interval": 2.2, "materials": 520, "rare": 2}
+      }
+    },
+    {
+      "id": "defend_depot",
+      "name": "補給拠点の防衛",
+      "type": "defend",
+      "desc": "制限時間まで補給拠点を守り切る。拠点が落ちたら失敗",
+      "objective_hp": 400,
+      "difficulties": {
+        "easy":   {"name": "易", "enemy_count": 3, "enemy_hp": 140, "enemy_fire_interval": 3.0, "time_limit": 60.0, "materials": 220, "rare": 1},
+        "normal": {"name": "中", "enemy_count": 4, "enemy_hp": 170, "enemy_fire_interval": 2.6, "time_limit": 90.0, "materials": 360, "rare": 2},
+        "hard":   {"name": "難", "enemy_count": 6, "enemy_hp": 200, "enemy_fire_interval": 2.2, "time_limit": 120.0, "materials": 600, "rare": 3}
+      }
+    },
+    {
+      "id": "strike_facility",
+      "name": "敵施設の破壊",
+      "type": "destroy",
+      "desc": "制限時間内に敵の施設を破壊する。守りは固い",
+      "objective_hp": 900,
+      "difficulties": {
+        "easy":   {"name": "易", "enemy_count": 2, "enemy_hp": 150, "enemy_fire_interval": 3.0, "time_limit": 90.0, "materials": 240, "rare": 1},
+        "normal": {"name": "中", "enemy_count": 3, "enemy_hp": 180, "enemy_fire_interval": 2.6, "time_limit": 75.0, "materials": 400, "rare": 2},
+        "hard":   {"name": "難", "enemy_count": 4, "enemy_hp": 210, "enemy_fire_interval": 2.2, "time_limit": 60.0, "materials": 680, "rare": 3}
+      }
+    }
+  ]
+}
