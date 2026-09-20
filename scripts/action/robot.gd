@@ -23,6 +23,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var body_color: Color = Color(0, 0, 0, 0)
 ## 組み立ての構成（頭・胴・腕・脚・発電機・武器のパーツ id）。空なら標準の構成
 @export var loadout: Dictionary = {}
+## true なら、ガレージで保存した構成を読み込んで使う（プレイヤー機に付ける）
+@export var use_saved_loadout: bool = false
 
 ## 照準できる距離（パーツで変わる。PlayerInput が使う）
 var aim_range: float = 1500.0
@@ -40,7 +42,10 @@ var step_amount: float = 0.0
 
 
 func _ready() -> void:
+	if use_saved_loadout:
+		loadout = LoadoutStore.load_saved()
 	apply_loadout(loadout)
+	_apply_part_visuals()
 	super._ready()
 	if body_color.a > 0.0:
 		_repaint(visual)
@@ -60,6 +65,50 @@ func apply_loadout(new_loadout: Dictionary) -> void:
 		w.fire_interval = float(stats["fire_interval"])
 		w.bullet_speed = float(stats["bullet_speed"])
 		w.spread = float(stats["spread"])
+	_apply_part_visuals()
+
+
+## パーツごとの見た目（大きさ・色）を機体に反映する
+## スロット → 変化させる部品の名前
+const VISUAL_PARTS := {
+	"head": ["Head"],
+	"body": ["Torso"],
+	"arms": ["ShoulderL", "ShoulderR", "ArmL", "ArmR"],
+	"legs": ["LegPivotL", "LegPivotR"],
+	"generator": ["BackPack"],
+	"weapon": ["Barrel"],
+}
+
+
+func _apply_part_visuals() -> void:
+	if visual == null:
+		return
+	for slot in VISUAL_PARTS:
+		var part := RobotParts.find(str(loadout.get(slot, "")))
+		var look: Dictionary = part.get("visual", {})
+		if look.is_empty():
+			continue
+		var scale_value := float(look.get("scale", 1.0))
+		var rgb: Array = look.get("color", [])
+		for node_name in VISUAL_PARTS[slot]:
+			var node: Node3D = visual.get_node_or_null(node_name)
+			if node == null:
+				continue
+			node.scale = Vector3.ONE * scale_value
+			if rgb.size() == 3 and body_color.a <= 0.0:
+				_tint(node, Color(rgb[0], rgb[1], rgb[2]))
+
+
+## 部品（とその子）の色を変える
+func _tint(node: Node, color: Color) -> void:
+	if node is MeshInstance3D:
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = color
+		mat.roughness = 0.7
+		mat.metallic = 0.3
+		(node as MeshInstance3D).material_override = mat
+	for child in node.get_children():
+		_tint(child, color)
 
 
 ## 機体の見た目を指定の色で塗り替える（目玉の発光部分はそのまま）

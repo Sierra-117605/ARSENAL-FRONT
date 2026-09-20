@@ -14,6 +14,8 @@ var outcome: String = ""
 signal finished(result: String)
 ## やり直しが指示された時に知らせる
 signal restart_requested
+## ガレージへ戻ると指示された時に知らせる
+signal garage_requested
 
 
 func _ready() -> void:
@@ -25,11 +27,22 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# 決着後に R キーでやり直し
-	if outcome == "" or not (event is InputEventKey and event.pressed):
+	# R キーでやり直し（決着後のみ）、G キーでガレージへ戻る（いつでも）
+	if not (event is InputEventKey and event.pressed):
 		return
-	if (event as InputEventKey).physical_keycode == InputActions.KEYS[InputActions.RESTART]:
+	var key: int = (event as InputEventKey).physical_keycode
+	if key == InputActions.KEYS[InputActions.GARAGE]:
+		to_garage()
+	elif key == InputActions.KEYS[InputActions.RESTART] and outcome != "":
 		restart()
+
+
+## ガレージ画面へ戻る
+func to_garage() -> void:
+	garage_requested.emit()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if get_tree() != null and get_tree().current_scene != null:
+		get_tree().change_scene_to_file("res://scenes/garage.tscn")
 
 
 ## 最初からやり直す

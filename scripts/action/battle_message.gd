@@ -32,5 +32,5 @@ func _draw() -> void:
 	# 見やすいように後ろを暗くする
 	draw_rect(Rect2(Vector2(0, center.y - 90), Vector2(size.x, 180)), Color(0, 0, 0, 0.5))
 	draw_string(font, Vector2(0, center.y), message, HORIZONTAL_ALIGNMENT_CENTER, size.x, 72, color)
-	draw_string(font, Vector2(0, center.y + 52), "press R to retry",
+	draw_string(font, Vector2(0, center.y + 52), "press R to retry   /   G for garage",
 		HORIZONTAL_ALIGNMENT_CENTER, size.x, 28, Color(1, 1, 1, 0.9))

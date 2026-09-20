@@ -12,7 +12,7 @@ config_version=5
 
 config/name="ARSENAL FRONT"
 config/description="3D メカ操縦アクション × 開発・組み立て (新 Phase 1: ロボット 1 機の操縦)"
-run/main_scene="res://scenes/field_3d.tscn"
+run/main_scene="res://scenes/garage.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="ArsenalFront"
 config/features=PackedStringArray("4.6", "Forward Plus")
