@@ -13,6 +13,10 @@ extends Node3D
 var mission: Dictionary = {}
 ## 守る拠点／壊す目標（任務によって使う）
 var objective: Pilotable = null
+## ボス（要塞）。ボス任務のときだけ出す
+var boss: BossFortress = null
+## ボスを置く場所（自機から見て正面の奥）
+const BOSS_POSITION := Vector3(0, 0, -260)
 ## 残り時間（秒。0 以下なら制限なし）
 var time_left: float = 0.0
 
@@ -121,6 +125,7 @@ func _setup_mission() -> void:
 	rare_for_win = int(mission.get("rare", 1))
 	_setup_enemies()
 	_setup_objective()
+	_setup_boss()
 
 
 ## 敵の数と強さを任務に合わせる
@@ -168,7 +173,8 @@ func _setup_objective() -> void:
 		return
 	objective = node as Pilotable
 	var kind := str(mission.get("type", "annihilate"))
-	if kind == "annihilate" or objective == null:
+	# 拠点や目標を使わない任務（殲滅・ボス）では建物ごと消す
+	if objective == null or kind == "annihilate" or kind == "boss" or int(mission.get("objective_hp", 0)) <= 0:
 		node.queue_free()
 		objective = null
 		return
@@ -180,6 +186,19 @@ func _setup_objective() -> void:
 	objective.destroyed.connect(_on_objective_destroyed)
 	GameLog.write("開始", "%s（耐久 %d）" % [
 		"守る拠点" if kind == "defend" else "破壊目標", objective.max_hp])
+
+
+## ボス任務のときだけ要塞を出す
+func _setup_boss() -> void:
+	if str(mission.get("type", "")) != "boss":
+		return
+	var scene: PackedScene = load("res://scenes/boss_fortress.tscn")
+	boss = scene.instantiate()
+	boss.railgun_interval = float(mission.get("railgun_interval", 22.0))
+	boss.railgun_damage = int(mission.get("railgun_damage", 120))
+	add_child(boss)
+	boss.position = BOSS_POSITION
+	boss.fortress_destroyed.connect(func(): _finish("win"))
 
 
 ## 拠点／目標が壊れた時

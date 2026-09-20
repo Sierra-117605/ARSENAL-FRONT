@@ -37,10 +37,25 @@ func _process(_delta: float) -> void:
 	if battle.objective != null and is_instance_valid(battle.objective):
 		var kind := "拠点" if str(battle.mission.get("type", "")) == "defend" else "目標"
 		parts.append("%s 耐久 %d / %d" % [kind, battle.objective.hp, battle.objective.max_hp])
+	# ボス戦では段階と残りの部位数を出す
+	var boss: BossFortress = battle.boss
+	if boss != null and is_instance_valid(boss):
+		var stage_name: String = {
+			1: "迎撃砲台", 2: "発電施設", 3: "砲身・中枢",
+		}.get(boss.stage, "撃破")
+		var alive := 0
+		for part in boss.parts_of_stage(boss.stage):
+			if part.is_alive():
+				alive += 1
+		parts.append("段階 %d：%s 残り %d" % [boss.stage, stage_name, alive])
+		if boss.warning:
+			parts.append("レールガン発射まもなく！物陰へ")
 	parts.append("敵 残り %d 体" % battle.alive_enemy_count())
 	status.text = "　／　".join(parts)
 	# 残り時間が少ない・拠点が危ない時は赤くする
 	var danger := battle.time_left > 0.0 and battle.time_left < 15.0
+	if battle.boss != null and is_instance_valid(battle.boss):
+		danger = danger or battle.boss.warning
 	if battle.objective != null and is_instance_valid(battle.objective):
 		danger = danger or float(battle.objective.hp) / float(maxi(battle.objective.max_hp, 1)) < 0.3
 	status.add_theme_color_override("font_color", Color(1, 0.45, 0.4) if danger else Color(0.9, 0.92, 0.9))

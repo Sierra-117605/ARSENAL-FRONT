@@ -2,7 +2,7 @@ extends SceneTree
 ## N5-1 の確認：任務データと勝敗条件（SPEC §0.14）。
 ##
 ## 確かめること：
-##  1. 任務が 3 種類あり、それぞれ易・中・難の設定を持つ
+##  1. 任務が 4 種類あり（殲滅・防衛・破壊・ボス）、それぞれ易・中・難の設定を持つ
 ##  2. 難易度を上げると敵が増え、強くなり、報酬も増える
 ##  3. 殲滅：敵を全滅させたら勝ち
 ##  4. 防衛：拠点が壊れたら負け／守り切れば（時間切れ）勝ち
@@ -31,7 +31,7 @@ func _initialize() -> void:
 
 ## 1・2：データの確認
 func _check_data() -> void:
-	_report(MissionData.all().size() == 3, "任務が 3 種類ある (%d)" % MissionData.all().size())
+	_report(MissionData.all().size() == 4, "任務が 4 種類ある（殲滅・防衛・破壊・ボス）(%d)" % MissionData.all().size())
 	var easy := MissionData.setup("sweep_plain", "easy")
 	var hard := MissionData.setup("sweep_plain", "hard")
 	_report(int(hard["enemy_count"]) > int(easy["enemy_count"])

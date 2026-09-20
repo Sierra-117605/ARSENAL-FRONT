@@ -7,9 +7,30 @@
       "type": "annihilate",
       "desc": "展開した敵部隊を全機撃破する。基本の任務",
       "difficulties": {
-        "easy":   {"name": "易", "enemy_count": 2, "enemy_hp": 150, "enemy_fire_interval": 3.0, "materials": 180, "rare": 1},
-        "normal": {"name": "中", "enemy_count": 3, "enemy_hp": 180, "enemy_fire_interval": 2.6, "materials": 300, "rare": 1},
-        "hard":   {"name": "難", "enemy_count": 5, "enemy_hp": 220, "enemy_fire_interval": 2.2, "materials": 520, "rare": 2}
+        "easy": {
+          "name": "易",
+          "enemy_count": 2,
+          "enemy_hp": 150,
+          "enemy_fire_interval": 3.0,
+          "materials": 180,
+          "rare": 1
+        },
+        "normal": {
+          "name": "中",
+          "enemy_count": 3,
+          "enemy_hp": 180,
+          "enemy_fire_interval": 2.6,
+          "materials": 300,
+          "rare": 1
+        },
+        "hard": {
+          "name": "難",
+          "enemy_count": 5,
+          "enemy_hp": 220,
+          "enemy_fire_interval": 2.2,
+          "materials": 520,
+          "rare": 2
+        }
       }
     },
     {
@@ -19,9 +40,33 @@
       "desc": "制限時間まで補給拠点を守り切る。拠点が落ちたら失敗",
       "objective_hp": 400,
       "difficulties": {
-        "easy":   {"name": "易", "enemy_count": 3, "enemy_hp": 140, "enemy_fire_interval": 3.0, "time_limit": 60.0, "materials": 220, "rare": 1},
-        "normal": {"name": "中", "enemy_count": 4, "enemy_hp": 170, "enemy_fire_interval": 2.6, "time_limit": 90.0, "materials": 360, "rare": 2},
-        "hard":   {"name": "難", "enemy_count": 6, "enemy_hp": 200, "enemy_fire_interval": 2.2, "time_limit": 120.0, "materials": 600, "rare": 3}
+        "easy": {
+          "name": "易",
+          "enemy_count": 3,
+          "enemy_hp": 140,
+          "enemy_fire_interval": 3.0,
+          "time_limit": 60.0,
+          "materials": 220,
+          "rare": 1
+        },
+        "normal": {
+          "name": "中",
+          "enemy_count": 4,
+          "enemy_hp": 170,
+          "enemy_fire_interval": 2.6,
+          "time_limit": 90.0,
+          "materials": 360,
+          "rare": 2
+        },
+        "hard": {
+          "name": "難",
+          "enemy_count": 6,
+          "enemy_hp": 200,
+          "enemy_fire_interval": 2.2,
+          "time_limit": 120.0,
+          "materials": 600,
+          "rare": 3
+        }
       }
     },
     {
@@ -31,9 +76,74 @@
       "desc": "制限時間内に敵の施設を破壊する。守りは固い",
       "objective_hp": 900,
       "difficulties": {
-        "easy":   {"name": "易", "enemy_count": 2, "enemy_hp": 150, "enemy_fire_interval": 3.0, "time_limit": 90.0, "materials": 240, "rare": 1},
-        "normal": {"name": "中", "enemy_count": 3, "enemy_hp": 180, "enemy_fire_interval": 2.6, "time_limit": 75.0, "materials": 400, "rare": 2},
-        "hard":   {"name": "難", "enemy_count": 4, "enemy_hp": 210, "enemy_fire_interval": 2.2, "time_limit": 60.0, "materials": 680, "rare": 3}
+        "easy": {
+          "name": "易",
+          "enemy_count": 2,
+          "enemy_hp": 150,
+          "enemy_fire_interval": 3.0,
+          "time_limit": 90.0,
+          "materials": 240,
+          "rare": 1
+        },
+        "normal": {
+          "name": "中",
+          "enemy_count": 3,
+          "enemy_hp": 180,
+          "enemy_fire_interval": 2.6,
+          "time_limit": 75.0,
+          "materials": 400,
+          "rare": 2
+        },
+        "hard": {
+          "name": "難",
+          "enemy_count": 4,
+          "enemy_hp": 210,
+          "enemy_fire_interval": 2.2,
+          "time_limit": 60.0,
+          "materials": 680,
+          "rare": 3
+        }
+      }
+    },
+    {
+      "id": "railgun_fortress",
+      "name": "レールガン要塞の攻略",
+      "type": "boss",
+      "desc": "超長距離砲の要塞を攻略する。迎撃砲台 → 発電施設 → 砲身と中枢の順に破壊する。レールガンの予兆が出たら物陰に隠れること",
+      "difficulties": {
+        "easy": {
+          "name": "易",
+          "enemy_count": 2,
+          "enemy_hp": 150,
+          "enemy_fire_interval": 3.0,
+          "time_limit": 0.0,
+          "materials": 700,
+          "rare": 3,
+          "railgun_interval": 26.0,
+          "railgun_damage": 90
+        },
+        "normal": {
+          "name": "中",
+          "enemy_count": 3,
+          "enemy_hp": 180,
+          "enemy_fire_interval": 2.6,
+          "time_limit": 0.0,
+          "materials": 1000,
+          "rare": 4,
+          "railgun_interval": 22.0,
+          "railgun_damage": 120
+        },
+        "hard": {
+          "name": "難",
+          "enemy_count": 5,
+          "enemy_hp": 210,
+          "enemy_fire_interval": 2.2,
+          "time_limit": 0.0,
+          "materials": 1500,
+          "rare": 6,
+          "railgun_interval": 18.0,
+          "railgun_damage": 160
+        }
       }
     }
   ]

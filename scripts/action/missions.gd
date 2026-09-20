@@ -55,6 +55,8 @@ static func setup(mission_id: String, difficulty: String) -> Dictionary:
 		"time_limit": float(level.get("time_limit", 0.0)),
 		"materials": int(level.get("materials", 300)),
 		"rare": int(level.get("rare", 1)),
+		"railgun_interval": float(level.get("railgun_interval", 22.0)),
+		"railgun_damage": int(level.get("railgun_damage", 120)),
 	}
 
 
