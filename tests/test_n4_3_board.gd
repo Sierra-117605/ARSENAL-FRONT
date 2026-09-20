@@ -20,6 +20,8 @@ var bar: Control
 var pilot: Occupant
 var frame := 0
 var failed := false
+var spare_pos_at_board := Vector3.ZERO
+var robot_pos_at_board := Vector3.ZERO
 
 
 func _initialize() -> void:
@@ -52,14 +54,16 @@ func _physics_process(_delta: float) -> bool:
 			_report(rig.target == spare, "カメラが予備機を追う")
 			_report(bar.target == spare, "耐久バーが予備機の耐久を出す")
 			_report(robot.control["move_z"] == 0.0, "降りた機体は操作を受け取らない")
-			# 5：降りた機体は止まる
+			# 5：乗り換えた先が動き、降りた機体は止まる
+			spare_pos_at_board = spare.global_position
+			robot_pos_at_board = robot.global_position
 			Input.action_press("move_forward")
 		40:
 			Input.action_release("move_forward")
-			_report(spare.global_position.distance_to(robot.global_position) > 20.0,
-				"乗り換えた先の機体が動く（元の機体は置いていかれる）")
-			_report(Vector2(robot.velocity.x, robot.velocity.z).length() < 0.5,
-				"降りた機体はその場で止まっている")
+			var spare_moved := spare.global_position.distance_to(spare_pos_at_board)
+			var robot_moved := robot.global_position.distance_to(robot_pos_at_board)
+			_report(spare_moved > 2.0, "乗り換えた先の機体が動く (%.1fm)" % spare_moved)
+			_report(robot_moved < 1.0, "降りた機体はその場に残る (%.1fm)" % robot_moved)
 		45:
 			# 6：戻れる
 			spare.global_position = robot.global_position + Vector3(15, 0, 0)
