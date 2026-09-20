@@ -80,7 +80,7 @@ func _next_target() -> void:
 func _check_destroyed() -> void:
 	var name_s: String = "標的%d" % (index + 1)
 	# 3 → 2 → 1 と減り、毎回違う色になっていれば OK
-	var ok: bool = hp_seen == [3, 2, 1] and colors_seen[0] != colors_seen[1] and colors_seen[1] != colors_seen[2]
+	var ok: bool = hp_seen == [30, 20, 10] and colors_seen[0] != colors_seen[1] and colors_seen[1] != colors_seen[2]
 	_report(ok, "%s：当たるたびに色が変わり (耐久 %s)、3 発目で壊れて消えた" % [name_s, hp_seen])
 
 

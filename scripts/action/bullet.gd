@@ -9,7 +9,7 @@ extends Node3D
 ## これだけ飛んだら消える（メートル）
 @export var max_distance: float = 1200.0
 ## 1 発のダメージ（標的の耐久を減らす量）
-@export var damage: int = 1
+@export var damage: int = 10
 
 ## 飛ぶ向き（長さ 1）
 var direction: Vector3 = Vector3.FORWARD

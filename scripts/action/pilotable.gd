@@ -6,6 +6,16 @@ extends CharacterBody3D
 
 ## この物を識別する文字列（保存・将来の通信用）
 @export var pilotable_id: String = ""
+## 耐久の最大値（0 になると撃破）
+@export var max_hp: int = 100
+
+## 今の耐久
+var hp: int = 0
+
+## 耐久が減った時に知らせる（残り耐久, 最大）
+signal damaged(hp: int, max_hp: int)
+## 撃破された時に知らせる
+signal destroyed
 
 ## 直近に受け取った操縦入力。中身は JSON にそのまま書ける値だけにする
 var control: Dictionary = empty_control()
@@ -29,6 +39,25 @@ static func aim_point(ctrl: Dictionary) -> Vector3:
 	return Vector3(a.get("x", 0.0), a.get("y", 0.0), a.get("z", 0.0))
 
 
+func _ready() -> void:
+	hp = max_hp
+
+
+## 弾などが当たった時に呼ばれる（Bullet から）
+func take_hit(damage: int) -> void:
+	if hp <= 0:
+		return
+	hp = maxi(hp - damage, 0)
+	damaged.emit(hp, max_hp)
+	if hp == 0:
+		destroyed.emit()
+
+
+## まだ動けるか
+func is_alive() -> bool:
+	return hp > 0
+
+
 ## 操縦席の乗員から操縦入力を受け取る（操縦席の「運転手席」からのみ呼ばれる）
 func apply_control(new_control: Dictionary) -> void:
 	control = new_control
@@ -49,6 +78,7 @@ func to_dict() -> Dictionary:
 		"id": pilotable_id,
 		"position": {"x": global_position.x, "y": global_position.y, "z": global_position.z},
 		"rotation_y": rotation.y,
+		"hp": hp,
 	}
 
 
@@ -58,3 +88,4 @@ func from_dict(data: Dictionary) -> void:
 	var p: Dictionary = data.get("position", {})
 	global_position = Vector3(p.get("x", 0.0), p.get("y", 0.0), p.get("z", 0.0))
 	rotation.y = data.get("rotation_y", 0.0)
+	hp = data.get("hp", max_hp)

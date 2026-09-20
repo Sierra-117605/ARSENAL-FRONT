@@ -29,7 +29,7 @@ func _initialize() -> void:
 ## 試験用の壁：正面 100m 先。当たった回数を数える
 func _add_test_wall() -> void:
 	var script := GDScript.new()
-	script.source_code = "extends StaticBody3D\nvar hits := 0\nfunc take_hit(d: int) -> void:\n\thits += d\n"
+	script.source_code = "extends StaticBody3D\nvar hits := 0\nfunc take_hit(_d: int) -> void:\n\thits += 1\n"
 	script.reload()
 	wall = StaticBody3D.new()
 	wall.set_script(script)

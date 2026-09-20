@@ -4,18 +4,16 @@ extends StaticBody3D
 
 ## この標的を識別する文字列（保存用）
 @export var target_id: String = ""
-## 壊れるまでに必要な命中数
-@export var max_hp: int = 3
+## 耐久（弾 1 発 = 10。3 発で壊れる）
+@export var max_hp: int = 30
 
 ## 残り耐久（命中するたびに減る）
 var hp: int = 0
 
-## 残り耐久ごとの色（満タン → 1 発目 → 2 発目）
-const COLORS := {
-	3: Color(0.9, 0.9, 0.85),
-	2: Color(1.0, 0.65, 0.15),
-	1: Color(0.85, 0.15, 0.1),
-}
+## 残り耐久の割合ごとの色（多い → 中くらい → 少ない）
+const COLOR_FULL := Color(0.9, 0.9, 0.85)
+const COLOR_HALF := Color(1.0, 0.65, 0.15)
+const COLOR_LOW := Color(0.85, 0.15, 0.1)
 
 var material: StandardMaterial3D
 
@@ -40,7 +38,13 @@ func take_hit(damage: int) -> void:
 
 
 func _update_color() -> void:
-	material.albedo_color = COLORS.get(hp, COLORS[1])
+	var ratio := float(hp) / float(maxi(max_hp, 1))
+	if ratio > 0.7:
+		material.albedo_color = COLOR_FULL
+	elif ratio > 0.35:
+		material.albedo_color = COLOR_HALF
+	else:
+		material.albedo_color = COLOR_LOW
 
 
 ## 保存用に現在の状態を JSON 互換の Dictionary にする
