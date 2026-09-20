@@ -6,7 +6,7 @@ extends SceneTree
 ##  2. 遠い機体には乗り換えられない
 ##  3. 近づいて F を押すと、無人の予備機（偵察歩行機）に乗り移れる
 ##  4. 乗り換えると、操作・カメラ・耐久バーの相手がすべて新しい機体になる
-##  5. 元の機体は無人になり、その場で止まる
+##  5. 元の機体は AI が引き継ぐ（置き去りにならない）
 ##  6. もう一度 F を押すと元の機体に戻れる
 ##
 ## 実行：Godot_console.exe --headless --path . --script res://tests/test_n4_3_board.gd
@@ -63,7 +63,9 @@ func _physics_process(_delta: float) -> bool:
 			var spare_moved := spare.global_position.distance_to(spare_pos_at_board)
 			var robot_moved := robot.global_position.distance_to(robot_pos_at_board)
 			_report(spare_moved > 2.0, "乗り換えた先の機体が動く (%.1fm)" % spare_moved)
-			_report(robot_moved < 1.0, "降りた機体はその場に残る (%.1fm)" % robot_moved)
+			var robot_seat: Seat = robot.get_node("DriverSeat")
+			_report(robot_seat.occupant is AIPilot,
+				"降りた機体は AI が引き継いでいる（置き去りにならない。移動 %.1fm）" % robot_moved)
 		45:
 			# 6：戻れる
 			spare.global_position = robot.global_position + Vector3(15, 0, 0)

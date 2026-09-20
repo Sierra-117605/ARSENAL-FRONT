@@ -29,6 +29,10 @@ func _initialize() -> void:
 	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
 	robot.use_saved_loadout = false
 	enemy = field.get_node("Enemies/Enemy1")
+	# このテストは「敵 1 体がプレイヤーを追う」ことだけを見るので、味方機は遠ざける
+	field.get_node("SpareRobot").position = Vector3(800, 0, 800)
+	for other in ["Enemy2", "Enemy3"]:
+		field.get_node("Enemies/" + other).queue_free()
 	robot.damaged.connect(_on_player_damaged)
 
 

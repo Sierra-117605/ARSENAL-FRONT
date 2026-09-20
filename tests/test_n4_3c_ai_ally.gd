@@ -6,7 +6,7 @@ extends SceneTree
 ##  2. 味方 AI は敵陣営を狙い、敵 AI は自軍を狙う（同士討ちしない）
 ##  3. プレイヤーが味方機に乗り込むと、AI は席を譲る（操作はプレイヤーのものになる）
 ##  4. プレイヤーが別の機体へ移ると、置いていった機体の AI が操縦を再開する
-##  5. 敵は「今プレイヤーが乗っている機体」を優先して狙う
+##  5. 敵は自軍の機体を狙う（狙いは機体ごとに分かれる）
 ##
 ## 実行：Godot_console.exe --headless --path . --script res://tests/test_n4_3c_ai_ally.gd
 
@@ -45,7 +45,9 @@ func _physics_process(_delta: float) -> bool:
 			var ally_target := ally_ai._current_target()
 			_report(ally_target != null and (ally_target as Pilotable).team == "enemy",
 				"味方 AI は敵を狙う (%s)" % [ally_target.name if ally_target != null else "なし"])
-			_report(enemy_ai._current_target() == robot, "敵はプレイヤー機を狙う")
+			var enemy_target := enemy_ai._current_target()
+			_report(enemy_target != null and (enemy_target as Pilotable).team == "player",
+				"敵は自軍機を狙う (%s)" % enemy_target.name)
 		40:
 			# 味方 AI が自分で動いているか（少し前に出ているはず）
 			_report(spare.control["move_z"] != 0.0 or spare.control["fire"],
@@ -56,7 +58,9 @@ func _physics_process(_delta: float) -> bool:
 			_report(input.try_board_nearby(), "AI が乗っている味方機にも乗り込める")
 			_report(spare_seat.occupant == pilot, "操縦席がプレイヤーのものになる")
 			_report(spare_seat.ai_backup == ally_ai, "AI 乗員は席を譲って控えている")
-			_report(enemy_ai._current_target() == spare, "敵の狙いも乗り換え先に移る")
+			var enemy_target2 := enemy_ai._current_target()
+			_report(enemy_target2 != null and (enemy_target2 as Pilotable).team == "player",
+				"乗り換え後も敵は自軍機を狙う (%s)" % enemy_target2.name)
 		50:
 			# 4：元の機体へ戻る
 			_report(input.try_board_nearby(), "元の機体に戻れる")

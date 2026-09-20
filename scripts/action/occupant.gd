@@ -13,7 +13,7 @@ var seat: Seat = null
 
 func _ready() -> void:
 	if start_seat != null:
-		start_seat.sit(self)
+		start_seat.take_over(self)
 
 
 ## 操縦入力を受け取り、座っている席を通して乗り物へ渡す

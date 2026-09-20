@@ -35,6 +35,12 @@ extends Occupant
 @export var retreat_hp_ratio: float = 0.35
 ## 距離を取るときに広げる距離（メートル）
 @export var retreat_distance: float = 45.0
+## 狙いを分散させる範囲（近い順にこの数の中から選ぶ）
+@export var target_spread_count: int = 2
+
+## 何機目の AI か（狙う相手を分散させるのに使う）
+static var _spawn_count: int = 0
+var _squad_index: int = 0
 
 ## 今の横移動の向き（+1 / -1）
 var _strafe_dir: float = 1.0
@@ -48,6 +54,8 @@ func _ready() -> void:
 	var vehicle := get_vehicle()
 	if vehicle != null and vehicle.get("weapon") != null:
 		vehicle.weapon.fire_interval = fire_interval
+	_squad_index = _spawn_count
+	_spawn_count += 1
 	# 機体ごとに癖をずらす（全員が同じ動きにならないように）
 	_strafe_timer = randf() * strafe_interval
 	_strafe_dir = 1.0 if randf() < 0.5 else -1.0
@@ -138,23 +146,27 @@ func _current_target() -> Node3D:
 	return _nearest_enemy()
 
 
-## 敵陣営でいちばん近い機体を探す
+## 敵陣営から狙う相手を選ぶ。
+## 近い順に並べ、上位（既定では 2 機）の中から機体ごとに違う相手を選ぶ。
+## こうしないと敵が全員そろって同じ相手に群がってしまう。
 func _nearest_enemy() -> Pilotable:
 	var vehicle := get_vehicle()
 	if vehicle == null:
 		return null
 	var enemy_team := "enemy" if vehicle.team == "player" else "player"
-	var nearest: Pilotable = null
-	var nearest_distance := INF
+	var candidates: Array[Pilotable] = []
 	for node in vehicle.get_tree().get_nodes_in_group("team_" + enemy_team):
 		var other := node as Pilotable
-		if other == null or not other.is_alive():
-			continue
-		var distance := vehicle.global_position.distance_to(other.global_position)
-		if distance < nearest_distance:
-			nearest = other
-			nearest_distance = distance
-	return nearest
+		if other != null and other.is_alive():
+			candidates.append(other)
+	if candidates.is_empty():
+		return null
+	# 近い順に並べる
+	var origin := vehicle.global_position
+	candidates.sort_custom(func(a: Pilotable, b: Pilotable) -> bool:
+		return origin.distance_to(a.global_position) < origin.distance_to(b.global_position))
+	var choices := mini(candidates.size(), target_spread_count)
+	return candidates[_squad_index % choices]
 
 
 ## 狙いのブレを作る

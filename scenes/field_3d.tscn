@@ -106,6 +106,11 @@ shape = SubResource("GroundShape")
 
 [node name="Robot" parent="." instance=ExtResource("1_robot")]
 use_saved_loadout = true
+team = "player"
+
+[node name="AIPilot" type="Node" parent="Robot" node_paths=PackedStringArray("start_seat")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
 
 [node name="Targets" type="Node3D" parent="."]
 
@@ -211,10 +216,9 @@ team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat", "chase_occupant")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_occupant = NodePath("../../../Pilot")
 [node name="Enemy2" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -150)
 pilotable_id = "enemy_02"
@@ -222,10 +226,9 @@ team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat", "chase_occupant")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_occupant = NodePath("../../../Pilot")
 [node name="Enemy3" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -132)
 pilotable_id = "enemy_03"
@@ -233,10 +236,9 @@ team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat", "chase_occupant")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_occupant = NodePath("../../../Pilot")
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")

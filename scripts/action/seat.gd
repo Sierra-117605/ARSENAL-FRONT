@@ -36,11 +36,24 @@ func leave() -> void:
 		vehicle.apply_control(Pilotable.empty_control())
 
 
-## プレイヤーがこの席を引き継ぐ（AI が座っていたら席を譲る）
+## この席を引き継ぐ。
+## すでに誰か座っている時、
+##  ・後から来たのが AI なら、その AI が控えに回る（プレイヤー優先）
+##  ・後から来たのがプレイヤーなら、座っていた AI が控えに回る
 func take_over(new_occupant: Occupant) -> void:
-	if occupant != null and occupant != new_occupant:
-		ai_backup = occupant
-		occupant.seat = null
+	if occupant == null:
+		occupant = new_occupant
+		new_occupant.seat = self
+		return
+	if occupant == new_occupant:
+		return
+	if new_occupant is AIPilot and not (occupant is AIPilot):
+		# プレイヤーが座っている席に AI が来た → AI は控え
+		ai_backup = new_occupant
+		new_occupant.seat = null
+		return
+	ai_backup = occupant
+	occupant.seat = null
 	occupant = new_occupant
 	new_occupant.seat = self
 
