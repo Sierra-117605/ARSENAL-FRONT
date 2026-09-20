@@ -1,6 +1,13 @@
 {
-  "_comment": "ロボットのパーツ一覧（Phase 3 / SPEC §0.11）。数値は仮。visual は見た目の変化。locked=最初は未開発、develop_cost=開発に必要な資材（SPEC §0.13 柱3）",
-  "slots": ["head", "body", "arms", "legs", "generator", "weapon"],
+  "_comment": "ロボットのパーツ一覧。locked=最初は未開発、develop_cost=資材、rare_cost=希少素材、requires=前提パーツ（SPEC §0.13 柱3）",
+  "slots": [
+    "head",
+    "body",
+    "arms",
+    "legs",
+    "generator",
+    "weapon"
+  ],
   "slot_names": {
     "head": "頭",
     "body": "胴",
@@ -11,117 +18,385 @@
   },
   "parts": [
     {
-      "id": "head_standard", "slot": "head", "name": "標準センサーヘッド",
+      "id": "head_standard",
+      "slot": "head",
+      "name": "標準センサーヘッド",
       "desc": "ごく普通の頭部。照準できる距離は標準",
-      "stats": {"max_hp": 20, "aim_range": 1500},
-      "visual": {"scale": 1.0, "color": [0.2, 0.21, 0.22]}
+      "stats": {
+        "max_hp": 20,
+        "aim_range": 1500
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.2,
+          0.21,
+          0.22
+        ]
+      }
     },
     {
-      "id": "head_longrange", "locked": true, "develop_cost": 120, "slot": "head", "name": "長距離照準ヘッド",
+      "id": "head_longrange",
+      "locked": true,
+      "develop_cost": 120,
+      "slot": "head",
+      "name": "長距離照準ヘッド",
       "desc": "遠くまで狙えるが、耐久は低い",
-      "stats": {"max_hp": 10, "aim_range": 2500},
-      "visual": {"scale": 1.25, "color": [0.18, 0.28, 0.3]}
+      "stats": {
+        "max_hp": 10,
+        "aim_range": 2500
+      },
+      "visual": {
+        "scale": 1.25,
+        "color": [
+          0.18,
+          0.28,
+          0.3
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "head_armored", "locked": true, "develop_cost": 100, "slot": "head", "name": "装甲ヘッド",
+      "id": "head_armored",
+      "locked": true,
+      "develop_cost": 100,
+      "slot": "head",
+      "name": "装甲ヘッド",
       "desc": "頑丈だが、照準できる距離は短い",
-      "stats": {"max_hp": 45, "aim_range": 900},
-      "visual": {"scale": 1.15, "color": [0.26, 0.26, 0.2]}
+      "stats": {
+        "max_hp": 45,
+        "aim_range": 900
+      },
+      "visual": {
+        "scale": 1.15,
+        "color": [
+          0.26,
+          0.26,
+          0.2
+        ]
+      },
+      "requires": [
+        "head_longrange"
+      ],
+      "rare_cost": 2
     },
-
     {
-      "id": "body_standard", "slot": "body", "name": "標準フレーム",
+      "id": "body_standard",
+      "slot": "body",
+      "name": "標準フレーム",
       "desc": "耐久と重さのつり合いが取れた胴",
-      "stats": {"max_hp": 260, "speed_mul": 1.0},
-      "visual": {"scale": 1.0, "color": [0.36, 0.4, 0.3]}
+      "stats": {
+        "max_hp": 260,
+        "speed_mul": 1.0
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.36,
+          0.4,
+          0.3
+        ]
+      }
     },
     {
-      "id": "body_light", "locked": true, "develop_cost": 140, "slot": "body", "name": "軽量フレーム",
+      "id": "body_light",
+      "locked": true,
+      "develop_cost": 140,
+      "slot": "body",
+      "name": "軽量フレーム",
       "desc": "薄いが軽く、脚が速く動く",
-      "stats": {"max_hp": 170, "speed_mul": 1.2},
-      "visual": {"scale": 0.85, "color": [0.4, 0.45, 0.35]}
+      "stats": {
+        "max_hp": 170,
+        "speed_mul": 1.2
+      },
+      "visual": {
+        "scale": 0.85,
+        "color": [
+          0.4,
+          0.45,
+          0.35
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "body_heavy", "locked": true, "develop_cost": 180, "slot": "body", "name": "重装甲フレーム",
+      "id": "body_heavy",
+      "locked": true,
+      "develop_cost": 180,
+      "slot": "body",
+      "name": "重装甲フレーム",
       "desc": "とても頑丈だが、重くて動きが鈍る",
-      "stats": {"max_hp": 420, "speed_mul": 0.8},
-      "visual": {"scale": 1.2, "color": [0.3, 0.32, 0.26]}
+      "stats": {
+        "max_hp": 420,
+        "speed_mul": 0.8
+      },
+      "visual": {
+        "scale": 1.2,
+        "color": [
+          0.3,
+          0.32,
+          0.26
+        ]
+      },
+      "requires": [
+        "body_light"
+      ],
+      "rare_cost": 3
     },
-
     {
-      "id": "arms_standard", "slot": "arms", "name": "標準マニピュレータ",
+      "id": "arms_standard",
+      "slot": "arms",
+      "name": "標準マニピュレータ",
       "desc": "ごく普通の腕。命中のばらつきは標準",
-      "stats": {"spread": 1.2, "damage_mul": 1.0},
-      "visual": {"scale": 1.0, "color": [0.2, 0.21, 0.22]}
+      "stats": {
+        "spread": 1.2,
+        "damage_mul": 1.0
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.2,
+          0.21,
+          0.22
+        ]
+      }
     },
     {
-      "id": "arms_precision", "locked": true, "develop_cost": 130, "slot": "arms", "name": "精密射撃腕",
+      "id": "arms_precision",
+      "locked": true,
+      "develop_cost": 130,
+      "slot": "arms",
+      "name": "精密射撃腕",
       "desc": "弾がほとんどぶれないが、火力は控えめ",
-      "stats": {"spread": 0.3, "damage_mul": 0.85},
-      "visual": {"scale": 0.9, "color": [0.22, 0.3, 0.34]}
+      "stats": {
+        "spread": 0.3,
+        "damage_mul": 0.85
+      },
+      "visual": {
+        "scale": 0.9,
+        "color": [
+          0.22,
+          0.3,
+          0.34
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "arms_power", "locked": true, "develop_cost": 150, "slot": "arms", "name": "強化駆動腕",
+      "id": "arms_power",
+      "locked": true,
+      "develop_cost": 150,
+      "slot": "arms",
+      "name": "強化駆動腕",
       "desc": "火力が上がるが、弾がぶれやすい",
-      "stats": {"spread": 2.6, "damage_mul": 1.35},
-      "visual": {"scale": 1.2, "color": [0.32, 0.22, 0.18]}
+      "stats": {
+        "spread": 2.6,
+        "damage_mul": 1.35
+      },
+      "visual": {
+        "scale": 1.2,
+        "color": [
+          0.32,
+          0.22,
+          0.18
+        ]
+      },
+      "requires": [
+        "arms_precision"
+      ],
+      "rare_cost": 2
     },
-
     {
-      "id": "legs_standard", "slot": "legs", "name": "標準脚部",
+      "id": "legs_standard",
+      "slot": "legs",
+      "name": "標準脚部",
       "desc": "歩く速さは標準",
-      "stats": {"walk_speed": 10.0, "max_hp": 30},
-      "visual": {"scale": 1.0, "color": [0.36, 0.4, 0.3]}
+      "stats": {
+        "walk_speed": 10.0,
+        "max_hp": 30
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.36,
+          0.4,
+          0.3
+        ]
+      }
     },
     {
-      "id": "legs_speed", "locked": true, "develop_cost": 140, "slot": "legs", "name": "高機動脚部",
+      "id": "legs_speed",
+      "locked": true,
+      "develop_cost": 140,
+      "slot": "legs",
+      "name": "高機動脚部",
       "desc": "速く歩けるが、脆い",
-      "stats": {"walk_speed": 15.0, "max_hp": 10},
-      "visual": {"scale": 0.9, "color": [0.34, 0.42, 0.38]}
+      "stats": {
+        "walk_speed": 15.0,
+        "max_hp": 10
+      },
+      "visual": {
+        "scale": 0.9,
+        "color": [
+          0.34,
+          0.42,
+          0.38
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "legs_heavy", "locked": true, "develop_cost": 160, "slot": "legs", "name": "重量脚部",
+      "id": "legs_heavy",
+      "locked": true,
+      "develop_cost": 160,
+      "slot": "legs",
+      "name": "重量脚部",
       "desc": "遅いが、脚まわりが頑丈",
-      "stats": {"walk_speed": 7.0, "max_hp": 70},
-      "visual": {"scale": 1.2, "color": [0.3, 0.3, 0.24]}
+      "stats": {
+        "walk_speed": 7.0,
+        "max_hp": 70
+      },
+      "visual": {
+        "scale": 1.2,
+        "color": [
+          0.3,
+          0.3,
+          0.24
+        ]
+      },
+      "requires": [
+        "legs_speed"
+      ],
+      "rare_cost": 2
     },
-
     {
-      "id": "gen_standard", "slot": "generator", "name": "標準ジェネレータ",
+      "id": "gen_standard",
+      "slot": "generator",
+      "name": "標準ジェネレータ",
       "desc": "連射の速さは標準",
-      "stats": {"fire_rate_mul": 1.0, "max_hp": 20},
-      "visual": {"scale": 1.0, "color": [0.2, 0.21, 0.22]}
+      "stats": {
+        "fire_rate_mul": 1.0,
+        "max_hp": 20
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.2,
+          0.21,
+          0.22
+        ]
+      }
     },
     {
-      "id": "gen_rapid", "locked": true, "develop_cost": 150, "slot": "generator", "name": "高出力ジェネレータ",
+      "id": "gen_rapid",
+      "locked": true,
+      "develop_cost": 150,
+      "slot": "generator",
+      "name": "高出力ジェネレータ",
       "desc": "連射が速くなるが、耐久は下がる",
-      "stats": {"fire_rate_mul": 1.6, "max_hp": 5},
-      "visual": {"scale": 1.3, "color": [0.35, 0.3, 0.12]}
+      "stats": {
+        "fire_rate_mul": 1.6,
+        "max_hp": 5
+      },
+      "visual": {
+        "scale": 1.3,
+        "color": [
+          0.35,
+          0.3,
+          0.12
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "gen_stable", "locked": true, "develop_cost": 120, "slot": "generator", "name": "安定型ジェネレータ",
+      "id": "gen_stable",
+      "locked": true,
+      "develop_cost": 120,
+      "slot": "generator",
+      "name": "安定型ジェネレータ",
       "desc": "連射は遅いが、機体が頑丈になる",
-      "stats": {"fire_rate_mul": 0.75, "max_hp": 60},
-      "visual": {"scale": 1.1, "color": [0.2, 0.28, 0.22]}
+      "stats": {
+        "fire_rate_mul": 0.75,
+        "max_hp": 60
+      },
+      "visual": {
+        "scale": 1.1,
+        "color": [
+          0.2,
+          0.28,
+          0.22
+        ]
+      },
+      "requires": [
+        "gen_rapid"
+      ],
+      "rare_cost": 2
     },
-
     {
-      "id": "weapon_rifle", "slot": "weapon", "name": "40mm ライフル",
+      "id": "weapon_rifle",
+      "slot": "weapon",
+      "name": "40mm ライフル",
       "desc": "扱いやすい標準の武器",
-      "stats": {"damage": 10, "fire_interval": 0.25, "bullet_speed": 300.0},
-      "visual": {"scale": 1.0, "color": [0.2, 0.21, 0.22]}
+      "stats": {
+        "damage": 10,
+        "fire_interval": 0.25,
+        "bullet_speed": 300.0
+      },
+      "visual": {
+        "scale": 1.0,
+        "color": [
+          0.2,
+          0.21,
+          0.22
+        ]
+      }
     },
     {
-      "id": "weapon_gatling", "locked": true, "develop_cost": 200, "slot": "weapon", "name": "20mm ガトリング",
+      "id": "weapon_gatling",
+      "locked": true,
+      "develop_cost": 200,
+      "slot": "weapon",
+      "name": "20mm ガトリング",
       "desc": "1 発は軽いが、とても速く撃てる",
-      "stats": {"damage": 4, "fire_interval": 0.08, "bullet_speed": 260.0},
-      "visual": {"scale": 1.3, "color": [0.24, 0.24, 0.26]}
+      "stats": {
+        "damage": 4,
+        "fire_interval": 0.08,
+        "bullet_speed": 260.0
+      },
+      "visual": {
+        "scale": 1.3,
+        "color": [
+          0.24,
+          0.24,
+          0.26
+        ]
+      },
+      "requires": []
     },
     {
-      "id": "weapon_cannon", "locked": true, "develop_cost": 260, "slot": "weapon", "name": "105mm キャノン",
+      "id": "weapon_cannon",
+      "locked": true,
+      "develop_cost": 260,
+      "slot": "weapon",
+      "name": "105mm キャノン",
       "desc": "一撃が非常に重い。当てれば敵を 2 発で倒せるが、外すと痛い",
-      "stats": {"damage": 90, "fire_interval": 1.2, "bullet_speed": 420.0},
-      "visual": {"scale": 1.8, "color": [0.26, 0.25, 0.2]}
+      "stats": {
+        "damage": 90,
+        "fire_interval": 1.2,
+        "bullet_speed": 420.0
+      },
+      "visual": {
+        "scale": 1.8,
+        "color": [
+          0.26,
+          0.25,
+          0.2
+        ]
+      },
+      "requires": [
+        "weapon_gatling"
+      ],
+      "rare_cost": 3
     }
   ]
 }

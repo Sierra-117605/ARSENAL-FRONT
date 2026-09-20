@@ -13,6 +13,13 @@ extends Node3D
 @export var materials_per_kill: int = 60
 ## 勝った時に追加で手に入る資材
 @export var materials_for_win: int = 120
+## 部位を壊してから倒すと手に入る希少素材
+@export var rare_per_captured_part: int = 1
+
+## この戦闘で手に入れた希少素材
+var earned_rare: int = 0
+## 壊した部位（鹵獲の対象。敵ごとに覚えておく）
+var _broken_parts_by_enemy: Dictionary = {}
 
 ## 戦闘の結果（"" = まだ決着していない / "win" / "lose"）
 var outcome: String = ""
@@ -36,6 +43,7 @@ func _ready() -> void:
 		player.destroyed.connect(_on_player_destroyed)
 	for enemy in _enemies():
 		enemy.destroyed.connect(_on_enemy_destroyed.bind(enemy))
+		enemy.part_broken.connect(_on_enemy_part_broken.bind(enemy))
 
 
 func _physics_process(_delta: float) -> void:
@@ -96,10 +104,46 @@ func _on_player_destroyed() -> void:
 	_finish("lose")
 
 
-## 戦果（資材と設計図）を進行状況に足して保存する
+## 敵の部位が壊れた：鹵獲の候補として覚えておく
+func _on_enemy_part_broken(part: String, enemy: Pilotable) -> void:
+	var list: Array = _broken_parts_by_enemy.get(enemy.get_instance_id(), [])
+	list.append(part)
+	_broken_parts_by_enemy[enemy.get_instance_id()] = list
+
+
+## 壊した部位に対応するパーツの設計図を鹵獲する
+func _capture_from(enemy: Pilotable) -> void:
+	var parts: Array = _broken_parts_by_enemy.get(enemy.get_instance_id(), [])
+	if parts.is_empty():
+		return
+	var progress := ProgressStore.load_progress()
+	for part in parts:
+		var slot := _slot_for_part(str(part))
+		if slot == "":
+			continue
+		# その部位に対応する未入手のパーツを 1 つ鹵獲する
+		for candidate in RobotParts.parts_for(slot):
+			var part_id := str(candidate.get("id", ""))
+			if bool(candidate.get("locked", false)) 					and not ProgressStore.is_unlocked(progress, part_id) 					and not (progress.get("blueprints", []) as Array).has(part_id) 					and not earned_blueprints.has(part_id):
+				earned_blueprints.append(part_id)
+				earned_rare += rare_per_captured_part
+				break
+
+
+## 壊した部位の名前から、対応するパーツの部位（スロット）を返す
+func _slot_for_part(part: String) -> String:
+	match part:
+		"head": return "head"
+		"arm_left", "arm_right": return "arms"
+		"legs": return "legs"
+	return ""
+
+
+## 戦果（資材・希少素材・設計図）を進行状況に足して保存する
 func _grant_rewards() -> void:
 	var progress := ProgressStore.load_progress()
 	progress["materials"] = int(progress.get("materials", 0)) + earned_materials
+	progress["rare"] = int(progress.get("rare", 0)) + earned_rare
 	for part_id in earned_blueprints:
 		ProgressStore.add_blueprint(progress, part_id)
 	ProgressStore.save_progress(progress)
@@ -119,8 +163,9 @@ func _pick_blueprint() -> String:
 
 
 func _on_enemy_destroyed(enemy: Pilotable) -> void:
-	# 撃破で資材が手に入る
+	# 撃破で資材が手に入る。部位を壊していれば、その部品を鹵獲できる
 	earned_materials += materials_per_kill
+	_capture_from(enemy)
 	# 壊れた敵は少し置いてから消す
 	enemy.set_physics_process(false)
 	var timer := get_tree().create_timer(1.0)

@@ -16,7 +16,8 @@ static func fresh() -> Dictionary:
 	return {
 		"unlocked": STARTING_PARTS.duplicate(),  # 使えるパーツ
 		"blueprints": [],                        # 持っている設計図（未開発）
-		"materials": 0,                          # 開発に使う資材
+		"materials": 0,                          # 開発に使う資材（量産品）
+		"rare": 0,                               # 希少素材（強敵の部位を壊して手に入る）
 	}
 
 
@@ -34,6 +35,7 @@ static func load_progress() -> Dictionary:
 		if data.get(key) is Array:
 			result[key] = data[key]
 	result["materials"] = int(data.get("materials", 0))
+	result["rare"] = int(data.get("rare", 0))
 	# 標準パーツは必ず使えるようにしておく
 	for part_id in STARTING_PARTS:
 		if not result["unlocked"].has(part_id):
@@ -72,15 +74,41 @@ static func add_blueprint(progress: Dictionary, part_id: String) -> bool:
 	return true
 
 
-## 設計図を開発して使えるようにする。資材が足りなければ false
+## 前提パーツがすべて開発済みか
+static func requirements_met(progress: Dictionary, part_id: String) -> bool:
+	for required in RobotParts.find(part_id).get("requires", []):
+		if not is_unlocked(progress, str(required)):
+			return false
+	return true
+
+
+## まだ開発できない理由を返す（開発できるなら空文字）
+static func develop_blocker(progress: Dictionary, part_id: String) -> String:
+	if not (progress.get("blueprints", []) as Array).has(part_id):
+		return "設計図がない"
+	if not requirements_met(progress, part_id):
+		var names: Array[String] = []
+		for required in RobotParts.find(part_id).get("requires", []):
+			if not is_unlocked(progress, str(required)):
+				names.append(str(RobotParts.find(str(required)).get("name", required)))
+		return "前提：" + ", ".join(names)
+	var part := RobotParts.find(part_id)
+	if int(progress.get("materials", 0)) < int(part.get("develop_cost", 100)):
+		return "資材が足りない"
+	if int(progress.get("rare", 0)) < int(part.get("rare_cost", 0)):
+		return "希少素材が足りない"
+	return ""
+
+
+## 設計図を開発して使えるようにする。条件を満たしていなければ false
 static func develop(progress: Dictionary, part_id: String) -> bool:
+	if develop_blocker(progress, part_id) != "":
+		return false
 	var blueprints: Array = progress.get("blueprints", [])
-	if not blueprints.has(part_id):
-		return false
-	var cost := int(RobotParts.find(part_id).get("develop_cost", 100))
-	if int(progress.get("materials", 0)) < cost:
-		return false
+	var part := RobotParts.find(part_id)
+	var cost := int(part.get("develop_cost", 100))
 	progress["materials"] = int(progress["materials"]) - cost
+	progress["rare"] = int(progress.get("rare", 0)) - int(part.get("rare_cost", 0))
 	blueprints.erase(part_id)
 	progress["blueprints"] = blueprints
 	var unlocked: Array = progress.get("unlocked", [])

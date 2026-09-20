@@ -10,8 +10,8 @@ extends Node
 @export var camera_rig: CameraRig
 ## 耐久バー（乗り換えたら表示先も切り替える）
 @export var health_bar: Control
-## この距離まで近づけば乗り込める（メートル）。兵士が歩いて近づく必要がある
-@export var board_distance: float = 15.0
+## この距離まで近づけば乗り込める（メートル）。機体の真横まで歩いて行く必要がある
+@export var board_distance: float = 8.0
 ## マウス感度（1 ピクセル動かしたときに回る角度・ラジアン）
 @export var mouse_sensitivity: float = 0.003
 

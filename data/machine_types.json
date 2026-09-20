@@ -1,29 +1,115 @@
 {
-  "_comment": "ロボットの機種（SPEC §0.9）。Phase 4 ではまず 4 機種。height=全高(m)、legs=脚の形、*_mul=パーツで決まった性能にかける倍率",
+  "_comment": "ロボットの機種（SPEC §0.9）。height=全高(m)、legs=脚の形、*_mul=倍率、allowed=その機種が装備できるパーツ（書かれていない部位は制限なし）",
   "types": [
     {
-      "id": "scout_walker", "name": "偵察歩行機（スカウトウォーカー）",
+      "id": "scout_walker",
+      "name": "偵察歩行機（スカウトウォーカー）",
       "desc": "軽量・二脚。小柄で速いが打たれ弱い。索敵向き",
-      "weight_class": "軽", "legs": "biped", "height": 8.0,
-      "stats": {"hp_mul": 0.6, "speed_mul": 1.35, "damage_mul": 0.9, "aim_range_mul": 1.2}
+      "weight_class": "軽",
+      "legs": "biped",
+      "height": 8.0,
+      "stats": {
+        "hp_mul": 0.6,
+        "speed_mul": 1.35,
+        "damage_mul": 0.9,
+        "aim_range_mul": 1.2
+      },
+      "allowed": {
+        "weapon": [
+          "weapon_rifle",
+          "weapon_gatling"
+        ],
+        "body": [
+          "body_standard",
+          "body_light"
+        ],
+        "legs": [
+          "legs_standard",
+          "legs_speed"
+        ],
+        "generator": [
+          "gen_standard",
+          "gen_rapid"
+        ]
+      }
     },
     {
-      "id": "multirole_walker", "name": "多用途歩行機（マルチロールウォーカー）",
+      "id": "multirole_walker",
+      "name": "多用途歩行機（マルチロールウォーカー）",
       "desc": "中量・二脚。なんでもこなす標準機。迷ったらこれ",
-      "weight_class": "中", "legs": "biped", "height": 12.0,
-      "stats": {"hp_mul": 1.0, "speed_mul": 1.0, "damage_mul": 1.0, "aim_range_mul": 1.0}
+      "weight_class": "中",
+      "legs": "biped",
+      "height": 12.0,
+      "stats": {
+        "hp_mul": 1.0,
+        "speed_mul": 1.0,
+        "damage_mul": 1.0,
+        "aim_range_mul": 1.0
+      },
+      "allowed": {}
     },
     {
-      "id": "assault_walker", "name": "突撃歩行機（アサルトウォーカー）",
+      "id": "assault_walker",
+      "name": "突撃歩行機（アサルトウォーカー）",
       "desc": "重量・二脚。頑丈で火力が高いが鈍い。前線を押し上げる",
-      "weight_class": "重", "legs": "biped", "height": 16.0,
-      "stats": {"hp_mul": 1.6, "speed_mul": 0.75, "damage_mul": 1.2, "aim_range_mul": 0.9}
+      "weight_class": "重",
+      "legs": "biped",
+      "height": 16.0,
+      "stats": {
+        "hp_mul": 1.6,
+        "speed_mul": 0.75,
+        "damage_mul": 1.2,
+        "aim_range_mul": 0.9
+      },
+      "allowed": {
+        "weapon": [
+          "weapon_rifle",
+          "weapon_cannon"
+        ],
+        "body": [
+          "body_standard",
+          "body_heavy"
+        ],
+        "legs": [
+          "legs_standard",
+          "legs_heavy"
+        ],
+        "arms": [
+          "arms_standard",
+          "arms_power"
+        ]
+      }
     },
     {
-      "id": "artillery_walker", "name": "砲撃歩行機（アーティラリーウォーカー）",
+      "id": "artillery_walker",
+      "name": "砲撃歩行機（アーティラリーウォーカー）",
       "desc": "重量・四脚。安定した脚で遠距離から撃つ。近接戦は苦手",
-      "weight_class": "重", "legs": "quad", "height": 16.0,
-      "stats": {"hp_mul": 1.4, "speed_mul": 0.6, "damage_mul": 1.35, "aim_range_mul": 1.6}
+      "weight_class": "重",
+      "legs": "quad",
+      "height": 16.0,
+      "stats": {
+        "hp_mul": 1.4,
+        "speed_mul": 0.6,
+        "damage_mul": 1.35,
+        "aim_range_mul": 1.6
+      },
+      "allowed": {
+        "weapon": [
+          "weapon_rifle",
+          "weapon_cannon"
+        ],
+        "legs": [
+          "legs_heavy"
+        ],
+        "arms": [
+          "arms_standard",
+          "arms_precision"
+        ],
+        "head": [
+          "head_standard",
+          "head_longrange"
+        ]
+      }
     }
   ]
 }

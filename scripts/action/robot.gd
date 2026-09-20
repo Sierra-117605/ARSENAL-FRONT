@@ -99,7 +99,7 @@ func _ready() -> void:
 func apply_loadout(new_loadout: Dictionary, new_machine: String = "") -> void:
 	if new_machine != "":
 		machine_type = new_machine
-	loadout = RobotParts.sanitize(new_loadout)
+	loadout = RobotParts.sanitize(new_loadout, machine_type)
 	var stats := RobotParts.compute_stats(loadout, machine_type)
 	_apply_machine_shape(stats)
 	max_hp = int(stats["max_hp"])

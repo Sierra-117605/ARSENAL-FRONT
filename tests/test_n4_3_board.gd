@@ -72,8 +72,9 @@ func _physics_process(_delta: float) -> bool:
 			# 6：降りて元の機体へ戻る
 			_report(input.toggle_board(), "もう一度 F で降りる")
 		50:
-			# 兵士を元の機体のすぐ横に置く（歩いて戻った想定）
-			field.get_node("Soldier").global_position = robot.global_position + Vector3(6, 0, 0)
+			# 兵士を元の機体のすぐ横に置く（歩いて戻った想定）。予備機は離しておく
+			spare.global_position = robot.global_position + Vector3(120, 0, 0)
+			field.get_node("Soldier").global_position = robot.global_position + Vector3(5, 0, 0)
 			_report(input.toggle_board(), "元の機体に乗り込める")
 			var boarded := pilot.get_vehicle()
 			_report(boarded == robot, "操縦の相手がプレイヤー機に戻る（実際は %s。兵士→機体 %.1fm、兵士→予備機 %.1fm）" % [

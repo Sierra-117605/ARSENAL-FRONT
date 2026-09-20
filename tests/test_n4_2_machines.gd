@@ -87,7 +87,7 @@ func _physics_process(_delta: float) -> bool:
 			garage._on_machine_selected(2)  # 3 番目＝突撃歩行機
 			_report(garage.machine_id == "assault_walker", "ガレージで機種を選べる (%s)" % garage.machine_id)
 			_report(garage.stats_label.text != before, "機種を変えると性能表示が変わる")
-			_report(garage.stats_label.text.contains("16"), "全高 16m が表示される")
+			_report(garage.machine_desc.text.contains("16"), "機種の欄に全高 16m が表示される (%s)" % garage.machine_desc.text)
 			garage._on_sortie_test()
 		35:
 			var saved := LoadoutStore.load_saved()

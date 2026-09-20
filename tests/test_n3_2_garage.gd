@@ -9,6 +9,7 @@ var failed := false
 var shot_path := ""
 var text_before := ""
 var saved_before := ""
+var progress_before := ""
 
 
 func _initialize() -> void:
@@ -18,6 +19,13 @@ func _initialize() -> void:
 	# 開発者が保存した構成を壊さないよう、いったん覚えておく
 	if FileAccess.file_exists(LoadoutStore.PATH):
 		saved_before = FileAccess.get_file_as_string(LoadoutStore.PATH)
+	# この確認では「選んだら表示が変わるか」を見たいので、対象パーツを開発済みにしておく
+	var progress := ProgressStore.load_progress()
+	progress_before = FileAccess.get_file_as_string(ProgressStore.PATH) if FileAccess.file_exists(ProgressStore.PATH) else ""
+	for part_id in ["weapon_cannon", "legs_heavy", "weapon_gatling", "legs_speed"]:
+		if not (progress["unlocked"] as Array).has(part_id):
+			progress["unlocked"].append(part_id)
+	ProgressStore.save_progress(progress)
 	garage = load("res://scenes/garage.tscn").instantiate()
 	root.add_child(garage)
 
@@ -46,6 +54,13 @@ func _physics_process(_delta: float) -> bool:
 			var saved := LoadoutStore.load_saved()
 			_report(saved.get("weapon", "") == "weapon_cannon" and saved.get("legs", "") == "legs_heavy",
 				"選んだ構成が保存される (%s)" % [saved])
+			# 開発者の進行状況と構成を元に戻す（テストで書き換えたままにしない）
+			if progress_before != "":
+				var pf := FileAccess.open(ProgressStore.PATH, FileAccess.WRITE)
+				if pf != null:
+					pf.store_string(progress_before)
+			elif FileAccess.file_exists(ProgressStore.PATH):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(ProgressStore.PATH))
 			# 開発者の構成を元に戻す（テストで書き換えたままにしない）
 			if saved_before != "":
 				var restore := FileAccess.open(LoadoutStore.PATH, FileAccess.WRITE)

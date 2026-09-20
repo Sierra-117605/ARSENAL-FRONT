@@ -85,6 +85,7 @@ func _build_ui() -> void:
 
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	columns.size_flags_stretch_ratio = 1.0
 	columns.add_theme_constant_override("separation", 40)
 	root_box.add_child(columns)
 
@@ -106,14 +107,20 @@ func _build_ui() -> void:
 	var right := PanelContainer.new()
 	right.custom_minimum_size = Vector2(380, 0)
 	columns.add_child(right)
+	var right_scroll := ScrollContainer.new()
+	right_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(right_scroll)
 	var right_box := VBoxContainer.new()
 	right_box.add_theme_constant_override("separation", 10)
-	right.add_child(right_box)
+	right_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_scroll.add_child(right_box)
 	var stats_title := Label.new()
 	stats_title.text = "この構成の性能"
-	stats_title.add_theme_font_size_override("font_size", 26)
+	stats_title.add_theme_font_size_override("font_size", 22)
 	right_box.add_child(stats_title)
 	stats_label = RichTextLabel.new()
+	stats_label.add_theme_font_size_override("normal_font_size", 18)
+	stats_label.add_theme_font_size_override("bold_font_size", 18)
 	stats_label.bbcode_enabled = true
 	stats_label.fit_content = true
 	right_box.add_child(stats_label)
@@ -121,7 +128,7 @@ func _build_ui() -> void:
 	# 開発（設計図を資材で形にする）
 	var develop_title := Label.new()
 	develop_title.text = "開発"
-	develop_title.add_theme_font_size_override("font_size", 26)
+	develop_title.add_theme_font_size_override("font_size", 22)
 	right_box.add_child(develop_title)
 	materials_label = Label.new()
 	materials_label.add_theme_color_override("font_color", Color(1, 0.92, 0.7))
@@ -134,6 +141,8 @@ func _build_ui() -> void:
 	# 下：出撃ボタンと操作説明
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 24)
+	bottom.custom_minimum_size = Vector2(0, 64)
+	bottom.size_flags_vertical = Control.SIZE_SHRINK_END
 	root_box.add_child(bottom)
 	var sortie := Button.new()
 	sortie.text = "出撃"
@@ -151,6 +160,9 @@ func _build_ui() -> void:
 	var help := Label.new()
 	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 乗り降り（徒歩で近づいて乗り込む）／Esc カーソル／R やり直し／G ガレージへ戻る"
 	help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
+	help.add_theme_font_size_override("font_size", 16)
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	help.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bottom.add_child(help)
 
@@ -168,12 +180,7 @@ func _build_slot_row(slot: String) -> Control:
 	var parts := RobotParts.parts_for(slot)
 	for i in parts.size():
 		var part_id := str(parts[i].get("id", ""))
-		var unlocked := ProgressStore.is_unlocked(progress, part_id)
-		var item_text := str(parts[i].get("name", part_id))
-		if not unlocked:
-			item_text += "（未開発）"
-		picker.add_item(item_text, i)
-		picker.set_item_disabled(i, not unlocked)
+		picker.add_item(str(parts[i].get("name", part_id)), i)
 		if part_id == loadout.get(slot, ""):
 			picker.select(i)
 	picker.item_selected.connect(_on_part_selected.bind(slot))
@@ -194,13 +201,17 @@ func _on_machine_selected(index: int) -> void:
 	var machines := RobotParts.machine_types()
 	if index >= 0 and index < machines.size():
 		machine_id = str(machines[index].get("id", ""))
+		# その機種で装備できないパーツは、使える物に置き換える
+		loadout = RobotParts.sanitize(loadout, machine_id)
 		_refresh()
 
 
 func _on_part_selected(index: int, slot: String) -> void:
 	var parts := RobotParts.parts_for(slot)
 	if index >= 0 and index < parts.size():
-		loadout[slot] = parts[index].get("id", "")
+		var part_id := str(parts[index].get("id", ""))
+		if ProgressStore.is_unlocked(progress, part_id) and RobotParts.can_equip(machine_id, part_id):
+			loadout[slot] = part_id
 		_refresh()
 
 
@@ -215,11 +226,10 @@ func _refresh() -> void:
 	for slot in RobotParts.slots():
 		var part := RobotParts.find(str(loadout.get(slot, "")))
 		descriptions[slot].text = str(part.get("desc", ""))
+	_refresh_pickers()
 	_refresh_develop()
 	var shots := 1.0 / maxf(float(stats["fire_interval"]), 0.01)
 	stats_label.text = "\n".join([
-		"[b]機種[/b]　　　%s" % stats.get("machine_name", ""),
-		"[b]全高[/b]　　　約 %.0f m" % stats.get("height", 12.0),
 		"[b]耐久[/b]　　　%d" % stats["max_hp"],
 		"[b]歩く速さ[/b]　%.1f m/秒" % stats["walk_speed"],
 		"[b]弾の威力[/b]　%d" % stats["damage"],
@@ -231,17 +241,38 @@ func _refresh() -> void:
 	])
 
 
+## 選択欄の「選べる／選べない」を今の機種と開発状況に合わせて更新する
+func _refresh_pickers() -> void:
+	for slot in RobotParts.slots():
+		var picker: OptionButton = pickers[slot]
+		var parts := RobotParts.parts_for(slot)
+		for i in parts.size():
+			var part_id := str(parts[i].get("id", ""))
+			var unlocked := ProgressStore.is_unlocked(progress, part_id)
+			var equippable := RobotParts.can_equip(machine_id, part_id)
+			var text := str(parts[i].get("name", part_id))
+			if not equippable:
+				text += "（この機種では不可）"
+			elif not unlocked:
+				text += "（未開発）"
+			picker.set_item_text(i, text)
+			picker.set_item_disabled(i, not (unlocked and equippable))
+			if part_id == str(loadout.get(slot, "")):
+				picker.select(i)
+
+
 ## 開発の欄を今の状況に合わせて作り直す
 func _refresh_develop() -> void:
 	if develop_box == null:
 		return
-	materials_label.text = "資材：%d" % int(progress.get("materials", 0))
+	materials_label.text = "資材：%d　／　希少素材：%d" % [
+		int(progress.get("materials", 0)), int(progress.get("rare", 0))]
 	for child in develop_box.get_children():
 		child.queue_free()
 	var blueprints: Array = progress.get("blueprints", [])
 	if blueprints.is_empty():
 		var empty := Label.new()
-		empty.text = "設計図がありません。出撃して敵を倒すと手に入ります。"
+		empty.text = "設計図がありません。出撃して敵を倒すと手に入ります。敵の腕・脚・頭を壊してから倒すと、その部位の設計図と希少素材を鹵獲できます。"
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.custom_minimum_size = Vector2(360, 0)
 		empty.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
@@ -253,14 +284,21 @@ func _refresh_develop() -> void:
 		var cost := int(part.get("develop_cost", 100))
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
+		var rare_cost := int(part.get("rare_cost", 0))
 		var name_label := Label.new()
-		name_label.text = "%s（資材 %d）" % [part.get("name", part_id), cost]
+		var cost_text := "資材 %d" % cost
+		if rare_cost > 0:
+			cost_text += "・希少素材 %d" % rare_cost
+		name_label.text = "%s（%s）" % [part.get("name", part_id), cost_text]
 		name_label.add_theme_font_size_override("font_size", 16)
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(name_label)
+		var blocker := ProgressStore.develop_blocker(progress, str(part_id))
 		var button := Button.new()
-		button.text = "開発"
-		button.disabled = int(progress.get("materials", 0)) < cost
+		button.text = "開発" if blocker == "" else blocker
+		button.disabled = blocker != ""
+		button.add_theme_font_size_override("font_size", 15)
 		button.pressed.connect(_on_develop.bind(str(part_id)))
 		row.add_child(button)
 		develop_box.add_child(row)
@@ -270,14 +308,6 @@ func _refresh_develop() -> void:
 func _on_develop(part_id: String) -> void:
 	if ProgressStore.develop(progress, part_id):
 		ProgressStore.save_progress(progress)
-		# 選択欄を作り直して、開発したパーツを選べるようにする
-		for slot in RobotParts.slots():
-			var picker: OptionButton = pickers[slot]
-			var parts := RobotParts.parts_for(slot)
-			for i in parts.size():
-				if str(parts[i].get("id", "")) == part_id:
-					picker.set_item_text(i, str(parts[i].get("name", part_id)))
-					picker.set_item_disabled(i, false)
 		_refresh()
 
 

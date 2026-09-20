@@ -68,7 +68,7 @@ func _physics_process(_delta: float) -> bool:
 			_report(weapon.damage < 10, "兵士の武器は機体より弱い (威力 %d)" % weapon.damage)
 		50:
 			# 7：機体に戻る
-			soldier.global_position = robot.global_position + Vector3(10, 0, 0)
+			soldier.global_position = robot.global_position + Vector3(5, 0, 0)
 		55:
 			_report(input.try_board_from_foot(), "機体に近づいて乗り込める")
 			_report(pilot.get_vehicle() == robot, "また機体を操縦している")

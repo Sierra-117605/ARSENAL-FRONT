@@ -57,6 +57,29 @@ static func slot_name(slot: String) -> String:
 	return data().get("slot_names", {}).get(slot, slot)
 
 
+## その機種がその部位に装備できるパーツの一覧（制限が無ければ全部）
+static func parts_for_machine(slot: String, machine_id: String) -> Array:
+	var all := parts_for(slot)
+	var allowed: Array = find_machine(machine_id).get("allowed", {}).get(slot, [])
+	if allowed.is_empty():
+		return all
+	var result: Array = []
+	for part in all:
+		if allowed.has(str(part.get("id", ""))):
+			result.append(part)
+	return result
+
+
+## その機種がそのパーツを装備できるか
+static func can_equip(machine_id: String, part_id: String) -> bool:
+	var part := find(part_id)
+	if part.is_empty():
+		return false
+	var slot := str(part.get("slot", ""))
+	var allowed: Array = find_machine(machine_id).get("allowed", {}).get(slot, [])
+	return allowed.is_empty() or allowed.has(part_id)
+
+
 ## そのスロットに付けられるパーツの一覧
 static func parts_for(slot: String) -> Array:
 	var list: Array = []
@@ -84,20 +107,27 @@ static func default_loadout() -> Dictionary:
 	return loadout
 
 
-## 構成に抜けや知らない id があれば、標準のパーツで埋める
-static func sanitize(loadout: Dictionary) -> Dictionary:
-	var fixed := default_loadout()
+## 構成に抜け・知らない id・その機種が装備できないパーツがあれば、使える物に置き換える
+static func sanitize(loadout: Dictionary, machine_id: String = "") -> Dictionary:
+	var machine := machine_id if machine_id != "" else str(loadout.get("machine_type", default_machine_id()))
+	var fixed := {}
 	for slot in slots():
+		var usable := parts_for_machine(slot, machine)
+		if usable.is_empty():
+			usable = parts_for(slot)
+		fixed[slot] = str(usable[0].get("id", ""))
 		var part_id: String = str(loadout.get(slot, ""))
-		var part := find(part_id)
-		if not part.is_empty() and part.get("slot", "") == slot:
-			fixed[slot] = part_id
+		for part in usable:
+			if str(part.get("id", "")) == part_id:
+				fixed[slot] = part_id
+				break
 	return fixed
 
 
 ## 構成（と機種）から機体の性能をまとめて計算する
 static func compute_stats(loadout: Dictionary, machine_id: String = "") -> Dictionary:
-	var fixed := sanitize(loadout)
+	var machine_for_parts := machine_id if machine_id != "" else default_machine_id()
+	var fixed := sanitize(loadout, machine_for_parts)
 	var stats := {
 		"max_hp": 0,          # 耐久
 		"walk_speed": 10.0,   # 歩く速さ（メートル/秒）
