@@ -37,6 +37,10 @@ extends Occupant
 @export var retreat_distance: float = 20.0
 ## 狙いを分散させる範囲（近い順にこの数の中から選ぶ）
 @export var target_spread_count: int = 2
+## レールガンの予兆が出たら物陰に隠れるか
+@export var takes_cover: bool = true
+## 物陰を探す範囲（メートル）
+@export var cover_search_range: float = 220.0
 
 ## 何機目の AI か（狙う相手を分散させるのに使う）
 static var _spawn_count: int = 0
@@ -69,6 +73,11 @@ func _physics_process(delta: float) -> void:
 	var control := Pilotable.empty_control()
 	var prey := _current_target()
 	if not vehicle.is_alive() or prey == null or not _alive(prey):
+		send_control(control)
+		return
+
+	# レールガンの予兆が出ていて、身をさらしているなら物陰へ走る（撃ち合いより退避を優先）
+	if takes_cover and _run_to_cover(vehicle, control):
 		send_control(control)
 		return
 
@@ -105,6 +114,65 @@ func _physics_process(delta: float) -> void:
 		var aim := aim_point + _spread()
 		control["aim"] = {"x": aim.x, "y": aim.y, "z": aim.z}
 	send_control(control)
+
+
+## レールガンの予兆中に物陰へ向かう。退避しているなら true
+func _run_to_cover(vehicle: Pilotable, control: Dictionary) -> bool:
+	var boss := _active_railgun()
+	if boss == null:
+		return false
+	var muzzle: Node3D = boss.get_node_or_null("RailgunMuzzle")
+	var from: Vector3 = muzzle.global_position if muzzle != null else boss.global_position
+	if not _exposed_to(vehicle, from):
+		return false  # すでに物陰にいる
+	var spot := _best_cover_spot(vehicle, from)
+	if spot == Vector3.INF:
+		return false
+	# 物陰の裏側へ向かって走る
+	var to_spot: Vector3 = spot - vehicle.global_position
+	control["yaw"] = atan2(-to_spot.x, -to_spot.z)
+	control["move_z"] = -1.0
+	return true
+
+
+## 予兆を出している要塞を探す
+func _active_railgun() -> Node3D:
+	var vehicle := get_vehicle()
+	if vehicle == null:
+		return null
+	for node in vehicle.get_tree().get_nodes_in_group("railgun_boss"):
+		if node.get("warning") == true:
+			return node as Node3D
+	return null
+
+
+## その場所から自分が見えているか（見えていれば撃たれる）
+func _exposed_to(vehicle: Pilotable, from: Vector3) -> bool:
+	var aim := vehicle.global_position + Vector3(0, 4, 0)
+	var query := PhysicsRayQueryParameters3D.create(from, aim)
+	var hit := vehicle.get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.is_empty() or hit["collider"] == vehicle
+
+
+## いちばん近い物陰の「裏側」の位置を返す（見つからなければ INF）
+func _best_cover_spot(vehicle: Pilotable, from: Vector3) -> Vector3:
+	var best := Vector3.INF
+	var best_distance := cover_search_range
+	for node in vehicle.get_tree().get_nodes_in_group("cover"):
+		var cover := node as Node3D
+		if cover == null:
+			continue
+		var distance := vehicle.global_position.distance_to(cover.global_position)
+		if distance > best_distance:
+			continue
+		# 砲から見て物陰の向こう側に回り込む
+		var away: Vector3 = (cover.global_position - from)
+		away.y = 0.0
+		if away.length() < 0.01:
+			continue
+		best = cover.global_position + away.normalized() * 12.0
+		best_distance = distance
+	return best
 
 
 ## 見越し射撃：弾が届くまでに相手が進む分だけ先を狙う

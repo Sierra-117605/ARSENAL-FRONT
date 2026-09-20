@@ -75,11 +75,12 @@ func _physics_process(delta: float) -> void:
 		if time_left <= 0.0:
 			_finish("win" if str(mission.get("type", "")) == "defend" else "lose")
 			return
-	# 乗り換えに対応するため、今乗っている機体が壊れたかを毎回見る
+	# 今プレイヤーが動かしている物（機体、または徒歩の兵士）が壊れたら失敗
 	if player_occupant == null:
 		return
-	var current := player_occupant.get_vehicle()
+	var current := player_occupant.get_controlled()
 	if current != null and not current.is_alive():
+		GameLog.write("結果", "%s が撃破された（作戦失敗）" % current.name)
 		_finish("lose")
 
 
@@ -199,6 +200,20 @@ func _setup_boss() -> void:
 	add_child(boss)
 	boss.position = BOSS_POSITION
 	boss.fortress_destroyed.connect(func(): _finish("win"))
+	_add_boss_covers()
+
+
+## ボス戦の道中に物陰を置く（レールガンから隠れる場所）
+func _add_boss_covers() -> void:
+	var covers_root := get_node_or_null("Covers")
+	if covers_root == null:
+		return
+	var cover_scene: PackedScene = load("res://scenes/cover_block.tscn")
+	for spot in [Vector3(-50, 0, -120), Vector3(45, 0, -140), Vector3(-15, 0, -175),
+			Vector3(60, 0, -195), Vector3(-70, 0, -210)]:
+		var cover: Node3D = cover_scene.instantiate()
+		covers_root.add_child(cover)
+		cover.position = spot
 
 
 ## 拠点／目標が壊れた時

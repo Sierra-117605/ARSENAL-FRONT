@@ -30,6 +30,7 @@ signal railgun_fired
 
 
 func _ready() -> void:
+	add_to_group("railgun_boss")  # AI が「隠れるべき相手」を探すのに使う
 	railgun_timer = railgun_interval
 	for part in parts():
 		part.destroyed.connect(_on_part_destroyed.bind(part))
