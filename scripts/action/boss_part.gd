@@ -26,6 +26,8 @@ var active: bool = false
 
 func _ready() -> void:
 	super._ready()
+	# 壊れたら当たり判定を消す（残骸が盾になって奥の部位を守ってしまわないように）
+	destroyed.connect(_on_destroyed)
 	material = StandardMaterial3D.new()
 	var mesh: MeshInstance3D = get_node_or_null("Mesh")
 	if mesh != null:
@@ -74,6 +76,13 @@ func take_hit_at_shape(damage: int, shape_index: int) -> void:
 	if not active:
 		return
 	super.take_hit_at_shape(damage, shape_index)
+
+
+## 壊れた時：見た目は残すが、弾は通り抜けるようにする
+func _on_destroyed() -> void:
+	for owner_id in get_shape_owners():
+		shape_owner_set_disabled(owner_id, true)
+	_update_color()
 
 
 ## 段階が来たら攻撃を受け付けるようにする

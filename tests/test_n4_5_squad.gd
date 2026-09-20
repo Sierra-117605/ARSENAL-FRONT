@@ -21,9 +21,14 @@ var enemies: Array = []
 var frame := 0
 var failed := false
 var robot_pos_at_switch := Vector3.ZERO
+var mission_before := ""
 
 
 func _initialize() -> void:
+	# 任務の設定に左右されないよう、基本の任務（殲滅・中）に固定する
+	if FileAccess.file_exists(MissionData.CHOICE_PATH):
+		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	MissionData.save_choice("sweep_plain", "normal")
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	battle = field
@@ -73,9 +78,20 @@ func _physics_process(_delta: float) -> bool:
 			spare.take_hit(100000)
 		95:
 			_report(battle.outcome == "lose", "今乗っている機体が壊れたら撃破 (%s)" % battle.outcome)
+			_restore_mission()
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false
+
+
+## 任務の設定を元に戻す
+func _restore_mission() -> void:
+	if mission_before != "":
+		var f := FileAccess.open(MissionData.CHOICE_PATH, FileAccess.WRITE)
+		if f != null:
+			f.store_string(mission_before)
+	elif FileAccess.file_exists(MissionData.CHOICE_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionData.CHOICE_PATH))
 
 
 func _report(ok: bool, msg: String) -> void:

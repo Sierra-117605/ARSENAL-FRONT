@@ -77,7 +77,7 @@ func _physics_process(_delta: float) -> bool:
 				ally.global_position = boss.global_position + Vector3(0, 0, 150)
 				ally_start = ally.global_position
 				boss.railgun_timer = boss.warning_time - 0.05
-			elif frame == 30:
+			elif frame == 75:
 				var ally: Robot = field.get_node("SpareRobot")
 				var ai: AIPilot = field.get_node("SpareRobot/AIPilot")
 				_report(boss.warning, "レールガンの予兆が出ている")

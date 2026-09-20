@@ -38,6 +38,8 @@ var aim_range: float = 1500.0
 @onready var visual: Node3D = $Visual
 @onready var leg_pivot_l: Node3D = $Visual/LegPivotL
 @onready var leg_pivot_r: Node3D = $Visual/LegPivotR
+@onready var arm_pivot: Node3D = get_node_or_null("Visual/ArmPivotR")
+@onready var muzzle_point: Node3D = get_node_or_null("Visual/ArmPivotR/MuzzlePoint")
 
 ## 部位ごとの耐久の割合（本体の耐久に対して）。壊れると効果が出る
 const PART_HP_RATIO := {
@@ -151,7 +153,7 @@ func _on_part_broken(part: String) -> void:
 const BROKEN_VISUAL := {
 	"head": ["Head"],
 	"arm_left": ["ShoulderL", "ArmL"],
-	"arm_right": ["ShoulderR", "ArmR", "Barrel"],
+	"arm_right": ["ShoulderR", "ArmPivotR"],
 	"legs": ["LegPivotL", "LegPivotR", "RearLegPivotL", "RearLegPivotR"],
 }
 
@@ -207,9 +209,7 @@ func _apply_machine_shape(stats: Dictionary) -> void:
 	var seat: Node3D = get_node_or_null("DriverSeat")
 	if seat != null:
 		seat.position = Vector3(0, BASE_SEAT_Y * factor, 0)
-	var w: Node3D = get_node_or_null("Weapon")
-	if w != null:
-		w.position = BASE_WEAPON_POS * factor
+	# 銃口の位置は腕の先端に毎フレーム合わせるので、ここでは何もしない
 	# 四脚なら後脚を出す
 	var quad := str(stats.get("legs", "biped")) == "quad"
 	for node_name in ["RearLegPivotL", "RearLegPivotR"]:
@@ -223,7 +223,7 @@ func _apply_machine_shape(stats: Dictionary) -> void:
 const VISUAL_PARTS := {
 	"head": ["Head"],
 	"body": ["Torso"],
-	"arms": ["ShoulderL", "ShoulderR", "ArmL", "ArmR"],
+	"arms": ["ShoulderL", "ShoulderR", "ArmL", "ArmPivotR"],
 	"legs": ["LegPivotL", "LegPivotR"],
 	"generator": ["BackPack"],
 	"weapon": ["Barrel"],
@@ -299,11 +299,29 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 	move_and_slide()
 
+	# 腕を狙う方向へ向け、銃口をその先端に合わせる（弾が腕の先から出るように）
+	_aim_arm()
+
 	# 射撃ボタンが押されていれば、照準の先へ撃つ
 	if control["fire"] and weapon != null:
 		weapon.try_fire(Pilotable.aim_point(control), self)
 
 	_update_step_motion(delta)
+
+
+## 腕（武器を持つ側）を狙っている方向へ向ける。
+## 銃口の位置も腕の先端に合わせるので、弾は必ず腕の先から出る。
+func _aim_arm() -> void:
+	if arm_pivot == null:
+		return
+	var aim := Pilotable.aim_point(control)
+	if aim != Vector3.ZERO:
+		var to_aim: Vector3 = aim - arm_pivot.global_position
+		if to_aim.length() > 0.5:
+			# 腕は -Z 方向を向く形で作ってあるので、その向きに合わせる
+			arm_pivot.global_basis = Basis.looking_at(to_aim.normalized())
+	if weapon != null and muzzle_point != null:
+		weapon.global_transform = muzzle_point.global_transform
 
 
 ## 仮の歩き：脚を前後に振り、歩調に合わせて機体を上下に揺らす

@@ -19,12 +19,17 @@ var shot_path := ""
 var shot_taken := false
 var colors_seen: Array = []
 var hp_seen: Array = []
+var mission_before := ""
 
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shot="):
 			shot_path = arg.substr(7)
+	# 任務の設定（ボス任務など）に左右されないよう、基本の任務に固定する
+	if FileAccess.file_exists(MissionData.CHOICE_PATH):
+		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	MissionData.save_choice("sweep_plain", "normal")
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	rig = field.get_node("CameraRig")
@@ -33,9 +38,10 @@ func _initialize() -> void:
 	# 流れ弾が標的に当たらないよう、戦闘中の機体を取り除く（標的の確認に集中する）
 	for enemy in field.get_node("Enemies").get_children():
 		enemy.queue_free()
-	var ally := field.get_node_or_null("SpareRobot")
-	if ally != null:
-		ally.queue_free()
+	for node_name in ["SpareRobot", "Tank"]:
+		var extra := field.get_node_or_null(node_name)
+		if extra != null:
+			extra.queue_free()
 	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
 	field.get_node("Robot").use_saved_loadout = false
 
@@ -98,8 +104,19 @@ func _finish() -> bool:
 		if is_instance_valid(t):
 			left += 1
 	_report(left == 0, "5 個すべて壊せた (残り %d 個)" % left)
+	_restore()
 	print("RESULT: ", "FAIL" if failed else "PASS")
 	return true
+
+
+## 任務の設定を元に戻す
+func _restore() -> void:
+	if mission_before != "":
+		var f := FileAccess.open(MissionData.CHOICE_PATH, FileAccess.WRITE)
+		if f != null:
+			f.store_string(mission_before)
+	elif FileAccess.file_exists(MissionData.CHOICE_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionData.CHOICE_PATH))
 
 
 ## 照準（画面中央）が標的の中心に重なるようにカメラの向きを合わせる

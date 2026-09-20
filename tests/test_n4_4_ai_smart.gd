@@ -19,9 +19,14 @@ var wall: StaticBody3D
 var frame := 0
 var failed := false
 var strafe_values: Array[float] = []
+var mission_before := ""
 
 
 func _initialize() -> void:
+	# 任務の設定に左右されないよう、基本の任務（殲滅・中）に固定する
+	if FileAccess.file_exists(MissionData.CHOICE_PATH):
+		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	MissionData.save_choice("sweep_plain", "normal")
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	robot = field.get_node("Robot")
@@ -30,6 +35,10 @@ func _initialize() -> void:
 	enemy_ai = field.get_node("Enemies/Enemy1/AIPilot")
 	# 味方 AI 機は今回の確認に関係ないので遠ざける
 	field.get_node("SpareRobot").position = Vector3(600, 0, 600)
+	# 味方の戦車も確認に関係ないので遠ざける
+	var tank := field.get_node_or_null("Tank")
+	if tank != null:
+		tank.position = Vector3(900, 0, 900)
 
 
 ## 敵とプレイヤーの間に厚い壁を置く
@@ -74,13 +83,26 @@ func _physics_process(_delta: float) -> bool:
 			var has_minus := strafe_values.any(func(v): return v < -0.3)
 			_report(has_plus and has_minus, "左右どちらにも横移動する（棒立ちで近づかない）")
 			# 6：耐久を減らして、離れて戦うか見る
+			# 戦闘中に受けた傷の影響を除くため、いったん耐久を満タンに戻して比べる
+			enemy.hp = enemy.max_hp
 			var before_keep := _current_keep()
 			enemy.hp = int(enemy.max_hp * 0.2)
 			_report(_current_keep() > before_keep,
 				"耐久が減ると距離を取る (%.0fm → %.0fm)" % [before_keep, _current_keep()])
+			_restore_mission()
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false
+
+
+## 任務の設定を元に戻す
+func _restore_mission() -> void:
+	if mission_before != "":
+		var f := FileAccess.open(MissionData.CHOICE_PATH, FileAccess.WRITE)
+		if f != null:
+			f.store_string(mission_before)
+	elif FileAccess.file_exists(MissionData.CHOICE_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionData.CHOICE_PATH))
 
 
 ## 今その AI が保とうとしている距離

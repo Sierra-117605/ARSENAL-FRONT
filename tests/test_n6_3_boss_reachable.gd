@@ -21,6 +21,7 @@ var failed := false
 var mission_before := ""
 var progress_before := ""
 var target_part: BossPart = null
+var shots := 0
 var alarm_heard := false
 var railgun_heard := false
 
@@ -39,7 +40,8 @@ func _initialize() -> void:
 func _physics_process(_delta: float) -> bool:
 	frame += 1
 	if frame > 3600:
-		_report(false, "60 秒以内に要塞を壊し切れなかった（段階 %d）" % (boss.stage if boss != null else 0))
+		_report(false, "60 秒以内に要塞を壊し切れなかった（段階 %d／撃った弾 %d 発）" % [
+			boss.stage if boss != null else 0, shots])
 		_finish_test()
 		return true
 	if frame == 10:
@@ -73,7 +75,9 @@ func _physics_process(_delta: float) -> bool:
 		var found := _move_to_firing_spot(target_part)
 		_report(found, "%s を撃てる位置がある（正面側から）" % target_part.part_label)
 	weapon.cooldown = 0.0
-	weapon.try_fire(target_part.global_position, robot)
+	robot._aim_arm()
+	if weapon.try_fire(target_part.global_position, robot):
+		shots += 1
 	return false
 
 
@@ -92,9 +96,15 @@ func _move_to_firing_spot(part: BossPart) -> bool:
 			# 正面（戦場側）を中心に左右へ振る
 			var angle := deg_to_rad(-60.0 + 10.0 * float(step))
 			var offset: Vector3 = Vector3(sin(angle), 0.0, cos(angle)) * float(distance)
-			robot.global_position = part.global_position + offset
-			robot.global_position.y = 0.0
+			var spot: Vector3 = part.global_position + offset
+			spot.y = 0.0
+			# 要塞の土台の上や中には立てない（プレイヤーも入れない場所なので試さない）
+			if spot.z < boss.global_position.z + 70.0:
+				continue
+			robot.global_position = spot
 			robot.force_update_transform()
+			# 銃口の位置を今の姿勢に合わせてから射線を調べる（1 フレーム前の位置で判定しない）
+			robot._aim_arm()
 			if _has_line_of_fire(part):
 				return true
 	return false

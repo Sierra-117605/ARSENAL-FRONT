@@ -19,6 +19,7 @@ var frame := 0
 var failed := false
 var progress_before := ""
 var loadout_before := ""
+var mission_before := ""
 
 
 func _initialize() -> void:
@@ -28,6 +29,10 @@ func _initialize() -> void:
 	if FileAccess.file_exists(LoadoutStore.PATH):
 		loadout_before = FileAccess.get_file_as_string(LoadoutStore.PATH)
 	ProgressStore.save_progress(ProgressStore.fresh())
+	# 任務の設定に左右されないよう、基本の任務（殲滅・中）に固定する
+	if FileAccess.file_exists(MissionData.CHOICE_PATH):
+		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	MissionData.save_choice("sweep_plain", "normal")
 
 	_check_initial_state()
 	field = load("res://scenes/field_3d.tscn").instantiate()
@@ -129,6 +134,7 @@ func _physics_process(_delta: float) -> bool:
 func _restore() -> void:
 	_write_or_delete(ProgressStore.PATH, progress_before)
 	_write_or_delete(LoadoutStore.PATH, loadout_before)
+	_write_or_delete(MissionData.CHOICE_PATH, mission_before)
 
 
 func _write_or_delete(path: String, content: String) -> void:

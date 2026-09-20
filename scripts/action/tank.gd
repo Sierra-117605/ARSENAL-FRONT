@@ -21,6 +21,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var weapon: Weapon = get_node_or_null("Weapon")
 @onready var turret: Node3D = get_node_or_null("Visual/Turret")
+@onready var muzzle_point: Node3D = get_node_or_null("Visual/Turret/MuzzlePoint")
 
 
 func _physics_process(delta: float) -> void:
@@ -56,6 +57,10 @@ func _physics_process(delta: float) -> void:
 		if Vector2(to_aim.x, to_aim.z).length() > 0.1:
 			var wanted_yaw := atan2(-to_aim.x, -to_aim.z)
 			turret.global_rotation.y = wanted_yaw
+
+	# 銃口を砲身の先に合わせる（弾が砲口から出るように）
+	if weapon != null and muzzle_point != null:
+		weapon.global_transform = muzzle_point.global_transform
 
 	if control["fire"] and weapon != null:
 		weapon.try_fire(aim, self)

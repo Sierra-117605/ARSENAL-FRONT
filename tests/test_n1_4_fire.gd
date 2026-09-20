@@ -25,6 +25,14 @@ func _initialize() -> void:
 	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
 	robot.use_saved_loadout = false
 	input = field.get_node("PlayerInput")
+	# 自機の射撃だけを見たいので、味方機・戦車・敵を取り除く
+	for node_name in ["SpareRobot", "Tank"]:
+		var extra := field.get_node_or_null(node_name)
+		if extra != null:
+			extra.queue_free()
+	for enemy in field.get_node("Enemies").get_children():
+		enemy.queue_free()
+	Bullet.hit_counts.clear()
 	_add_test_wall()
 
 
@@ -70,7 +78,7 @@ func _physics_process(_delta: float) -> bool:
 		90:
 			Input.action_release("fire")
 		150:
-			var hits: int = wall.get("hits")
+			var hits: int = int(Bullet.hit_counts.get(robot.get_instance_id(), 0))
 			# 1 秒間 (60 フレーム) 押しっぱなし・0.25 秒間隔 → 4〜5 発
 			_report(hits >= 4 and hits <= 5, "押している間、連射して壁に当たる (%d 発命中)" % hits)
 			_report(_bullets().is_empty(), "当たった弾は消える")
@@ -80,7 +88,8 @@ func _physics_process(_delta: float) -> bool:
 			Input.action_press("fire")
 		200:
 			Input.action_release("fire")
-			_report(_bullets().is_empty() and int(wall.get("hits")) == hits_at_release, "Esc 中はクリックしても撃たない")
+			_report(_bullets().is_empty() and int(Bullet.hit_counts.get(robot.get_instance_id(), 0)) == hits_at_release,
+				"Esc 中はクリックしても撃たない")
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false
@@ -90,7 +99,7 @@ var hits_at_release := 0
 
 
 func _check_no_fire_when_released() -> void:
-	hits_at_release = wall.get("hits")
+	hits_at_release = int(Bullet.hit_counts.get(robot.get_instance_id(), 0))
 
 
 ## 自機が撃った弾だけを数える（味方 AI の弾は数えない）
