@@ -119,8 +119,8 @@
     },
     {
       "id": "weapon_cannon", "slot": "weapon", "name": "105mm キャノン",
-      "desc": "1 発が重いが、次の弾まで時間がかかる",
-      "stats": {"damage": 45, "fire_interval": 1.4, "bullet_speed": 420.0},
+      "desc": "一撃が非常に重い。当てれば敵を 2 発で倒せるが、外すと痛い",
+      "stats": {"damage": 90, "fire_interval": 1.2, "bullet_speed": 420.0},
       "visual": {"scale": 1.8, "color": [0.26, 0.25, 0.2]}
     }
   ]

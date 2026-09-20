@@ -33,7 +33,7 @@ func _physics_process(_delta: float) -> bool:
 			_select(garage, "legs", "legs_heavy")
 		15:
 			_report(garage.stats_label.text != text_before, "パーツを変えると性能表示が変わる")
-			_report(garage.stats_label.text.contains("45"), "キャノンの威力 45 が表示される")
+			_report(garage.stats_label.text.contains("90"), "キャノンの威力 90 が表示される")
 			if shot_path != "":
 				_save_shot()
 		25:
@@ -42,6 +42,8 @@ func _physics_process(_delta: float) -> bool:
 			var saved := LoadoutStore.load_saved()
 			_report(saved.get("weapon", "") == "weapon_cannon" and saved.get("legs", "") == "legs_heavy",
 				"選んだ構成が保存される (%s)" % [saved])
+			# テストで書いた保存ファイルは消しておく（実際の遊びに影響させない）
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(LoadoutStore.PATH))
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false

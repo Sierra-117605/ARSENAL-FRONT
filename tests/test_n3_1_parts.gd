@@ -75,7 +75,7 @@ func _check_apply() -> void:
 	robot.apply_loadout({"body": "body_heavy", "legs": "legs_heavy", "weapon": "weapon_cannon"})
 	_report(robot.max_hp > before_hp, "機体に反映：耐久 %d → %d" % [before_hp, robot.max_hp])
 	_report(robot.walk_speed < before_speed, "機体に反映：速さ %.1f → %.1f" % [before_speed, robot.walk_speed])
-	_report(weapon.damage == 45 and weapon.fire_interval > 1.0,
+	_report(weapon.damage == 90 and weapon.fire_interval > 1.0,
 		"武器に反映：威力 %d / 連射 %.2f 秒" % [weapon.damage, weapon.fire_interval])
 	var text := JSON.stringify(robot.to_dict())
 	_report(text.contains("loadout"), "構成が保存データに入る")

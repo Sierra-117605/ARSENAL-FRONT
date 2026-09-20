@@ -42,9 +42,13 @@ var step_amount: float = 0.0
 
 
 func _ready() -> void:
+	# 組み立ての構成が指定されている時だけ性能を入れ替える。
+	# 指定が無い機体（敵など）は、シーンで設定した耐久・速さをそのまま使う
 	if use_saved_loadout:
 		loadout = LoadoutStore.load_saved()
-	apply_loadout(loadout)
+		apply_loadout(loadout)
+	elif not loadout.is_empty():
+		apply_loadout(loadout)
 	_apply_part_visuals()
 	super._ready()
 	if body_color.a > 0.0:
