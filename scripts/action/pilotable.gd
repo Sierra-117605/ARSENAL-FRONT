@@ -18,6 +18,8 @@ var hp: int = 0
 signal damaged(hp: int, max_hp: int)
 ## 撃破された時に知らせる
 signal destroyed
+## 部位が壊れた時に知らせる（部位名）
+signal part_broken(part: String)
 
 ## 直近に受け取った操縦入力。中身は JSON にそのまま書ける値だけにする
 var control: Dictionary = empty_control()
@@ -45,6 +47,51 @@ func _ready() -> void:
 	hp = max_hp
 	add_to_group("pilotable")  # 乗り換え先を探すときに使う
 	add_to_group("team_" + team)  # 陣営ごとの検索用
+
+
+## 当たり判定の形（shape）ごとの部位名。継承先で設定する（例：{"HitArmR": "arm_right"}）
+var part_of_shape: Dictionary = {}
+## 部位ごとの「本体へのダメージの通りやすさ」。継承先で設定する
+var part_body_ratio: Dictionary = {}
+## 部位ごとの残り耐久
+var part_hp: Dictionary = {}
+## 壊れた部位の一覧
+var broken_parts: Array[String] = []
+
+
+## 当たった場所（shape 番号）から部位名を調べる
+func part_name_for_shape(shape_index: int) -> String:
+	if shape_index < 0:
+		return ""
+	var owner_id := shape_find_owner(shape_index)
+	var node := shape_owner_get_owner(owner_id)
+	if node == null:
+		return ""
+	return str(part_of_shape.get(node.name, ""))
+
+
+## 弾が当たった：当たった部位の耐久を減らし、本体の耐久も減らす。
+## 本体への効き方は部位ごとに違う（頭は弱点、腕や脚は本体に響きにくい）。
+func take_hit_at_shape(damage: int, shape_index: int) -> void:
+	var part := part_name_for_shape(shape_index)
+	if part != "" and part_hp.has(part) and not broken_parts.has(part):
+		part_hp[part] = maxi(int(part_hp[part]) - damage, 0)
+		if int(part_hp[part]) == 0:
+			broken_parts.append(part)
+			_on_part_broken(part)
+			part_broken.emit(part)
+	var ratio := float(part_body_ratio.get(part, 1.0))
+	take_hit(maxi(int(round(float(damage) * ratio)), 1))
+
+
+## 部位が壊れた時の処理（継承先で中身を書く）
+func _on_part_broken(_part: String) -> void:
+	pass
+
+
+## その部位が壊れているか
+func is_part_broken(part: String) -> bool:
+	return broken_parts.has(part)
 
 
 ## 弾などが当たった時に呼ばれる（Bullet から）
@@ -87,6 +134,7 @@ func to_dict() -> Dictionary:
 		"position": {"x": pos.x, "y": pos.y, "z": pos.z},
 		"rotation_y": rotation.y,
 		"hp": hp,
+		"broken_parts": broken_parts.duplicate(),
 	}
 
 

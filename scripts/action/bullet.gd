@@ -42,7 +42,11 @@ func _physics_process(delta: float) -> void:
 	if not hit.is_empty():
 		Sounds.play_at(self, Sounds.IMPACT, hit["position"])
 		var target: Object = hit["collider"]
-		if target != null and target.has_method("take_hit"):
+		if target != null and target.has_method("take_hit_at_shape"):
+			# 部位を持つ相手（ロボットなど）には、当たった場所を伝える
+			target.take_hit_at_shape(damage, int(hit.get("shape", -1)))
+			hit_counts[shooter_id] = int(hit_counts.get(shooter_id, 0)) + 1
+		elif target != null and target.has_method("take_hit"):
 			target.take_hit(damage)
 			hit_counts[shooter_id] = int(hit_counts.get(shooter_id, 0)) + 1
 		queue_free()

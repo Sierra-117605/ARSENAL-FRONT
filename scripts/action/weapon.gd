@@ -14,6 +14,9 @@ extends Marker3D
 ## 弾のばらつき（狙った点からずれる幅の目安。小さいほど正確）
 @export var spread: float = 0.0
 
+## true なら壊れていて撃てない（腕を破壊された時）
+var disabled: bool = false
+
 var cooldown: float = 0.0
 
 
@@ -23,7 +26,7 @@ func _physics_process(delta: float) -> void:
 
 ## 撃てるなら aim_point に向けて 1 発撃つ。撃ったら true
 func try_fire(aim_point: Vector3, shooter: CollisionObject3D) -> bool:
-	if cooldown > 0.0:
+	if disabled or cooldown > 0.0:
 		return false
 	var dir := aim_point - global_position
 	if dir.length() < 0.01:
