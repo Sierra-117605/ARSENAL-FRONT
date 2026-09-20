@@ -15,6 +15,10 @@ extends Node3D
 var direction: Vector3 = Vector3.FORWARD
 ## 撃った本人（自分には当たらない）
 var shooter_rid: RID
+## 撃った機体ごとの命中数（自動プレイ検証で命中率を出すために数えている）
+static var hit_counts: Dictionary = {}
+## 撃った機体の識別番号
+var shooter_id: int = 0
 var travelled: float = 0.0
 
 
@@ -23,6 +27,7 @@ func launch(from: Vector3, dir: Vector3, shooter: CollisionObject3D) -> void:
 	direction = dir.normalized()
 	if shooter != null:
 		shooter_rid = shooter.get_rid()
+		shooter_id = shooter.get_instance_id()
 	# 弾の見た目を飛ぶ向きにそろえる（-Z が進行方向）
 	global_transform = Transform3D(Basis.looking_at(direction), from)
 
@@ -39,6 +44,7 @@ func _physics_process(delta: float) -> void:
 		var target: Object = hit["collider"]
 		if target != null and target.has_method("take_hit"):
 			target.take_hit(damage)
+			hit_counts[shooter_id] = int(hit_counts.get(shooter_id, 0)) + 1
 		queue_free()
 		return
 	global_position = to

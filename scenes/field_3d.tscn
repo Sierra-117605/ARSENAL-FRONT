@@ -213,33 +213,35 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -78)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -160)
 pilotable_id = "enemy_01"
 team = "enemy"
-max_hp = 100
+max_hp = 180
 body_color = Color(0.55, 0.15, 0.13, 1)
 
 [node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
+fire_interval = 2.6
 [node name="Enemy2" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -150)
 pilotable_id = "enemy_02"
 team = "enemy"
-max_hp = 100
+max_hp = 180
 body_color = Color(0.55, 0.15, 0.13, 1)
 
 [node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
+fire_interval = 2.6
 [node name="Enemy3" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -132)
 pilotable_id = "enemy_03"
 team = "enemy"
-max_hp = 100
+max_hp = 180
 body_color = Color(0.55, 0.15, 0.13, 1)
 
 [node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-
+fire_interval = 2.6
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")
 start_seat = NodePath("../Robot/DriverSeat")

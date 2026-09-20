@@ -47,7 +47,7 @@ func _physics_process(_delta: float) -> bool:
 	if frame == 5:
 		start_distance = _distance()
 		_report(enemy != null and enemy.is_alive(), "敵ロボットがいる（耐久 %d）" % enemy.max_hp)
-		_report(enemy.max_hp == 100, "敵の耐久はシーンで設定した 100 のまま（構成で上書きされない）")
+		_report(enemy.max_hp == 180, "敵の耐久はシーンで設定した 180 のまま（構成で上書きされない）")
 		_report(start_distance > 100.0, "敵は遠くから始まる (%.0fm)" % start_distance)
 		return false
 	closest = minf(closest, _distance())

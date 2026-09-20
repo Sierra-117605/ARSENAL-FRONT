@@ -34,7 +34,7 @@ extends Occupant
 ## 耐久がこの割合を下回ると距離を取る
 @export var retreat_hp_ratio: float = 0.35
 ## 距離を取るときに広げる距離（メートル）
-@export var retreat_distance: float = 45.0
+@export var retreat_distance: float = 20.0
 ## 狙いを分散させる範囲（近い順にこの数の中から選ぶ）
 @export var target_spread_count: int = 2
 
