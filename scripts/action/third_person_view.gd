@@ -3,6 +3,8 @@ extends CameraView
 ## 三人称視点（肩越し）：機体の右後ろ上方から、見ている方向を映す。
 ## 機体が画面のやや左に映り、画面中央の照準が機体に隠れない（SPEC §0.7）。
 
+## この数値は全高 12m の機体を基準にしている（機種で全高が変わると比例させる）
+@export var base_machine_height: float = 12.0
 ## 回転の中心の高さ（機体の足元から。胸〜頭のあたり）
 @export var pivot_height: float = 10.4
 ## 回転の中心からカメラまでの距離
@@ -14,9 +16,13 @@ extends CameraView
 
 
 func update_camera(camera: Camera3D, target: Node3D, yaw: float, pitch: float) -> void:
-	var pivot := target.global_position + Vector3(0.0, pivot_height, 0.0)
+	# 機体が大きいほどカメラを引く
+	var factor := 1.0
+	if target.get("height") != null:
+		factor = float(target.get("height")) / base_machine_height
+	var pivot := target.global_position + Vector3(0.0, pivot_height * factor, 0.0)
 	var look := Basis.from_euler(Vector3(pitch, yaw, 0.0))
 	# 見ている方向の真後ろに下がった位置にカメラを置く
-	var pos := pivot + look * Vector3(shoulder_offset, 0.0, distance)
+	var pos := pivot + look * Vector3(shoulder_offset * factor, 0.0, distance * factor)
 	pos.y = maxf(pos.y, target.global_position.y + min_camera_height)
 	camera.global_transform = Transform3D(look, pos)

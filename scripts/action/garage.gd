@@ -7,6 +7,10 @@ const FIELD_SCENE := "res://scenes/field_3d.tscn"
 
 ## 今選んでいる構成
 var loadout: Dictionary = {}
+## 今選んでいる機種
+var machine_id: String = ""
+var machine_picker: OptionButton
+var machine_desc: Label
 ## スロット名 → 選択欄
 var pickers: Dictionary = {}
 ## 選んだパーツの説明を出すラベル
@@ -18,6 +22,7 @@ func _ready() -> void:
 	# ガレージではマウスカーソルを出す（戦闘画面では隠れているため）
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	loadout = LoadoutStore.load_saved()
+	machine_id = str(loadout.get("machine_type", RobotParts.default_machine_id()))
 	_build_ui()
 	_refresh()
 
@@ -44,9 +49,30 @@ func _build_ui() -> void:
 	root_box.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "多用途歩行機（全高 約 12m）の組み立て。部位ごとにパーツを選んでください。"
+	subtitle.text = "機種を選び、部位ごとにパーツを選んでください。"
 	subtitle.add_theme_color_override("font_color", Color(0.75, 0.78, 0.8))
 	root_box.add_child(subtitle)
+
+	# 機種の選択欄（一番上。機種で全高と基礎性能が変わる）
+	var machine_row := HBoxContainer.new()
+	machine_row.add_theme_constant_override("separation", 16)
+	root_box.add_child(machine_row)
+	var machine_label := Label.new()
+	machine_label.text = "機種"
+	machine_label.add_theme_font_size_override("font_size", 24)
+	machine_row.add_child(machine_label)
+	machine_picker = OptionButton.new()
+	machine_picker.custom_minimum_size = Vector2(460, 42)
+	var machines := RobotParts.machine_types()
+	for i in machines.size():
+		machine_picker.add_item(str(machines[i].get("name", "")), i)
+		if machines[i].get("id", "") == machine_id:
+			machine_picker.select(i)
+	machine_picker.item_selected.connect(_on_machine_selected)
+	machine_row.add_child(machine_picker)
+	machine_desc = Label.new()
+	machine_desc.add_theme_color_override("font_color", Color(0.72, 0.75, 0.78))
+	machine_row.add_child(machine_desc)
 
 	var columns := HBoxContainer.new()
 	columns.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -137,6 +163,13 @@ func _build_slot_row(slot: String) -> Control:
 	return box
 
 
+func _on_machine_selected(index: int) -> void:
+	var machines := RobotParts.machine_types()
+	if index >= 0 and index < machines.size():
+		machine_id = str(machines[index].get("id", ""))
+		_refresh()
+
+
 func _on_part_selected(index: int, slot: String) -> void:
 	var parts := RobotParts.parts_for(slot)
 	if index >= 0 and index < parts.size():
@@ -146,12 +179,19 @@ func _on_part_selected(index: int, slot: String) -> void:
 
 ## 性能表示と説明を今の構成に合わせる
 func _refresh() -> void:
-	var stats := RobotParts.compute_stats(loadout)
+	var stats := RobotParts.compute_stats(loadout, machine_id)
+	var machine := RobotParts.find_machine(machine_id)
+	if machine_desc != null:
+		machine_desc.text = "%s ／ 全高 約 %.0fm ／ %s" % [
+			str(machine.get("desc", "")), float(machine.get("height", 12.0)),
+			"四脚" if str(machine.get("legs", "")) == "quad" else "二脚"]
 	for slot in RobotParts.slots():
 		var part := RobotParts.find(str(loadout.get(slot, "")))
 		descriptions[slot].text = str(part.get("desc", ""))
 	var shots := 1.0 / maxf(float(stats["fire_interval"]), 0.01)
 	stats_label.text = "\n".join([
+		"[b]機種[/b]　　　%s" % stats.get("machine_name", ""),
+		"[b]全高[/b]　　　約 %.0f m" % stats.get("height", 12.0),
 		"[b]耐久[/b]　　　%d" % stats["max_hp"],
 		"[b]歩く速さ[/b]　%.1f m/秒" % stats["walk_speed"],
 		"[b]弾の威力[/b]　%d" % stats["damage"],
@@ -164,5 +204,11 @@ func _refresh() -> void:
 
 
 func _on_sortie() -> void:
-	LoadoutStore.save(loadout)
+	_on_sortie_test()
 	get_tree().change_scene_to_file(FIELD_SCENE)
+
+
+## 出撃時の保存だけを行う（自動テストから呼ぶ。場面は切り替えない）
+func _on_sortie_test() -> void:
+	loadout["machine_type"] = machine_id
+	LoadoutStore.save(loadout)

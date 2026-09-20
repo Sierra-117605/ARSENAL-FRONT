@@ -3,8 +3,10 @@ extends Pilotable
 ## 二足歩行ロボット。操縦入力に従って歩く。
 ## Phase 1 の自機は多用途歩行機（全高 約 12m、SPEC §0.9）。
 
-## 機種（SPEC §0.9 の機種区分。保存用の文字列）
+## 機種（SPEC §0.9 の機種区分。data/machine_types.json の id）
 @export var machine_type: String = "multirole_walker"
+## 全高（メートル）。機種で決まる。カメラが距離を合わせるのに使う
+var height: float = 12.0
 ## 歩く速さ（メートル/秒）
 @export var walk_speed: float = 10.0
 ## 歩き出し・止まりの滑らかさ（大きいほどキビキビ）
@@ -47,10 +49,13 @@ func _ready() -> void:
 	# 組み立ての構成が指定されている時だけ性能を入れ替える。
 	# 指定が無い機体（敵など）は、シーンで設定した耐久・速さをそのまま使う
 	if use_saved_loadout:
-		loadout = LoadoutStore.load_saved()
-		apply_loadout(loadout)
+		var saved := LoadoutStore.load_saved()
+		apply_loadout(saved, str(saved.get("machine_type", machine_type)))
 	elif not loadout.is_empty():
 		apply_loadout(loadout)
+	else:
+		# 構成の指定が無い機体（敵など）も、機種の大きさだけは反映する
+		_apply_machine_shape(RobotParts.compute_stats(RobotParts.default_loadout(), machine_type))
 	_apply_part_visuals()
 	super._ready()
 	if body_color.a > 0.0:
@@ -58,9 +63,12 @@ func _ready() -> void:
 
 
 ## 組み立ての構成を機体の性能に反映する
-func apply_loadout(new_loadout: Dictionary) -> void:
+func apply_loadout(new_loadout: Dictionary, new_machine: String = "") -> void:
+	if new_machine != "":
+		machine_type = new_machine
 	loadout = RobotParts.sanitize(new_loadout)
-	var stats := RobotParts.compute_stats(loadout)
+	var stats := RobotParts.compute_stats(loadout, machine_type)
+	_apply_machine_shape(stats)
 	max_hp = int(stats["max_hp"])
 	hp = max_hp
 	walk_speed = float(stats["walk_speed"])
@@ -72,6 +80,41 @@ func apply_loadout(new_loadout: Dictionary) -> void:
 		w.bullet_speed = float(stats["bullet_speed"])
 		w.spread = float(stats["spread"])
 	_apply_part_visuals()
+
+
+## 機種に応じて機体の大きさ・脚の数・当たり判定・部品の位置を変える
+## （仮の機体は全高 4m で作ってあるので、機種の全高に合わせて倍率をかける）
+const BASE_HEIGHT := 4.0
+const BASE_SEAT_Y := 3.0
+const BASE_WEAPON_POS := Vector3(1.3, 1.75, -1.45)
+
+
+func _apply_machine_shape(stats: Dictionary) -> void:
+	height = float(stats.get("height", 12.0))
+	var factor := height / BASE_HEIGHT
+	if visual != null:
+		visual.scale = Vector3.ONE * factor
+	# 当たり判定（カプセル）も同じ倍率にする
+	var collision: CollisionShape3D = get_node_or_null("Collision")
+	if collision != null and collision.shape is CapsuleShape3D:
+		var shape: CapsuleShape3D = collision.shape.duplicate()
+		shape.radius = 1.0 * factor
+		shape.height = BASE_HEIGHT * factor
+		collision.shape = shape
+		collision.position = Vector3(0, BASE_HEIGHT * 0.5 * factor, 0)
+	# 操縦席と銃口の位置
+	var seat: Node3D = get_node_or_null("DriverSeat")
+	if seat != null:
+		seat.position = Vector3(0, BASE_SEAT_Y * factor, 0)
+	var w: Node3D = get_node_or_null("Weapon")
+	if w != null:
+		w.position = BASE_WEAPON_POS * factor
+	# 四脚なら後脚を出す
+	var quad := str(stats.get("legs", "biped")) == "quad"
+	for node_name in ["RearLegPivotL", "RearLegPivotR"]:
+		var leg: Node3D = visual.get_node_or_null(node_name) if visual != null else null
+		if leg != null:
+			leg.visible = quad
 
 
 ## パーツごとの見た目（大きさ・色）を機体に反映する
@@ -180,6 +223,12 @@ func _update_step_motion(delta: float) -> void:
 	var swing := sin(step_phase * TAU) * deg_to_rad(step_swing_deg) * step_amount
 	leg_pivot_l.rotation.x = swing
 	leg_pivot_r.rotation.x = -swing
+	# 四脚のときは後脚を前脚と逆に振る
+	var rear_l: Node3D = visual.get_node_or_null("RearLegPivotL")
+	var rear_r: Node3D = visual.get_node_or_null("RearLegPivotR")
+	if rear_l != null and rear_l.visible:
+		rear_l.rotation.x = -swing
+		rear_r.rotation.x = swing
 	# 1 歩で 2 回沈むので 2 倍の速さで上下させる
 	visual.position.y = -absf(sin(step_phase * TAU)) * body_bob * step_amount
 

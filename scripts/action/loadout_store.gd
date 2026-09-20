@@ -16,12 +16,17 @@ static func save(loadout: Dictionary) -> void:
 	file.store_string(JSON.stringify(loadout, "\t"))
 
 
-## 保存した構成を読む（無ければ標準の構成）
+## 保存した構成を読む（無ければ標準の構成）。機種は "machine_type" に入れて持ち歩く
 static func load_saved() -> Dictionary:
+	var fallback := RobotParts.default_loadout()
+	fallback["machine_type"] = RobotParts.default_machine_id()
 	if not FileAccess.file_exists(PATH):
-		return RobotParts.default_loadout()
+		return fallback
 	var text := FileAccess.get_file_as_string(PATH)
 	var parsed: Variant = JSON.parse_string(text)
 	if parsed is Dictionary:
-		return RobotParts.sanitize(parsed)
-	return RobotParts.default_loadout()
+		var fixed := RobotParts.sanitize(parsed)
+		var machine := str(parsed.get("machine_type", RobotParts.default_machine_id()))
+		fixed["machine_type"] = str(RobotParts.find_machine(machine).get("id", RobotParts.default_machine_id()))
+		return fixed
+	return fallback

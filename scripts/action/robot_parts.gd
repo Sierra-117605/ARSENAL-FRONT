@@ -4,8 +4,10 @@ extends RefCounted
 ## 数値を変えたい時は JSON だけ直せばよい（スクリプトを触らない）。
 
 const DATA_PATH := "res://data/robot_parts.json"
+const MACHINES_PATH := "res://data/machine_types.json"
 
 static var _data: Dictionary = {}
+static var _machines: Dictionary = {}
 
 
 ## JSON を読み込む（最初の 1 回だけ実際に読む）
@@ -15,6 +17,34 @@ static func data() -> Dictionary:
 		var parsed: Variant = JSON.parse_string(text)
 		_data = parsed if parsed is Dictionary else {}
 	return _data
+
+
+## 機種データ（data/machine_types.json）
+static func machine_data() -> Dictionary:
+	if _machines.is_empty():
+		var text := FileAccess.get_file_as_string(MACHINES_PATH)
+		var parsed: Variant = JSON.parse_string(text)
+		_machines = parsed if parsed is Dictionary else {}
+	return _machines
+
+
+## 機種の一覧
+static func machine_types() -> Array:
+	return machine_data().get("types", [])
+
+
+## id から機種を探す（無ければ標準の機種）
+static func find_machine(machine_id: String) -> Dictionary:
+	for m in machine_types():
+		if m.get("id", "") == machine_id:
+			return m
+	var list := machine_types()
+	return list[0] if not list.is_empty() else {}
+
+
+## 標準の機種 id（多用途歩行機）
+static func default_machine_id() -> String:
+	return str(find_machine("multirole_walker").get("id", ""))
 
 
 ## スロットの並び（頭・胴・腕・脚・発電機・武器）
@@ -65,8 +95,8 @@ static func sanitize(loadout: Dictionary) -> Dictionary:
 	return fixed
 
 
-## 構成から機体の性能をまとめて計算する
-static func compute_stats(loadout: Dictionary) -> Dictionary:
+## 構成（と機種）から機体の性能をまとめて計算する
+static func compute_stats(loadout: Dictionary, machine_id: String = "") -> Dictionary:
 	var fixed := sanitize(loadout)
 	var stats := {
 		"max_hp": 0,          # 耐久
@@ -103,4 +133,15 @@ static func compute_stats(loadout: Dictionary) -> Dictionary:
 	stats["walk_speed"] = float(stats["walk_speed"]) * speed_mul
 	stats["damage"] = int(round(float(stats["damage"]) * damage_mul))
 	stats["fire_interval"] = float(stats["fire_interval"]) / maxf(fire_rate_mul, 0.01)
+
+	# 機種ごとの倍率をかける（大きい機体ほど硬くて鈍い、など）
+	var machine := find_machine(machine_id if machine_id != "" else default_machine_id())
+	var m_stats: Dictionary = machine.get("stats", {})
+	stats["max_hp"] = int(round(float(stats["max_hp"]) * float(m_stats.get("hp_mul", 1.0))))
+	stats["walk_speed"] = float(stats["walk_speed"]) * float(m_stats.get("speed_mul", 1.0))
+	stats["damage"] = int(round(float(stats["damage"]) * float(m_stats.get("damage_mul", 1.0))))
+	stats["aim_range"] = float(stats["aim_range"]) * float(m_stats.get("aim_range_mul", 1.0))
+	stats["height"] = float(machine.get("height", 12.0))
+	stats["machine_name"] = str(machine.get("name", ""))
+	stats["legs"] = str(machine.get("legs", "biped"))
 	return stats

@@ -11,7 +11,7 @@ func _initialize() -> void:
 		elif a.contains("="):
 			var kv := a.split("=")
 			lo[kv[0]] = kv[1]
-	LoadoutStore.save(lo)
+	LoadoutStore.save(lo)  # machine_type=... も引数で渡せる
 	root.add_child(load("res://scenes/field_3d.tscn").instantiate())
 func _physics_process(_d: float) -> bool:
 	n += 1

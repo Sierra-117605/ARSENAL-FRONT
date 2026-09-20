@@ -101,6 +101,34 @@ mesh = SubResource("Mesh_foot")
 surface_material_override/0 = SubResource("Mat_frame")
 
 
+[node name="RearLegPivotL" type="Node3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 1.95, 1.1)
+visible = false
+
+[node name="RearLegL" type="MeshInstance3D" parent="Visual/RearLegPivotL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, 0)
+mesh = SubResource("Mesh_leg")
+surface_material_override/0 = SubResource("Mat_body")
+
+[node name="RearFootL" type="MeshInstance3D" parent="Visual/RearLegPivotL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8, 0.15)
+mesh = SubResource("Mesh_foot")
+surface_material_override/0 = SubResource("Mat_frame")
+
+[node name="RearLegPivotR" type="Node3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 1.95, 1.1)
+visible = false
+
+[node name="RearLegR" type="MeshInstance3D" parent="Visual/RearLegPivotR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.9, 0)
+mesh = SubResource("Mesh_leg")
+surface_material_override/0 = SubResource("Mat_body")
+
+[node name="RearFootR" type="MeshInstance3D" parent="Visual/RearLegPivotR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8, 0.15)
+mesh = SubResource("Mesh_foot")
+surface_material_override/0 = SubResource("Mat_frame")
+
 [node name="Hip" type="MeshInstance3D" parent="Visual"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, 0)
 mesh = SubResource("Mesh_hip")
