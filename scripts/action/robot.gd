@@ -27,6 +27,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var loadout: Dictionary = {}
 ## true なら、ガレージで保存した構成を読み込んで使う（プレイヤー機に付ける）
 @export var use_saved_loadout: bool = false
+## true なら、ガレージで保存した「味方機」の構成を読み込んで使う
+@export var use_ally_loadout: bool = false
 
 ## 照準できる距離（パーツで変わる。PlayerInput が使う）
 var aim_range: float = 1500.0
@@ -82,6 +84,9 @@ func _ready() -> void:
 	if use_saved_loadout:
 		var saved := LoadoutStore.load_saved()
 		apply_loadout(saved, str(saved.get("machine_type", machine_type)))
+	elif use_ally_loadout:
+		var ally := LoadoutStore.load_ally()
+		apply_loadout(ally, str(ally.get("machine_type", machine_type)))
 	elif not loadout.is_empty():
 		apply_loadout(loadout)
 	else:

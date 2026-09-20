@@ -30,6 +30,12 @@ func _initialize() -> void:
 	rig = field.get_node("CameraRig")
 	camera = field.get_node("CameraRig/Camera3D")
 	targets = field.get_node("Targets").get_children()
+	# 流れ弾が標的に当たらないよう、戦闘中の機体を取り除く（標的の確認に集中する）
+	for enemy in field.get_node("Enemies").get_children():
+		enemy.queue_free()
+	var ally := field.get_node_or_null("SpareRobot")
+	if ally != null:
+		ally.queue_free()
 	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
 	field.get_node("Robot").use_saved_loadout = false
 

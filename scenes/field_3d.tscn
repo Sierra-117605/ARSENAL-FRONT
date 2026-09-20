@@ -193,6 +193,7 @@ machine_type = "scout_walker"
 max_hp = 200
 body_color = Color(0.25, 0.35, 0.5, 1)
 team = "player"
+use_ally_loadout = true
 
 [node name="AIPilot" type="Node" parent="SpareRobot" node_paths=PackedStringArray("start_seat")]
 script = ExtResource("9_ai")

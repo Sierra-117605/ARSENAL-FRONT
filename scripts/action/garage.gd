@@ -5,8 +5,15 @@ extends Control
 ## 出撃した時に読み込む戦闘の場面
 const FIELD_SCENE := "res://scenes/field_3d.tscn"
 
-## 今選んでいる構成
+## 今編集している機体（"player" = 自機 / "ally" = 味方機）
+var editing: String = "player"
+## 自機の構成
 var loadout: Dictionary = {}
+## 味方機の構成
+var ally_loadout: Dictionary = {}
+## 味方機の機種
+var ally_machine_id: String = ""
+var target_buttons: Array[Button] = []
 ## 今選んでいる機種
 var machine_id: String = ""
 ## 進行状況（開発済みパーツ・設計図・資材）
@@ -27,10 +34,14 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	progress = ProgressStore.load_progress()
 	loadout = LoadoutStore.load_saved()
-	# 未開発のパーツが構成に入っていたら標準品に戻す
+	ally_loadout = LoadoutStore.load_ally()
+	ally_machine_id = str(ally_loadout.get("machine_type", RobotParts.default_machine_id()))
+	# 未開発のパーツが構成に入っていたら標準品に戻す（自機・味方機とも）
 	for slot in RobotParts.slots():
 		if not ProgressStore.is_unlocked(progress, str(loadout.get(slot, ""))):
 			loadout[slot] = RobotParts.parts_for(slot)[0].get("id", "")
+		if not ProgressStore.is_unlocked(progress, str(ally_loadout.get(slot, ""))):
+			ally_loadout[slot] = RobotParts.parts_for(slot)[0].get("id", "")
 	machine_id = str(loadout.get("machine_type", RobotParts.default_machine_id()))
 	_build_ui()
 	_refresh()
@@ -64,7 +75,30 @@ func _build_ui() -> void:
 	subtitle.add_theme_color_override("font_color", Color(0.75, 0.78, 0.8))
 	root_box.add_child(subtitle)
 
-	# 機種の選択欄（一番上。機種で全高と基礎性能が変わる）
+	# 編集する機体の切り替え（自機／味方機）
+	var target_row := HBoxContainer.new()
+	target_row.add_theme_constant_override("separation", 12)
+	root_box.add_child(target_row)
+	var target_label := Label.new()
+	target_label.text = "編集する機体"
+	target_label.add_theme_font_size_override("font_size", 22)
+	target_row.add_child(target_label)
+	for key in ["player", "ally"]:
+		var button := Button.new()
+		button.text = "自機" if key == "player" else "味方機（AI）"
+		button.custom_minimum_size = Vector2(150, 42)
+		button.toggle_mode = true
+		button.set_meta("key", key)
+		button.pressed.connect(_on_target_selected.bind(str(key)))
+		target_buttons.append(button)
+		target_row.add_child(button)
+	var target_help := Label.new()
+	target_help.text = "味方機は AI が操縦します。自機を降りると AI が引き継ぎます。"
+	target_help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
+	target_help.add_theme_font_size_override("font_size", 16)
+	target_row.add_child(target_help)
+
+	# 機種の選択欄（機種で全高と基礎性能が変わる）
 	var machine_row := HBoxContainer.new()
 	machine_row.add_theme_constant_override("separation", 16)
 	root_box.add_child(machine_row)
@@ -204,12 +238,33 @@ func _build_slot_row(slot: String) -> Control:
 	return box
 
 
+## 編集する機体を切り替える
+func _on_target_selected(key: String) -> void:
+	editing = key
+	_refresh()
+
+
+## 今編集している構成
+func current_loadout() -> Dictionary:
+	return loadout if editing == "player" else ally_loadout
+
+
+## 今編集している機種
+func current_machine() -> String:
+	return machine_id if editing == "player" else ally_machine_id
+
+
 func _on_machine_selected(index: int) -> void:
 	var machines := RobotParts.machine_types()
 	if index >= 0 and index < machines.size():
-		machine_id = str(machines[index].get("id", ""))
+		var picked := str(machines[index].get("id", ""))
 		# その機種で装備できないパーツは、使える物に置き換える
-		loadout = RobotParts.sanitize(loadout, machine_id)
+		if editing == "player":
+			machine_id = picked
+			loadout = RobotParts.sanitize(loadout, picked)
+		else:
+			ally_machine_id = picked
+			ally_loadout = RobotParts.sanitize(ally_loadout, picked)
 		_refresh()
 
 
@@ -217,21 +272,28 @@ func _on_part_selected(index: int, slot: String) -> void:
 	var parts := RobotParts.parts_for(slot)
 	if index >= 0 and index < parts.size():
 		var part_id := str(parts[index].get("id", ""))
-		if ProgressStore.is_unlocked(progress, part_id) and RobotParts.can_equip(machine_id, part_id):
-			loadout[slot] = part_id
+		if ProgressStore.is_unlocked(progress, part_id) and RobotParts.can_equip(current_machine(), part_id):
+			current_loadout()[slot] = part_id
 		_refresh()
 
 
 ## 性能表示と説明を今の構成に合わせる
 func _refresh() -> void:
-	var stats := RobotParts.compute_stats(loadout, machine_id)
-	var machine := RobotParts.find_machine(machine_id)
+	for button in target_buttons:
+		button.button_pressed = str(button.get_meta("key")) == editing
+	if machine_picker != null:
+		var machines := RobotParts.machine_types()
+		for i in machines.size():
+			if str(machines[i].get("id", "")) == current_machine():
+				machine_picker.select(i)
+	var stats := RobotParts.compute_stats(current_loadout(), current_machine())
+	var machine := RobotParts.find_machine(current_machine())
 	if machine_desc != null:
 		machine_desc.text = "%s ／ 全高 約 %.0fm ／ %s" % [
 			str(machine.get("desc", "")), float(machine.get("height", 12.0)),
 			"四脚" if str(machine.get("legs", "")) == "quad" else "二脚"]
 	for slot in RobotParts.slots():
-		var part := RobotParts.find(str(loadout.get(slot, "")))
+		var part := RobotParts.find(str(current_loadout().get(slot, "")))
 		descriptions[slot].text = str(part.get("desc", ""))
 	_refresh_pickers()
 	_refresh_develop()
@@ -256,7 +318,7 @@ func _refresh_pickers() -> void:
 		for i in parts.size():
 			var part_id := str(parts[i].get("id", ""))
 			var unlocked := ProgressStore.is_unlocked(progress, part_id)
-			var equippable := RobotParts.can_equip(machine_id, part_id)
+			var equippable := RobotParts.can_equip(current_machine(), part_id)
 			var text := str(parts[i].get("name", part_id))
 			if not equippable:
 				text += "（この機種では不可）"
@@ -264,7 +326,7 @@ func _refresh_pickers() -> void:
 				text += "（未開発）"
 			picker.set_item_text(i, text)
 			picker.set_item_disabled(i, not (unlocked and equippable))
-			if part_id == str(loadout.get(slot, "")):
+			if part_id == str(current_loadout().get(slot, "")):
 				picker.select(i)
 
 
@@ -330,6 +392,9 @@ func _on_sortie() -> void:
 func _on_sortie_test() -> void:
 	loadout["machine_type"] = machine_id
 	LoadoutStore.save(loadout)
+	ally_loadout["machine_type"] = ally_machine_id
+	LoadoutStore.save_ally(ally_loadout)
+	GameLog.write("出撃", "味方機：" + GameLog.loadout_text(ally_loadout, ally_machine_id))
 	var stats := RobotParts.compute_stats(loadout, machine_id)
 	GameLog.write("出撃", GameLog.loadout_text(loadout, machine_id))
 	GameLog.write("出撃", "耐久 %d ／ 速さ %.1f ／ 威力 %d ／ 連射 %.2f 秒" % [
