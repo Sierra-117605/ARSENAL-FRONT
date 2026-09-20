@@ -7,6 +7,12 @@ extends Marker3D
 @export var bullet_scene: PackedScene = preload("res://scenes/bullet.tscn")
 ## 次の弾までの間隔（秒）
 @export var fire_interval: float = 0.25
+## 弾 1 発の威力
+@export var damage: int = 10
+## 弾の速さ（メートル/秒）
+@export var bullet_speed: float = 300.0
+## 弾のばらつき（狙った点からずれる幅の目安。小さいほど正確）
+@export var spread: float = 0.0
 
 var cooldown: float = 0.0
 
@@ -24,7 +30,12 @@ func try_fire(aim_point: Vector3, shooter: CollisionObject3D) -> bool:
 		return false
 	cooldown = fire_interval
 	var bullet: Bullet = bullet_scene.instantiate()
+	bullet.damage = damage
+	bullet.speed = bullet_speed
 	# 弾は機体の子ではなく、機体と同じ場所（フィールド）に置く
 	shooter.get_parent().add_child(bullet)
+	# ばらつき：狙った点を少しずらす（距離が遠いほど影響が小さくなる）
+	if spread > 0.0:
+		dir += Vector3(randf_range(-spread, spread), randf_range(-spread, spread), randf_range(-spread, spread))
 	bullet.launch(global_position, dir, shooter)
 	return true

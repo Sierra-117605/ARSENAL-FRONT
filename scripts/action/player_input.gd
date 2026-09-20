@@ -11,7 +11,7 @@ extends Node
 ## マウス感度（1 ピクセル動かしたときに回る角度・ラジアン）
 @export var mouse_sensitivity: float = 0.003
 
-## 照準の先を探す最大距離（メートル）
+## 照準の先を探す最大距離（メートル）。機体のパーツで決まる場合はそちらを使う
 @export var aim_range: float = 2000.0
 
 ## マウスでカメラを回せる状態か（Esc で解除、画面クリックで再開）
@@ -70,7 +70,11 @@ func _physics_process(_delta: float) -> void:
 func _find_aim_point() -> Vector3:
 	var camera := camera_rig.camera
 	var from := camera.global_position
-	var to := from - camera.global_transform.basis.z * aim_range
+	var range_m := aim_range
+	var vehicle_for_range := occupant.get_vehicle()
+	if vehicle_for_range != null and vehicle_for_range.get("aim_range") != null:
+		range_m = float(vehicle_for_range.get("aim_range"))
+	var to := from - camera.global_transform.basis.z * range_m
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	var vehicle := occupant.get_vehicle()
 	if vehicle != null:

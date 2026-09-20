@@ -74,9 +74,11 @@ func get_seats() -> Array[Seat]:
 
 ## 保存用に現在の状態を JSON 互換の Dictionary にする
 func to_dict() -> Dictionary:
+	# まだ世界に置かれていない時は親からの位置を使う（global_position は使えない）
+	var pos := global_position if is_inside_tree() else position
 	return {
 		"id": pilotable_id,
-		"position": {"x": global_position.x, "y": global_position.y, "z": global_position.z},
+		"position": {"x": pos.x, "y": pos.y, "z": pos.z},
 		"rotation_y": rotation.y,
 		"hp": hp,
 	}
@@ -86,6 +88,10 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	pilotable_id = data.get("id", pilotable_id)
 	var p: Dictionary = data.get("position", {})
-	global_position = Vector3(p.get("x", 0.0), p.get("y", 0.0), p.get("z", 0.0))
+	var loaded := Vector3(p.get("x", 0.0), p.get("y", 0.0), p.get("z", 0.0))
+	if is_inside_tree():
+		global_position = loaded
+	else:
+		position = loaded
 	rotation.y = data.get("rotation_y", 0.0)
 	hp = data.get("hp", max_hp)

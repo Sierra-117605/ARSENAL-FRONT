@@ -21,6 +21,11 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var body_bob: float = 0.25
 ## 機体の色を塗り替える（透明のままなら元の色。敵機を赤くするのに使う）
 @export var body_color: Color = Color(0, 0, 0, 0)
+## 組み立ての構成（頭・胴・腕・脚・発電機・武器のパーツ id）。空なら標準の構成
+@export var loadout: Dictionary = {}
+
+## 照準できる距離（パーツで変わる。PlayerInput が使う）
+var aim_range: float = 1500.0
 
 ## 腕の武器（Phase 1 は 1 種類）
 @onready var weapon: Weapon = get_node_or_null("Weapon")
@@ -35,9 +40,26 @@ var step_amount: float = 0.0
 
 
 func _ready() -> void:
+	apply_loadout(loadout)
 	super._ready()
 	if body_color.a > 0.0:
 		_repaint(visual)
+
+
+## 組み立ての構成を機体の性能に反映する
+func apply_loadout(new_loadout: Dictionary) -> void:
+	loadout = RobotParts.sanitize(new_loadout)
+	var stats := RobotParts.compute_stats(loadout)
+	max_hp = int(stats["max_hp"])
+	hp = max_hp
+	walk_speed = float(stats["walk_speed"])
+	aim_range = float(stats["aim_range"])
+	var w: Weapon = get_node_or_null("Weapon")
+	if w != null:
+		w.damage = int(stats["damage"])
+		w.fire_interval = float(stats["fire_interval"])
+		w.bullet_speed = float(stats["bullet_speed"])
+		w.spread = float(stats["spread"])
 
 
 ## 機体の見た目を指定の色で塗り替える（目玉の発光部分はそのまま）
@@ -105,6 +127,7 @@ func _update_step_motion(delta: float) -> void:
 func to_dict() -> Dictionary:
 	var data := super.to_dict()
 	data["machine_type"] = machine_type
+	data["loadout"] = loadout
 	return data
 
 
@@ -112,3 +135,5 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	super.from_dict(data)
 	machine_type = data.get("machine_type", machine_type)
+	if data.has("loadout"):
+		apply_loadout(data["loadout"])
