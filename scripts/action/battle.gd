@@ -156,6 +156,11 @@ func _setup_enemies() -> void:
 				enemy.weapon.fire_interval = interval
 
 
+## 拠点を置く場所（防衛は自陣の後方、破壊は敵陣の奥）
+const DEFEND_POSITION := Vector3(0, 0, 55)
+const DESTROY_POSITION := Vector3(0, 0, -190)
+
+
 ## 守る拠点／壊す目標を用意する
 func _setup_objective() -> void:
 	var node := get_node_or_null("Objective")
@@ -170,6 +175,8 @@ func _setup_objective() -> void:
 	objective.max_hp = int(mission.get("objective_hp", 400))
 	objective.hp = objective.max_hp
 	objective.team = "player" if kind == "defend" else "enemy"  # グループも自動で付け替わる
+	# 守る拠点は自陣の後方に、壊す目標は敵陣の奥に置く
+	objective.position = DEFEND_POSITION if kind == "defend" else DESTROY_POSITION
 	objective.destroyed.connect(_on_objective_destroyed)
 	GameLog.write("開始", "%s（耐久 %d）" % [
 		"守る拠点" if kind == "defend" else "破壊目標", objective.max_hp])
@@ -293,7 +300,11 @@ func _on_enemy_destroyed(enemy: Pilotable) -> void:
 	enemy.set_physics_process(false)
 	var timer := get_tree().create_timer(1.0)
 	timer.timeout.connect(enemy.queue_free)
-	if alive_enemy_count() == 0 and str(mission.get("type", "annihilate")) == "annihilate":
+	# 殲滅はもちろん、防衛でも敵を全滅させたら勝ち（守り切ったのと同じ）
+	var kind := str(mission.get("type", "annihilate"))
+	if alive_enemy_count() == 0 and (kind == "annihilate" or kind == "defend"):
+		if kind == "defend":
+			GameLog.write("結果", "敵を全滅させて拠点を守り切った")
 		_finish("win")
 
 

@@ -83,12 +83,26 @@ func _physics_process(_delta: float) -> bool:
 				_report(battle.objective != null and battle.objective.team == "player",
 					"防衛では守る拠点が出る（耐久 %d）" % (battle.objective.max_hp if battle.objective != null else 0))
 				_report(battle.time_left > 0.0, "制限時間がある（残り %.0f 秒）" % battle.time_left)
+				var robot_z: float = (field.get_node("Robot") as Node3D).global_position.z
+				var enemy_z: float = (battle._enemies()[0] as Node3D).global_position.z
+				var obj_z: float = battle.objective.global_position.z
+				_report(absf(obj_z - robot_z) < absf(obj_z - enemy_z),
+					"守る拠点は自陣側にある（拠点 z=%.0f／自機 z=%.0f／敵 z=%.0f）" % [obj_z, robot_z, enemy_z])
 				battle.objective.take_hit(100000)
 			elif frame == 15:
 				_report(battle.outcome == "lose", "防衛：拠点が壊れたら負け (%s)" % battle.outcome)
 				stage = 2
 				_start_mission("defend_depot", "easy")
 		2:  # 防衛（守り切れば勝ち）
+			if frame == 10:
+				# 敵を全滅させたら、時間を待たずに勝ちになるか
+				for enemy in battle._enemies():
+					enemy.take_hit(100000)
+			elif frame == 15:
+				_report(battle.outcome == "win", "防衛：敵を全滅させたら勝ち (%s)" % battle.outcome)
+				stage = 21
+				_start_mission("defend_depot", "easy")
+		21:  # 防衛（時間切れまで守り切る）
 			if frame == 10:
 				battle.time_left = 0.2  # すぐ時間切れにする
 			elif frame == 30:
@@ -99,6 +113,10 @@ func _physics_process(_delta: float) -> bool:
 			if frame == 10:
 				_report(battle.objective != null and battle.objective.team == "enemy",
 					"破壊では目標施設が出る（耐久 %d）" % (battle.objective.max_hp if battle.objective != null else 0))
+				var robot_z2: float = (field.get_node("Robot") as Node3D).global_position.z
+				_report(battle.objective.global_position.z < robot_z2 - 100.0,
+					"破壊目標は敵陣の奥にある（目標 z=%.0f／自機 z=%.0f）" % [
+						battle.objective.global_position.z, robot_z2])
 				battle.objective.take_hit(100000)
 			elif frame == 15:
 				_report(battle.outcome == "win", "破壊：目標を壊したら勝ち (%s)" % battle.outcome)
