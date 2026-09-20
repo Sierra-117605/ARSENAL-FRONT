@@ -41,6 +41,7 @@ static func empty_control() -> Dictionary:
 		"throttle": 0.0, # 加速・減速の入力 (-1=減速 〜 1=加速。航空機だけが使う)
 		"stick_x": 0.0,  # 操縦桿の左右（-1=左に傾ける 〜 1=右。航空機だけが使う）
 		"stick_y": 0.0,  # 操縦桿の上下（-1=機首下げ 〜 1=機首上げ。航空機だけが使う）
+		"rudder": 0.0,   # 方向舵（-1=左 〜 1=右。航空機だけが使う）
 		"fire": false,   # 射撃ボタン
 		"aim": {"x": 0.0, "y": 0.0, "z": 0.0},  # 狙っている地点（照準の先）
 	}
@@ -118,6 +119,11 @@ func take_hit(damage: int) -> void:
 ## まだ動けるか
 func is_alive() -> bool:
 	return hp > 0
+
+
+## 敵に狙われる相手になれるか（機体の中に隠れている兵士などは外す）
+func is_targetable() -> bool:
+	return is_alive()
 
 
 ## 操縦席の乗員から操縦入力を受け取る（操縦席の「運転手席」からのみ呼ばれる）

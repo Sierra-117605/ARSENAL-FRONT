@@ -33,6 +33,9 @@ func _initialize() -> void:
 	robot.use_saved_loadout = false
 	enemy = field.get_node("Enemies/Enemy1")
 	enemy_ai = field.get_node("Enemies/Enemy1/AIPilot")
+	# 味方を遠ざけているので、敵が「2 番目に近い相手」を選ぶと遠くへ歩いて行ってしまう。
+	# ここでは必ず一番近い相手（自機）を狙わせる
+	enemy_ai.target_spread_count = 1
 	# 味方 AI 機は今回の確認に関係ないので遠ざける
 	field.get_node("SpareRobot").position = Vector3(600, 0, 600)
 	# 味方の戦車・攻撃機も確認に関係ないので遠ざける

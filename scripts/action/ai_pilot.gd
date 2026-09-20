@@ -225,7 +225,7 @@ func _nearest_enemy() -> Pilotable:
 	var candidates: Array[Pilotable] = []
 	for node in vehicle.get_tree().get_nodes_in_group("team_" + enemy_team):
 		var other := node as Pilotable
-		if other != null and other.is_alive():
+		if other != null and other.is_targetable():
 			candidates.append(other)
 	if candidates.is_empty():
 		return null

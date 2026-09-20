@@ -8,6 +8,10 @@ extends Pilotable
 ##   W/S = 機首の上げ下げ（キーボードでも操作できる）、A/D = 機体を傾ける
 ##   Space = 加速、Shift = 減速、左クリック = 機関砲
 ## 地面にぶつかると墜落する。速度を落として水平に近づければ着陸できる。
+##
+## 操縦方式は 2 つ（ガレージ画面で切り替え。エースコンバットの呼び方に合わせている）：
+##   エキスパート：機体を自由に回せる。360 度ロールも背面飛行もできて、自動で水平に戻らない
+##   ノーヴィス：傾きが左右 80 度までで、手を離すと自動で水平に戻る（初心者向け）
 
 ## いちばん遅く飛べる速さ（メートル/秒）。これ以下には落ちない
 @export var min_speed: float = 45.0
@@ -31,6 +35,10 @@ extends Pilotable
 @export var landing_tilt_deg: float = 20.0
 ## 地上での減速の強さ
 @export var ground_brake: float = 40.0
+## 方向舵（A/D と一緒に使う水平の回頭）の速さ（度/秒）
+@export var rudder_speed_deg: float = 30.0
+## 操縦方式（"expert" / "novice"）。空のままなら保存された設定を使う
+@export var flight_mode: String = ""
 ## 全高（カメラが距離を合わせるのに使う）
 var height: float = 5.0
 ## 照準できる距離（空からは遠くまで狙える）
@@ -51,6 +59,17 @@ signal crashed
 @onready var weapon: Weapon = get_node_or_null("Weapon")
 @onready var gun_pivot: Node3D = get_node_or_null("Visual/GunPivot")
 @onready var muzzle_point: Node3D = get_node_or_null("Visual/GunPivot/MuzzlePoint")
+
+
+func _ready() -> void:
+	super._ready()
+	if flight_mode == "":
+		flight_mode = SettingsStore.flight_mode()
+
+
+## エキスパート操作か（ロール自由・自動で水平に戻らない）
+func is_expert() -> bool:
+	return flight_mode != SettingsStore.NOVICE
 
 
 func _physics_process(delta: float) -> void:
@@ -79,8 +98,7 @@ func _run_on_ground(delta: float) -> void:
 	else:
 		speed = move_toward(speed, 0.0, ground_brake * delta)
 	# 地上では機体を水平に戻す
-	rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
-	rotation.z = move_toward(rotation.z, 0.0, deg_to_rad(120.0) * delta)
+	_level_off()
 	# 左右の入力で向きを変える（滑走路での方向転換）
 	rotation.y -= _roll_input() * deg_to_rad(40.0) * delta
 	var forward := -global_transform.basis.z
@@ -103,25 +121,10 @@ func _fly(delta: float) -> void:
 	var throttle := float(control.get("throttle", 0.0))
 	speed = clampf(speed + throttle * throttle_power * delta, min_speed, max_speed)
 
-	# 機首の上下（操縦桿を引くと上を向く）
-	var pitch_input := _pitch_input()
-	rotation.x = clampf(rotation.x + pitch_input * deg_to_rad(pitch_speed_deg) * delta,
-		-deg_to_rad(pitch_limit_deg), deg_to_rad(pitch_limit_deg))
-
-	# 機体の傾き（バンク）。入力が無ければゆっくり水平に戻る
-	var roll_input := _roll_input()
-	if absf(roll_input) > 0.05:
-		rotation.z = clampf(rotation.z - roll_input * deg_to_rad(roll_speed_deg) * delta,
-			-deg_to_rad(80.0), deg_to_rad(80.0))
+	if is_expert():
+		_turn_expert(delta)
 	else:
-		rotation.z = move_toward(rotation.z, 0.0, deg_to_rad(40.0) * delta)
-
-	# 傾けている方向へ旋回する（実際の飛行機と同じで、傾けて曲がる）
-	rotation.y += sin(rotation.z) * deg_to_rad(turn_rate_deg) * delta
-
-	# 上限の高さを超えたら機首を下げる
-	if global_position.y > ceiling and rotation.x > 0.0:
-		rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
+		_turn_novice(delta)
 
 	# 機首の向いている方向へ、今の速さで進み続ける
 	var forward := -global_transform.basis.z
@@ -130,22 +133,67 @@ func _fly(delta: float) -> void:
 		_touch_ground()
 
 
+## エキスパート操作：機体そのものの軸で回す。何度でもロールでき、背面飛行もできる
+func _turn_expert(delta: float) -> void:
+	var pitch_input := _pitch_input()
+	var roll_input := _roll_input()
+	var yaw_input := float(control.get("rudder", 0.0))
+	# 機体から見た軸で回す（世界の上下に縛られないので一回転できる）
+	var turn := Basis.IDENTITY
+	turn = turn.rotated(Vector3.RIGHT, pitch_input * deg_to_rad(pitch_speed_deg) * delta)
+	turn = turn.rotated(Vector3.BACK, -roll_input * deg_to_rad(roll_speed_deg) * delta)
+	turn = turn.rotated(Vector3.UP, -yaw_input * deg_to_rad(rudder_speed_deg) * delta)
+	transform.basis = (transform.basis * turn).orthonormalized()
+	# 上限の高さを超えたら機首を下げる
+	if global_position.y > ceiling:
+		var nose_up: float = (-transform.basis.z).y
+		if nose_up > 0.0:
+			transform.basis = (transform.basis * Basis(Vector3.RIGHT,
+				-deg_to_rad(60.0) * delta)).orthonormalized()
+
+
+## ノーヴィス操作：傾きは左右 80 度まで。手を離すと自動で水平に戻る
+func _turn_novice(delta: float) -> void:
+	var pitch_input := _pitch_input()
+	rotation.x = clampf(rotation.x + pitch_input * deg_to_rad(pitch_speed_deg) * delta,
+		-deg_to_rad(pitch_limit_deg), deg_to_rad(pitch_limit_deg))
+	var roll_input := _roll_input()
+	if absf(roll_input) > 0.05:
+		rotation.z = clampf(rotation.z - roll_input * deg_to_rad(roll_speed_deg) * delta,
+			-deg_to_rad(80.0), deg_to_rad(80.0))
+	else:
+		rotation.z = move_toward(rotation.z, 0.0, deg_to_rad(40.0) * delta)
+	# 傾けている方向へ旋回する（傾けるだけで曲がってくれる）
+	rotation.y += sin(rotation.z) * deg_to_rad(turn_rate_deg) * delta
+	if global_position.y > ceiling and rotation.x > 0.0:
+		rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
+
+
 ## 地面・建物に触れた：条件が良ければ着陸、そうでなければ墜落
 func _touch_ground() -> void:
 	if takeoff_grace > 0.0:
 		return  # 離陸した直後は地面をこすっても墜落しない
-	var tilt := maxf(absf(rotation.z), absf(rotation.x))
+	# どれだけ傾いているか（機体の上が真上からどれだけずれているか）
+	var tilt := transform.basis.y.angle_to(Vector3.UP)
 	var sinking := -velocity.y
 	var gentle: bool = sinking < landing_sink and tilt < deg_to_rad(landing_tilt_deg) \
 		and speed < min_speed + 25.0 and is_on_floor()
 	if gentle:
 		on_ground = true
-		rotation.x = 0.0
-		rotation.z = 0.0
+		_level_off()
 		velocity = Vector3.ZERO
 		GameLog.write("航空機", "%s が着陸した（速度 %.0fm/秒）" % [name, speed])
 		return
 	crash()
+
+
+## 機体を水平に戻す（向きはそのまま）
+func _level_off() -> void:
+	var forward: Vector3 = -transform.basis.z
+	forward.y = 0.0
+	if forward.length() < 0.01:
+		forward = Vector3.FORWARD
+	rotation = Vector3(0.0, atan2(-forward.x, -forward.z), 0.0)
 
 
 ## 墜落する（撃墜と同じ扱い）
@@ -194,4 +242,5 @@ func to_dict() -> Dictionary:
 	data["altitude"] = global_position.y
 	data["speed"] = speed
 	data["on_ground"] = on_ground
+	data["flight_mode"] = flight_mode
 	return data

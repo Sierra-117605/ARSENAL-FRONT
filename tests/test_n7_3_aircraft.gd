@@ -1,42 +1,46 @@
 extends SceneTree
-## 航空機（攻撃機）の確認。エースコンバット風の「常に飛び続ける」操作（SPEC §0.15）。
+## 航空機（攻撃機）の確認。エースコンバット風の操作（SPEC §0.15）。
 ## 実際にキーを押した・マウスを動かしたことにして飛ばす。
 ##
 ## 確かめること：
-##  1. 戦場に攻撃機が駐機していて、兵士が歩いて行けば乗り込める
-##  2. Space（加速）で滑走して離陸する
-##  3. 空中では止まれない。Shift で減速しても最低速度より遅くならない
-##  4. マウスを上に動かすと機首が上がり、高度が上がる
-##  5. マウスを右に動かすと機体が右に傾き、その方向へ旋回する（傾けて曲がる）
-##  6. 弾は機首の銃口の先から出る
-##  7. カメラが航空機用の後方視点に切り替わる
+##  1. 戦場に攻撃機が駐機していて、兵士が歩いて行けば乗り込める。カメラが後方視点になる
+##  2. Space（加速）で滑走して離陸する。空中では止まれず、最低速度を下回らない
+##  3. マウスを上に動かすと機首が上がり、高度が上がる
+##  4. エキスパート操作：傾けただけでは曲がらず、傾けて機首を引くと旋回する
+##  5. エキスパート操作：360 度ロールできる（背面飛行になる）
+##  6. ノーヴィス操作：傾けるだけで曲がり、手を離すと自動で水平に戻る
+##  7. 弾は機首の銃口の先から出る
 ##  8. 地面に突っ込むと墜落する（撃墜と同じ扱い）
 ##
 ## 実行：Godot_console.exe --headless --path . --script res://tests/test_n7_3_aircraft.gd
 
 var field: Node
 var plane: Aircraft
-var robot: Robot
 var rig: CameraRig
 var input: PlayerInput
 var pilot: Occupant
 var frame := 0
 var failed := false
 var mission_before := ""
+var settings_before := ""
 var yaw_before := 0.0
 var crashed := false
+## 飛行中にいちばん逆さまになった度合い（-1 = 完全な背面飛行）
+var most_inverted := 1.0
 
 
 func _initialize() -> void:
-	# 任務の設定に左右されないよう、基本の任務（殲滅・中）に固定する
+	# 任務・設定に左右されないよう、基本の任務とエキスパート操作に固定する
 	if FileAccess.file_exists(MissionData.CHOICE_PATH):
 		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
+	if FileAccess.file_exists(SettingsStore.PATH):
+		settings_before = FileAccess.get_file_as_string(SettingsStore.PATH)
 	MissionData.save_choice("sweep_plain", "normal")
+	SettingsStore.save_flight_mode(SettingsStore.EXPERT)
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	plane = field.get_node("Aircraft")
-	robot = field.get_node("Robot")
-	robot.use_saved_loadout = false
+	(field.get_node("Robot") as Robot).use_saved_loadout = false
 	rig = field.get_node("CameraRig")
 	input = field.get_node("PlayerInput")
 	pilot = field.get_node("Pilot")
@@ -48,9 +52,13 @@ func _initialize() -> void:
 
 func _physics_process(_delta: float) -> bool:
 	frame += 1
+	# いちばん逆さまになった瞬間を覚えておく（1 = 水平、-1 = 背面）
+	if plane != null and is_instance_valid(plane):
+		most_inverted = minf(most_inverted, plane.global_transform.basis.y.y)
 	match frame:
 		30:
 			_report(plane.is_landed(), "攻撃機は地上に駐機している（速度 %.0fm/秒）" % plane.speed)
+			_report(plane.is_expert(), "設定どおりエキスパート操作になっている")
 			input.toggle_board()  # 自機のロボットから降りる
 		40:
 			var soldier: Node3D = pilot.body
@@ -65,48 +73,92 @@ func _physics_process(_delta: float) -> bool:
 				plane.global_position.y, plane.speed])
 			_report(plane.speed >= plane.min_speed, "空中では最低速度を下回らない (%.0f)" % plane.speed)
 			Input.action_release("throttle_up")
-			# 4：マウスを上に動かして機首を上げる（画面上向き＝ y が負の動き）
+			# 3：マウスを上に動かして機首を上げる（画面の上＝ y が負の動き）
 			_move_mouse(0.0, -120.0)
 			set_meta("height_before", plane.global_position.y)
 		290:
-			_report(plane.rotation.x > deg_to_rad(10.0),
-				"マウスを上に動かすと機首が上がる（%.0f 度）" % rad_to_deg(plane.rotation.x))
+			_report(_nose_up() > 0.2, "マウスを上に動かすと機首が上がる（%.0f 度）" % rad_to_deg(asin(_nose_up())))
 			_report(plane.global_position.y > float(get_meta("height_before")) + 20.0,
 				"機首を上げると高度が上がる（%.0fm → %.0fm）" % [
 					get_meta("height_before"), plane.global_position.y])
-			# 操縦桿を中央に戻して水平飛行へ
-			_move_mouse(0.0, 120.0)
+			_move_mouse(0.0, 120.0)  # 操縦桿を中央へ戻す
 		350:
-			# 5：マウスを右に動かして旋回
-			yaw_before = plane.rotation.y
+			# 4：エキスパートは傾けただけでは曲がらない
+			yaw_before = _heading()
 			_move_mouse(150.0, 0.0)
 		410:
-			_report(plane.rotation.z < deg_to_rad(-10.0),
-				"マウスを右に動かすと機体が右に傾く（%.0f 度）" % rad_to_deg(-plane.rotation.z))
-			var turned: float = absf(wrapf(plane.rotation.y - yaw_before, -PI, PI))
-			_report(turned > deg_to_rad(15.0),
-				"傾けた方向へ旋回する（%.0f 度まわった）" % rad_to_deg(turned))
-			_move_mouse(-150.0, 0.0)  # 操縦桿を中央へ戻す
-		440:
-			_check_muzzle()
-			# 3：減速しても止まれない
-			Input.action_press("throttle_down")
+			_report(_bank() > 0.2, "マウスを右に動かすと機体が右に傾く（%.0f 度）" % rad_to_deg(asin(_bank())))
+			_report(_turned_from(yaw_before) < deg_to_rad(20.0),
+				"エキスパートは傾けただけでは曲がらない（%.0f 度）" % rad_to_deg(_turned_from(yaw_before)))
+			# 傾けたまま機首を引く＝旋回
+			yaw_before = _heading()
+			_move_mouse(0.0, -150.0)
+		470:
+			_report(_turned_from(yaw_before) > deg_to_rad(25.0),
+				"傾けて機首を引くと旋回する（%.0f 度まわった）" % rad_to_deg(_turned_from(yaw_before)))
+			# 5：360 度ロール（操縦桿を右に倒し続ける）
+			_move_mouse(0.0, 150.0)  # 上下は中央へ
+			_move_mouse(120.0, 0.0)  # 右へいっぱい
 		560:
+			_report(most_inverted < -0.5,
+				"エキスパートなら 360 度ロールできる（いちばん逆さまで %.2f）" % most_inverted)
+			_check_muzzle()
+			# 操縦桿を中央へ戻し、ノーヴィス操作に切り替える
+			_move_mouse(-270.0, 0.0)
+			plane.flight_mode = SettingsStore.NOVICE
+			plane.rotation = Vector3(0.0, plane.rotation.y, 0.0)
+			plane.global_position.y = 220.0
+			plane.force_update_transform()
+		620:
+			# 6：ノーヴィスは傾けるだけで曲がる
+			yaw_before = _heading()
+			_move_mouse(150.0, 0.0)
+		700:
+			_report(_bank() > 0.2 and _bank() < 0.99,
+				"ノーヴィスの傾きは 80 度までに収まる（%.0f 度）" % rad_to_deg(asin(_bank())))
+			_report(_turned_from(yaw_before) > deg_to_rad(20.0),
+				"ノーヴィスは傾けるだけで曲がる（%.0f 度まわった）" % rad_to_deg(_turned_from(yaw_before)))
+			_move_mouse(-150.0, 0.0)  # 手を離した＝操縦桿を中央へ
+		880:
+			_report(_bank() < 0.1, "ノーヴィスは手を離すと自動で水平に戻る（%.0f 度）" % rad_to_deg(asin(_bank())))
+			# 2：減速しても止まれない
+			Input.action_press("throttle_down")
+		1020:
 			Input.action_release("throttle_down")
 			_report(absf(plane.speed - plane.min_speed) < 1.0,
 				"Shift で減速しても最低速度で飛び続ける (%.0fm/秒)" % plane.speed)
-			_report(not plane.is_landed(), "空中で止まることはできない")
 			# 8：地面へ突っ込ませる
 			plane.global_position = Vector3(plane.global_position.x, 40.0, plane.global_position.z)
 			plane.rotation.x = deg_to_rad(-60.0)
 			plane.force_update_transform()
-		620:
+		1080:
 			_report(crashed, "地面に突っ込むと墜落する")
 			_report(not plane.is_alive(), "墜落した機体は撃墜と同じ扱いになる（耐久 %d）" % plane.hp)
-			_restore_mission()
+			_restore()
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false
+
+
+## 機首がどれだけ上を向いているか（1 = 真上）
+func _nose_up() -> float:
+	return (-plane.global_transform.basis.z).y
+
+
+## 右にどれだけ傾いているか（1 = 右の翼が真下）
+func _bank() -> float:
+	return -plane.global_transform.basis.x.y
+
+
+## 今どちらを向いているか（水平の角度）
+func _heading() -> float:
+	var forward: Vector3 = -plane.global_transform.basis.z
+	return atan2(-forward.x, -forward.z)
+
+
+## 記録した向きからどれだけ回ったか
+func _turned_from(before: float) -> float:
+	return absf(wrapf(_heading() - before, -PI, PI))
 
 
 ## マウスを動かしたことにする（操縦桿を倒す）
@@ -141,14 +193,19 @@ func _check_muzzle() -> void:
 	_report(distance < 20.0, "弾が銃口の位置から出る（%.1fm）" % distance)
 
 
-## 任務の設定を元に戻す
-func _restore_mission() -> void:
-	if mission_before != "":
-		var f := FileAccess.open(MissionData.CHOICE_PATH, FileAccess.WRITE)
+## 任務と設定を元に戻す
+func _restore() -> void:
+	_write_or_delete(MissionData.CHOICE_PATH, mission_before)
+	_write_or_delete(SettingsStore.PATH, settings_before)
+
+
+func _write_or_delete(path: String, content: String) -> void:
+	if content != "":
+		var f := FileAccess.open(path, FileAccess.WRITE)
 		if f != null:
-			f.store_string(mission_before)
-	elif FileAccess.file_exists(MissionData.CHOICE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(MissionData.CHOICE_PATH))
+			f.store_string(content)
+	elif FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 func _report(ok: bool, msg: String) -> void:

@@ -21,6 +21,9 @@ extends Node
 ## 航空機のマウス感度（1 ピクセルで操縦桿がどれだけ倒れるか）
 @export var stick_sensitivity: float = 0.004
 
+## 操縦桿の「遊び」。これより小さい傾きは中央と見なす（少しのずれで勝手に曲がらないように）
+@export var stick_deadzone: float = 0.12
+
 ## 航空機に乗っている間の操縦桿の傾き（-1〜1。中央に戻すと水平飛行）
 var stick: Vector2 = Vector2.ZERO
 
@@ -81,10 +84,16 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_pressed(InputActions.THROTTLE_DOWN):
 		throttle -= 1.0
 	control["throttle"] = throttle
+	var rudder := 0.0
+	if Input.is_action_pressed(InputActions.RUDDER_RIGHT):
+		rudder += 1.0
+	if Input.is_action_pressed(InputActions.RUDDER_LEFT):
+		rudder -= 1.0
+	control["rudder"] = rudder
 	if _aircraft() == null:
 		stick = Vector2.ZERO
-	control["stick_x"] = stick.x
-	control["stick_y"] = stick.y
+	control["stick_x"] = _with_deadzone(stick.x)
+	control["stick_y"] = _with_deadzone(stick.y)
 	if camera_rig != null:
 		control["yaw"] = camera_rig.yaw
 		control["pitch"] = camera_rig.pitch
@@ -171,6 +180,11 @@ func _machine_radius(vehicle: Pilotable) -> float:
 	if vehicle.get("height") != null:
 		return float(vehicle.get("height")) * 0.4
 	return 4.0
+
+
+## 操縦桿の小さなずれを 0 として扱う（遊びの分）
+func _with_deadzone(value: float) -> float:
+	return 0.0 if absf(value) < stick_deadzone else value
 
 
 ## 今プレイヤーが操縦している航空機（乗っていなければ null）

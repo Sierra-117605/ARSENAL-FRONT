@@ -49,8 +49,13 @@ func _physics_process(delta: float) -> void:
 		weapon.try_fire(Pilotable.aim_point(control), self)
 
 
+## 機体の中にいるか（乗っている間は敵に狙われない）
+var inside_vehicle: bool = false
+
+
 ## 乗り物に乗り込む時：体を隠して動かなくする
 func enter_vehicle() -> void:
+	inside_vehicle = true
 	visible = false
 	set_physics_process(false)
 	# 当たり判定も止める（機体の中にいる扱い）
@@ -63,7 +68,13 @@ func exit_vehicle(at_position: Vector3, facing_yaw: float) -> void:
 	global_position = at_position
 	rotation.y = facing_yaw
 	velocity = Vector3.ZERO
+	inside_vehicle = false
 	visible = true
 	set_physics_process(true)
 	for owner_id in get_shape_owners():
 		shape_owner_set_disabled(owner_id, false)
+
+
+## 機体の中に隠れている間は敵に狙われない
+func is_targetable() -> bool:
+	return is_alive() and not inside_vehicle

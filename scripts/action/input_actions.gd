@@ -11,6 +11,8 @@ const FIRE := "fire"
 const RESTART := "restart"
 const GARAGE := "garage"
 const BOARD := "board"
+const RUDDER_LEFT := "rudder_left"      # 機首を左へ振る（航空機）
+const RUDDER_RIGHT := "rudder_right"    # 機首を右へ振る（航空機）
 const THROTTLE_UP := "throttle_up"      # 加速（航空機）
 const THROTTLE_DOWN := "throttle_down"  # 減速（航空機）
 
@@ -23,6 +25,8 @@ const KEYS := {
 	RESTART: KEY_R,
 	GARAGE: KEY_G,
 	BOARD: KEY_F,
+	RUDDER_LEFT: KEY_Q,
+	RUDDER_RIGHT: KEY_E,
 	THROTTLE_UP: KEY_SPACE,
 	THROTTLE_DOWN: KEY_SHIFT,
 }

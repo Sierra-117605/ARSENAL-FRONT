@@ -14,6 +14,8 @@ var ally_loadout: Dictionary = {}
 ## 味方機の機種
 var ally_machine_id: String = ""
 var target_buttons: Array[Button] = []
+## 攻撃機の操縦方式のボタン（エキスパート／ノーヴィス）
+var flight_mode_buttons: Array[Button] = []
 ## 今選んでいる機種
 var machine_id: String = ""
 ## 進行状況（開発済みパーツ・設計図・資材）
@@ -92,6 +94,7 @@ func _build_ui() -> void:
 		button.pressed.connect(_on_target_selected.bind(str(key)))
 		target_buttons.append(button)
 		target_row.add_child(button)
+	_build_flight_mode_row(root_box)
 	var target_help := Label.new()
 	target_help.text = "味方機は AI が操縦します。自機を降りると AI が引き継ぎます。"
 	target_help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
@@ -199,13 +202,46 @@ func _build_ui() -> void:
 	sortie.pressed.connect(_on_sortie)
 	bottom.add_child(sortie)
 	var help := Label.new()
-	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 乗り降り（徒歩で近づいて乗り込む）／Space・Shift 加速・減速（攻撃機）／Esc カーソル／R やり直し／G ガレージへ戻る"
+	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 乗り降り（徒歩で近づいて乗り込む）／Space・Shift 加速・減速・Q/E 方向舵（攻撃機）／Esc カーソル／R やり直し／G ガレージへ戻る"
 	help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
 	help.add_theme_font_size_override("font_size", 16)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	help.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bottom.add_child(help)
+
+
+## 航空機の操縦方式（エキスパート／ノーヴィス）を選ぶ行
+func _build_flight_mode_row(parent: Control) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var label := Label.new()
+	label.text = "攻撃機の操縦"
+	label.add_theme_font_size_override("font_size", 22)
+	row.add_child(label)
+	for mode in [SettingsStore.EXPERT, SettingsStore.NOVICE]:
+		var button := Button.new()
+		button.text = "エキスパート" if mode == SettingsStore.EXPERT else "ノーヴィス"
+		button.custom_minimum_size = Vector2(150, 42)
+		button.toggle_mode = true
+		button.button_pressed = SettingsStore.flight_mode() == mode
+		button.set_meta("mode", mode)
+		button.pressed.connect(_on_flight_mode_selected.bind(str(mode)))
+		flight_mode_buttons.append(button)
+		row.add_child(button)
+	var help := Label.new()
+	help.text = "エキスパート：360 度ロールも背面飛行もできる／ノーヴィス：傾けすぎず自動で水平に戻る"
+	help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
+	help.add_theme_font_size_override("font_size", 16)
+	row.add_child(help)
+	parent.add_child(row)
+
+
+## 操縦方式のボタンが押された
+func _on_flight_mode_selected(mode: String) -> void:
+	SettingsStore.save_flight_mode(mode)
+	for button in flight_mode_buttons:
+		button.button_pressed = str(button.get_meta("mode")) == mode
 
 
 ## 1 つの部位ぶんの行（名前・選択欄・説明）

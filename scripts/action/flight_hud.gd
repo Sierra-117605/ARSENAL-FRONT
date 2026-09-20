@@ -18,8 +18,9 @@ func _process(_delta: float) -> void:
 	var stick := ""
 	if player_input != null:
 		stick = "　操縦桿 %s%s" % [_arrow_x(player_input.stick.x), _arrow_y(player_input.stick.y)]
-	text = "速度 %3.0f m/秒　高度 %4.0f m　%s%s" % [
-		plane.speed, maxf(plane.global_position.y, 0.0), state, stick]
+	var mode := "エキスパート" if plane.is_expert() else "ノーヴィス"
+	text = "速度 %3.0f m/秒　高度 %4.0f m　%s　操縦 %s%s" % [
+		plane.speed, maxf(plane.global_position.y, 0.0), state, mode, stick]
 
 
 ## 今プレイヤーが乗っている航空機（乗っていなければ null）

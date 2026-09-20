@@ -43,6 +43,10 @@ func _initialize() -> void:
 			extra.position = Vector3(900, 0, 900)
 	for other in ["Enemy2", "Enemy3"]:
 		field.get_node("Enemies/" + other).queue_free()
+	# このテストは味方を遠ざけているので、敵が「2 番目に近い相手」を選ぶと
+	# 遠くの味方へ歩いて行ってしまう。ここでは必ず一番近い相手（自機）を狙わせる
+	var enemy_ai: AIPilot = enemy.get_node("AIPilot")
+	enemy_ai.target_spread_count = 1
 	robot.damaged.connect(_on_player_damaged)
 
 
