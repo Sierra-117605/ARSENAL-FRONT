@@ -91,16 +91,24 @@ func _physics_process(_delta: float) -> bool:
 			var slot := str(RobotParts.find(developed).get("slot", ""))
 			var picker: OptionButton = garage.pickers[slot]
 			var developed_ok := false
-			var locked_found := false
 			for i in picker.item_count:
 				var parts := RobotParts.parts_for(slot)
-				var part_id := str(parts[i].get("id", ""))
-				if part_id == developed:
+				if str(parts[i].get("id", "")) == developed:
 					developed_ok = not picker.is_item_disabled(i)
-				elif not ProgressStore.is_unlocked(progress, part_id):
-					locked_found = picker.is_item_disabled(i)
 			_report(developed_ok, "開発したパーツはガレージで選べる (%s)" % developed)
-			_report(locked_found, "未開発のパーツは選べない（グレーアウト）")
+			# 未開発のパーツは、どの部位でも選べない状態になっているか
+			var locked_total := 0
+			var locked_disabled := 0
+			for other_slot in RobotParts.slots():
+				var other_picker: OptionButton = garage.pickers[other_slot]
+				var other_parts := RobotParts.parts_for(other_slot)
+				for i in other_parts.size():
+					if not ProgressStore.is_unlocked(progress, str(other_parts[i].get("id", ""))):
+						locked_total += 1
+						if other_picker.is_item_disabled(i):
+							locked_disabled += 1
+			_report(locked_total > 0 and locked_disabled == locked_total,
+				"未開発のパーツは選べない（%d 件すべてグレーアウト）" % locked_total)
 			# 7：未開発パーツが構成に残っていた場合
 			LoadoutStore.save({"weapon": "weapon_gatling", "machine_type": "multirole_walker"})
 		35:
