@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
 [ext_resource type="PackedScene" path="res://scenes/tank.tscn" id="17_tank"]
 [ext_resource type="PackedScene" path="res://scenes/aircraft.tscn" id="18_air"]
+[ext_resource type="Script" path="res://scripts/action/chase_view.gd" id="19_chase"]
+[ext_resource type="Script" path="res://scripts/action/flight_hud.gd" id="20_fhud"]
 [ext_resource type="PackedScene" path="res://scenes/objective.tscn" id="14_obj"]
 [ext_resource type="Script" path="res://scripts/action/mission_hud.gd" id="15_mhud"]
 [ext_resource type="Theme" path="res://assets/ui_theme.tres" id="16_theme"]
@@ -296,6 +298,10 @@ fov = 70.0
 script = ExtResource("5_tpv")
 view_name = "三人称"
 
+[node name="ChaseView" type="Node" parent="CameraRig"]
+script = ExtResource("19_chase")
+view_name = "航空機（後方）"
+
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="Crosshair" type="Control" parent="HUD"]
@@ -329,6 +335,16 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("11_msg")
 battle = NodePath("../..")
+
+[node name="FlightHUD" type="Label" parent="HUD" node_paths=PackedStringArray("occupant", "player_input")]
+offset_left = 24.0
+offset_top = 96.0
+offset_right = 560.0
+offset_bottom = 126.0
+theme = ExtResource("16_theme")
+script = ExtResource("20_fhud")
+occupant = NodePath("../../Pilot")
+player_input = NodePath("../../PlayerInput")
 
 [node name="MissionHUD" type="Control" parent="HUD" node_paths=PackedStringArray("battle")]
 layout_mode = 3

@@ -18,6 +18,12 @@ extends Node
 ## 照準の先を探す最大距離（メートル）。機体のパーツで決まる場合はそちらを使う
 @export var aim_range: float = 2000.0
 
+## 航空機のマウス感度（1 ピクセルで操縦桿がどれだけ倒れるか）
+@export var stick_sensitivity: float = 0.004
+
+## 航空機に乗っている間の操縦桿の傾き（-1〜1。中央に戻すと水平飛行）
+var stick: Vector2 = Vector2.ZERO
+
 ## マウスでカメラを回せる状態か（Esc で解除、画面クリックで再開）
 var look_enabled: bool = true
 ## カメラ操作に戻るためのクリックで撃たないよう、ボタンを一度離すまで射撃を止める
@@ -46,10 +52,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			fire_blocked = true
 			get_viewport().set_input_as_handled()
 		return
-	# マウスの動き：カメラを回す（右へ動かすと右を向く、上へ動かすと上を向く）
+	# マウスの動き
 	if event is InputEventMouseMotion and look_enabled and camera_rig != null:
 		var d: Vector2 = event.screen_relative
-		camera_rig.add_look(-d.x * mouse_sensitivity, -d.y * mouse_sensitivity)
+		if _aircraft() != null:
+			# 航空機：マウスが操縦桿になる。倒した位置のままだとその方向へ曲がり続ける
+			stick.x = clampf(stick.x + d.x * stick_sensitivity, -1.0, 1.0)
+			stick.y = clampf(stick.y - d.y * stick_sensitivity, -1.0, 1.0)
+		else:
+			# それ以外：カメラを回す（右へ動かすと右を向く、上へ動かすと上を向く）
+			camera_rig.add_look(-d.x * mouse_sensitivity, -d.y * mouse_sensitivity)
 
 
 func _physics_process(_delta: float) -> void:
@@ -62,13 +74,17 @@ func _physics_process(_delta: float) -> void:
 		InputActions.MOVE_FORWARD, InputActions.MOVE_BACK)
 	control["move_x"] = move.x
 	control["move_z"] = move.y
-	# 上昇・下降（航空機だけが使う。他の機体は無視する）
-	var lift := 0.0
-	if Input.is_action_pressed(InputActions.ASCEND):
-		lift += 1.0
-	if Input.is_action_pressed(InputActions.DESCEND):
-		lift -= 1.0
-	control["lift"] = lift
+	# 加速・減速と操縦桿（航空機だけが使う。他の機体は無視する）
+	var throttle := 0.0
+	if Input.is_action_pressed(InputActions.THROTTLE_UP):
+		throttle += 1.0
+	if Input.is_action_pressed(InputActions.THROTTLE_DOWN):
+		throttle -= 1.0
+	control["throttle"] = throttle
+	if _aircraft() == null:
+		stick = Vector2.ZERO
+	control["stick_x"] = stick.x
+	control["stick_y"] = stick.y
 	if camera_rig != null:
 		control["yaw"] = camera_rig.yaw
 		control["pitch"] = camera_rig.pitch
@@ -157,10 +173,20 @@ func _machine_radius(vehicle: Pilotable) -> float:
 	return 4.0
 
 
+## 今プレイヤーが操縦している航空機（乗っていなければ null）
+func _aircraft() -> Aircraft:
+	if occupant == null:
+		return null
+	return occupant.get_vehicle() as Aircraft
+
+
 ## カメラと耐久バーの見る相手を切り替える
 func _switch_view_to(target: Node3D) -> void:
 	if camera_rig != null:
 		camera_rig.target = target
+		# 航空機は後方からの追従視点、それ以外は三人称（肩越し）に切り替える
+		camera_rig.select_view(ChaseView if target is Aircraft else ThirdPersonView)
+		stick = Vector2.ZERO
 	if health_bar != null:
 		health_bar.target = target
 

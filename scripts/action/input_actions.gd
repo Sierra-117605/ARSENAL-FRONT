@@ -11,8 +11,8 @@ const FIRE := "fire"
 const RESTART := "restart"
 const GARAGE := "garage"
 const BOARD := "board"
-const ASCEND := "ascend"    # 上昇（航空機）
-const DESCEND := "descend"  # 下降（航空機）
+const THROTTLE_UP := "throttle_up"      # 加速（航空機）
+const THROTTLE_DOWN := "throttle_down"  # 減速（航空機）
 
 ## 操作名 → キー（キーボード上の物理位置で指定するので配列が違っても同じ場所）
 const KEYS := {
@@ -23,8 +23,8 @@ const KEYS := {
 	RESTART: KEY_R,
 	GARAGE: KEY_G,
 	BOARD: KEY_F,
-	ASCEND: KEY_SPACE,
-	DESCEND: KEY_SHIFT,
+	THROTTLE_UP: KEY_SPACE,
+	THROTTLE_DOWN: KEY_SHIFT,
 }
 
 ## 操作名 → マウスボタン

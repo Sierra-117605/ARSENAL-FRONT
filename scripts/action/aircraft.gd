@@ -1,117 +1,172 @@
 class_name Aircraft
 extends Pilotable
-## 攻撃機（垂直に浮き上がれる機体）。
-## 空を飛べるので物陰や地形を越えて回り込めるが、装甲は薄く、当たればすぐ落ちる。
+## 攻撃機（SPEC §0.15）。エースコンバット風に「常に前へ飛び続ける」機体。
+## 空中で止まることはできず、マウス（＝操縦桿）で機首を上下させ、機体を傾けて旋回する。
 ##
-## 操作（SPEC §0.15）：
-##   W/S = 前進・後退、A/D = 左右に平行移動、Space = 上昇、Shift = 下降
-##   マウス = 狙う方向（機首がその方向へ向く）、左クリック = 機関砲
-## 上昇も下降もしていない時は、その高さのまま浮いて止まる（ホバリング）。
+## 操作：
+##   マウス上下 = 機首の上げ下げ、マウス左右 = 機体を傾ける（傾けると旋回する）
+##   W/S = 機首の上げ下げ（キーボードでも操作できる）、A/D = 機体を傾ける
+##   Space = 加速、Shift = 減速、左クリック = 機関砲
+## 地面にぶつかると墜落する。速度を落として水平に近づければ着陸できる。
 
-## 前進の速さ（メートル/秒）
-@export var forward_speed: float = 55.0
-## 後退の速さ
-@export var back_speed: float = 22.0
-## 左右に平行移動する速さ
-@export var strafe_speed: float = 32.0
-## 加速の滑らかさ
-@export var acceleration: float = 45.0
-## 上昇・下降の速さ
-@export var climb_speed: float = 22.0
-## 上下の加速の滑らかさ
-@export var climb_acceleration: float = 80.0
-## 機首が狙う方向へ向く速さ（度/秒）
-@export var turn_speed_deg: float = 110.0
+## いちばん遅く飛べる速さ（メートル/秒）。これ以下には落ちない
+@export var min_speed: float = 45.0
+## いちばん速い速さ
+@export var max_speed: float = 130.0
+## 加速・減速の強さ（1 秒でどれだけ速さを変えられるか）
+@export var throttle_power: float = 45.0
+## 機首を上下に動かす速さ（度/秒）
+@export var pitch_speed_deg: float = 55.0
+## 機体を傾ける速さ（度/秒）
+@export var roll_speed_deg: float = 130.0
+## 傾けた時に曲がる強さ（度/秒。傾きが大きいほど速く曲がる）
+@export var turn_rate_deg: float = 70.0
+## 機首を上下に向けられる限界（度）
+@export var pitch_limit_deg: float = 70.0
 ## これ以上は上がれない高さ（メートル）
-@export var ceiling: float = 220.0
-## 見た目の傾き（度）。曲がる時に機体を傾ける
-@export var bank_deg: float = 25.0
-## AI が操縦している時に保つ高さ（メートル）。プレイヤーが乗っている間は使わない
-@export var ai_cruise_height: float = 40.0
-## 誰も乗っていない時に自分で降りてくる速さ（メートル/秒）
-@export var landing_speed: float = 8.0
+@export var ceiling: float = 400.0
+## 着陸できる最大の沈み込み速度（メートル/秒）
+@export var landing_sink: float = 10.0
+## 着陸できる最大の傾き（度）
+@export var landing_tilt_deg: float = 20.0
+## 地上での減速の強さ
+@export var ground_brake: float = 40.0
 ## 全高（カメラが距離を合わせるのに使う）
 var height: float = 5.0
 ## 照準できる距離（空からは遠くまで狙える）
 var aim_range: float = 2600.0
 
+## 今の速さ（メートル/秒）
+var speed: float = 0.0
+## 離陸直後に地面との接触を無視する残り時間（秒）
+var takeoff_grace: float = 0.0
+## 地上にいるか（駐機中・着陸後）
+var on_ground: bool = true
+
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+## 墜落した時に知らせる
+signal crashed
+
 @onready var weapon: Weapon = get_node_or_null("Weapon")
-@onready var visual: Node3D = get_node_or_null("Visual")
 @onready var gun_pivot: Node3D = get_node_or_null("Visual/GunPivot")
 @onready var muzzle_point: Node3D = get_node_or_null("Visual/GunPivot/MuzzlePoint")
 
 
 func _physics_process(delta: float) -> void:
 	if not is_alive():
-		# 撃墜されたら推力を失って落ちる
-		velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
-		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
+		# 撃墜されたら錐揉みしながら落ちる
+		rotation.z += 3.0 * delta
 		velocity.y -= gravity * delta
 		move_and_slide()
 		return
 
-	_turn_to_aim(delta)
-	_move_horizontal(delta)
-	_move_vertical(delta)
-	move_and_slide()
-	_update_bank(delta)
+	if on_ground:
+		_run_on_ground(delta)
+	else:
+		_fly(delta)
 	_aim_gun()
 
 	if control["fire"] and weapon != null:
 		weapon.try_fire(Pilotable.aim_point(control), self)
 
 
-## 機首を狙っている方向へ向ける（すぐには向かず、少しずつ回る）
-func _turn_to_aim(delta: float) -> void:
-	var aim := Pilotable.aim_point(control)
-	if aim == Vector3.ZERO:
-		return
-	var to_aim: Vector3 = aim - global_position
-	if Vector2(to_aim.x, to_aim.z).length() < 0.1:
-		return
-	var wanted := atan2(-to_aim.x, -to_aim.z)
-	rotation.y = rotate_toward(rotation.y, wanted, deg_to_rad(turn_speed_deg) * delta)
-
-
-## 前後・左右の動き（機首の向きを基準に動く）
-func _move_horizontal(delta: float) -> void:
+## 駐機中・着陸後の動き。加速していけば浮き上がる
+func _run_on_ground(delta: float) -> void:
+	var throttle := float(control.get("throttle", 0.0))
+	if throttle > 0.0:
+		speed = clampf(speed + throttle * throttle_power * delta, 0.0, max_speed)
+	else:
+		speed = move_toward(speed, 0.0, ground_brake * delta)
+	# 地上では機体を水平に戻す
+	rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
+	rotation.z = move_toward(rotation.z, 0.0, deg_to_rad(120.0) * delta)
+	# 左右の入力で向きを変える（滑走路での方向転換）
+	rotation.y -= _roll_input() * deg_to_rad(40.0) * delta
 	var forward := -global_transform.basis.z
-	var right := global_transform.basis.x
-	var input_z := float(control["move_z"])
-	var wanted := right * float(control["move_x"]) * strafe_speed
-	if input_z < 0.0:
-		wanted += forward * forward_speed * -input_z
-	elif input_z > 0.0:
-		wanted += -forward * back_speed * input_z
-	velocity.x = move_toward(velocity.x, wanted.x, acceleration * delta)
-	velocity.z = move_toward(velocity.z, wanted.z, acceleration * delta)
+	velocity = forward * speed
+	velocity.y = -2.0  # 地面に押し付けておく
+	move_and_slide()
+	# 十分な速さになったら離陸する（機首を少し上げて地面から離れる）
+	if speed >= min_speed:
+		on_ground = false
+		rotation.x = deg_to_rad(12.0)
+		velocity.y = 6.0
+		takeoff_grace = 0.8
+		GameLog.write("航空機", "%s が離陸した（速度 %.0fm/秒）" % [name, speed])
 
 
-## 上下の動き。入力が無ければその高さで浮いて止まる
-func _move_vertical(delta: float) -> void:
-	var lift := float(control.get("lift", 0.0))
-	if lift > 0.0 and global_position.y >= ceiling:
-		lift = 0.0  # 上限の高さまで来たらそれ以上は上がらない
-	var wanted := lift * climb_speed
-	if lift == 0.0:
-		if _driver_is_ai():
-			# AI が操縦している時は、決まった高さまで自分で上がって飛び続ける
-			var diff := ai_cruise_height - global_position.y
-			wanted = clampf(diff, -climb_speed, climb_speed)
-		elif not _has_driver() and not is_on_floor():
-			# 誰も乗っていない機体は、ゆっくり降りて自分で着陸する
-			wanted = -landing_speed
-	velocity.y = move_toward(velocity.y, wanted, climb_acceleration * delta)
+## 飛んでいる間の動き
+func _fly(delta: float) -> void:
+	takeoff_grace = maxf(takeoff_grace - delta, 0.0)
+	# 加速・減速（何も押していなければ今の速さを保つ）
+	var throttle := float(control.get("throttle", 0.0))
+	speed = clampf(speed + throttle * throttle_power * delta, min_speed, max_speed)
+
+	# 機首の上下（操縦桿を引くと上を向く）
+	var pitch_input := _pitch_input()
+	rotation.x = clampf(rotation.x + pitch_input * deg_to_rad(pitch_speed_deg) * delta,
+		-deg_to_rad(pitch_limit_deg), deg_to_rad(pitch_limit_deg))
+
+	# 機体の傾き（バンク）。入力が無ければゆっくり水平に戻る
+	var roll_input := _roll_input()
+	if absf(roll_input) > 0.05:
+		rotation.z = clampf(rotation.z - roll_input * deg_to_rad(roll_speed_deg) * delta,
+			-deg_to_rad(80.0), deg_to_rad(80.0))
+	else:
+		rotation.z = move_toward(rotation.z, 0.0, deg_to_rad(40.0) * delta)
+
+	# 傾けている方向へ旋回する（実際の飛行機と同じで、傾けて曲がる）
+	rotation.y += sin(rotation.z) * deg_to_rad(turn_rate_deg) * delta
+
+	# 上限の高さを超えたら機首を下げる
+	if global_position.y > ceiling and rotation.x > 0.0:
+		rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
+
+	# 機首の向いている方向へ、今の速さで進み続ける
+	var forward := -global_transform.basis.z
+	velocity = forward * speed
+	if move_and_slide():
+		_touch_ground()
 
 
-## 曲がる時・横に動く時に機体を傾ける（見た目だけ）
-func _update_bank(delta: float) -> void:
-	if visual == null:
+## 地面・建物に触れた：条件が良ければ着陸、そうでなければ墜落
+func _touch_ground() -> void:
+	if takeoff_grace > 0.0:
+		return  # 離陸した直後は地面をこすっても墜落しない
+	var tilt := maxf(absf(rotation.z), absf(rotation.x))
+	var sinking := -velocity.y
+	var gentle: bool = sinking < landing_sink and tilt < deg_to_rad(landing_tilt_deg) \
+		and speed < min_speed + 25.0 and is_on_floor()
+	if gentle:
+		on_ground = true
+		rotation.x = 0.0
+		rotation.z = 0.0
+		velocity = Vector3.ZERO
+		GameLog.write("航空機", "%s が着陸した（速度 %.0fm/秒）" % [name, speed])
 		return
-	var wanted := -float(control["move_x"]) * deg_to_rad(bank_deg)
-	visual.rotation.z = move_toward(visual.rotation.z, wanted, deg_to_rad(90.0) * delta)
+	crash()
+
+
+## 墜落する（撃墜と同じ扱い）
+func crash() -> void:
+	if not is_alive():
+		return
+	GameLog.write("航空機", "%s が墜落した（速度 %.0fm/秒・高さ %.0fm）" % [
+		name, speed, global_position.y])
+	crashed.emit()
+	take_hit(max_hp)
+
+
+## 機首を上げ下げする入力（＋で上向き）。マウスとキーボードの両方を足す
+func _pitch_input() -> float:
+	# move_z は W で -1（機首下げ）、S で +1（機首上げ）
+	return clampf(float(control.get("stick_y", 0.0)) + float(control["move_z"]), -1.0, 1.0)
+
+
+## 機体を傾ける入力（＋で右に傾く）
+func _roll_input() -> float:
+	return clampf(float(control.get("stick_x", 0.0)) + float(control["move_x"]), -1.0, 1.0)
 
 
 ## 機関砲を狙っている方向へ向け、弾が銃口の先から出るようにする
@@ -127,25 +182,9 @@ func _aim_gun() -> void:
 		weapon.global_transform = muzzle_point.global_transform
 
 
-## 操縦席に誰か座っているか
-func _has_driver() -> bool:
-	for seat in get_seats():
-		if seat.is_driver:
-			return seat.occupant != null
-	return false
-
-
-## 今の操縦者が AI かどうか
-func _driver_is_ai() -> bool:
-	for seat in get_seats():
-		if seat.is_driver:
-			return seat.occupant is AIPilot
-	return false
-
-
-## 地上に降りているか（空中では乗り降りできない）
+## 地上にいるか（空中では乗り降りできない）
 func is_landed() -> bool:
-	return is_on_floor()
+	return on_ground
 
 
 ## 保存用の状態
@@ -153,4 +192,6 @@ func to_dict() -> Dictionary:
 	var data := super.to_dict()
 	data["kind"] = "aircraft"
 	data["altitude"] = global_position.y
+	data["speed"] = speed
+	data["on_ground"] = on_ground
 	return data

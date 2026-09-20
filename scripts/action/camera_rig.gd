@@ -52,6 +52,15 @@ func get_current_view() -> CameraView:
 	return views[clampi(view_index, 0, views.size() - 1)]
 
 
+## 指定した種類の視点に切り替える（例：航空機なら ChaseView）
+func select_view(view_type) -> void:
+	var views := get_views()
+	for i in views.size():
+		if is_instance_of(views[i], view_type):
+			view_index = i
+			return
+
+
 ## 次の視点に切り替える（Phase 1 は三人称だけなので変化なし）
 func next_view() -> void:
 	var count := get_views().size()
