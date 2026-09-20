@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/action/crosshair.gd" id="6_cross"]
 [ext_resource type="PackedScene" path="res://scenes/target.tscn" id="7_target"]
 [ext_resource type="Script" path="res://scripts/action/health_bar.gd" id="8_hp"]
+[ext_resource type="Script" path="res://scripts/action/ai_pilot.gd" id="9_ai"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -167,6 +168,19 @@ billboard = 1
 pixel_size = 0.02
 text = "2F HOUSE 6.5m"
 font_size = 128
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="Enemy1" parent="Enemies" instance=ExtResource("1_robot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -160)
+pilotable_id = "enemy_01"
+max_hp = 60
+body_color = Color(0.55, 0.15, 0.13, 1)
+
+[node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat", "chase_target")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
+chase_target = NodePath("../../../Robot")
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")

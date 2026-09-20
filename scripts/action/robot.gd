@@ -19,6 +19,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var step_rate: float = 0.09
 ## 歩調に合わせて機体が上下に揺れる量（メートル）
 @export var body_bob: float = 0.25
+## 機体の色を塗り替える（透明のままなら元の色。敵機を赤くするのに使う）
+@export var body_color: Color = Color(0, 0, 0, 0)
 
 ## 腕の武器（Phase 1 は 1 種類）
 @onready var weapon: Weapon = get_node_or_null("Weapon")
@@ -30,6 +32,24 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var step_phase: float = 0.0
 ## 見た目の揺れの強さ（止まると 0 に戻る）
 var step_amount: float = 0.0
+
+
+func _ready() -> void:
+	super._ready()
+	if body_color.a > 0.0:
+		_repaint(visual)
+
+
+## 機体の見た目を指定の色で塗り替える（目玉の発光部分はそのまま）
+func _repaint(node: Node) -> void:
+	for child in node.get_children():
+		if child is MeshInstance3D and child.name != "Visor":
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = body_color
+			mat.roughness = 0.7
+			mat.metallic = 0.3
+			(child as MeshInstance3D).material_override = mat
+		_repaint(child)
 
 
 func _physics_process(delta: float) -> void:
