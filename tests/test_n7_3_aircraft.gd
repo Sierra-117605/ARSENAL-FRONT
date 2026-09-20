@@ -1,11 +1,11 @@
 extends SceneTree
 ## 航空機（攻撃機）の確認。エースコンバット風の操作（SPEC §0.15）。
-## 実際にキーを押した・マウスを動かしたことにして飛ばす。
+## 操作はキーボードだけ（マウスは使わない）。実際にキーを押したことにして飛ばす。
 ##
 ## 確かめること：
 ##  1. 戦場に攻撃機が駐機していて、兵士が歩いて行けば乗り込める。カメラが後方視点になる
 ##  2. Space（加速）で滑走して離陸する。空中では止まれず、最低速度を下回らない
-##  3. マウスを上に動かすと機首が上がり、高度が上がる
+##  3. S を押すと機首が上がり、高度が上がる
 ##  4. エキスパート操作：傾けただけでは曲がらず、傾けて機首を引くと旋回する
 ##  5. エキスパート操作：360 度ロールできる（背面飛行になる）
 ##  6. ノーヴィス操作：傾けるだけで曲がり、手を離すと自動で水平に戻る
@@ -73,38 +73,42 @@ func _physics_process(_delta: float) -> bool:
 				plane.global_position.y, plane.speed])
 			_report(plane.speed >= plane.min_speed, "空中では最低速度を下回らない (%.0f)" % plane.speed)
 			Input.action_release("throttle_up")
-			# 3：マウスを上に動かして機首を上げる（画面の上＝ y が負の動き）
-			_move_mouse(0.0, -120.0)
+			# 3：S を押して機首を上げる
+			_hold(["move_back"])
 			set_meta("height_before", plane.global_position.y)
 		290:
-			_report(_nose_up() > 0.2, "マウスを上に動かすと機首が上がる（%.0f 度）" % rad_to_deg(asin(_nose_up())))
+			_report(_nose_up() > 0.2, "S を押すと機首が上がる（%.0f 度）" % rad_to_deg(asin(_nose_up())))
 			_report(plane.global_position.y > float(get_meta("height_before")) + 20.0,
 				"機首を上げると高度が上がる（%.0fm → %.0fm）" % [
 					get_meta("height_before"), plane.global_position.y])
-			_move_mouse(0.0, 120.0)  # 操縦桿を中央へ戻す
+			_hold([])  # キーを離す
 		350:
 			# 4：エキスパートは傾けただけでは曲がらない
+			# 傾きだけを見たいので、いったん水平飛行の姿勢に整える
+			plane.rotation = Vector3(0.0, plane.rotation.y, 0.0)
+			plane.global_position.y = 200.0
+			plane.force_update_transform()
 			yaw_before = _heading()
-			_move_mouse(150.0, 0.0)
-		410:
-			_report(_bank() > 0.2, "マウスを右に動かすと機体が右に傾く（%.0f 度）" % rad_to_deg(asin(_bank())))
+			_hold(["move_right"])  # D で右に傾ける
+		380:
+			# キーは一気に舵がいっぱいまで入るので、短い時間で確かめる
+			_report(_bank() > 0.2, "D を押すと機体が右に傾く（%.0f 度）" % rad_to_deg(asin(_bank())))
 			_report(_turned_from(yaw_before) < deg_to_rad(20.0),
 				"エキスパートは傾けただけでは曲がらない（%.0f 度）" % rad_to_deg(_turned_from(yaw_before)))
-			# 傾けたまま機首を引く＝旋回
+			# 傾けたまま機首を引く＝旋回（D + S）
 			yaw_before = _heading()
-			_move_mouse(0.0, -150.0)
-		470:
+			_hold(["move_right", "move_back"])
+		440:
 			_report(_turned_from(yaw_before) > deg_to_rad(25.0),
 				"傾けて機首を引くと旋回する（%.0f 度まわった）" % rad_to_deg(_turned_from(yaw_before)))
-			# 5：360 度ロール（操縦桿を右に倒し続ける）
-			_move_mouse(0.0, 150.0)  # 上下は中央へ
-			_move_mouse(120.0, 0.0)  # 右へいっぱい
+			# 5：360 度ロール（D を押し続ける）
+			_hold(["move_right"])
 		560:
 			_report(most_inverted < -0.5,
 				"エキスパートなら 360 度ロールできる（いちばん逆さまで %.2f）" % most_inverted)
 			_check_muzzle()
-			# 操縦桿を中央へ戻し、ノーヴィス操作に切り替える
-			_move_mouse(-270.0, 0.0)
+			# キーを離して、ノーヴィス操作に切り替える
+			_hold([])
 			plane.flight_mode = SettingsStore.NOVICE
 			plane.rotation = Vector3(0.0, plane.rotation.y, 0.0)
 			plane.global_position.y = 220.0
@@ -112,13 +116,13 @@ func _physics_process(_delta: float) -> bool:
 		620:
 			# 6：ノーヴィスは傾けるだけで曲がる
 			yaw_before = _heading()
-			_move_mouse(150.0, 0.0)
+			_hold(["move_right"])
 		700:
 			_report(_bank() > 0.2 and _bank() < 0.99,
 				"ノーヴィスの傾きは 80 度までに収まる（%.0f 度）" % rad_to_deg(asin(_bank())))
 			_report(_turned_from(yaw_before) > deg_to_rad(20.0),
 				"ノーヴィスは傾けるだけで曲がる（%.0f 度まわった）" % rad_to_deg(_turned_from(yaw_before)))
-			_move_mouse(-150.0, 0.0)  # 手を離した＝操縦桿を中央へ
+			_hold([])  # 手を離す
 		880:
 			_report(_bank() < 0.1, "ノーヴィスは手を離すと自動で水平に戻る（%.0f 度）" % rad_to_deg(asin(_bank())))
 			# 2：減速しても止まれない
@@ -161,12 +165,13 @@ func _turned_from(before: float) -> float:
 	return absf(wrapf(_heading() - before, -PI, PI))
 
 
-## マウスを動かしたことにする（操縦桿を倒す）
-func _move_mouse(dx: float, dy: float) -> void:
-	var ev := InputEventMouseMotion.new()
-	ev.screen_relative = Vector2(dx, dy)
-	ev.relative = Vector2(dx, dy)
-	input._unhandled_input(ev)
+## 押しているキーを切り替える（複数同時に押せる）
+func _hold(actions: Array) -> void:
+	for action in ["move_forward", "move_back", "move_left", "move_right"]:
+		if actions.has(action):
+			Input.action_press(action)
+		else:
+			Input.action_release(action)
 
 
 ## 弾が機首の銃口の先から出るか確かめる
@@ -195,6 +200,7 @@ func _check_muzzle() -> void:
 
 ## 任務と設定を元に戻す
 func _restore() -> void:
+	_hold([])
 	_write_or_delete(MissionData.CHOICE_PATH, mission_before)
 	_write_or_delete(SettingsStore.PATH, settings_before)
 

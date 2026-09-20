@@ -202,7 +202,7 @@ func _build_ui() -> void:
 	sortie.pressed.connect(_on_sortie)
 	bottom.add_child(sortie)
 	var help := Label.new()
-	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 乗り降り（徒歩で近づいて乗り込む）／Space・Shift 加速・減速・Q/E 方向舵（攻撃機）／Esc カーソル／R やり直し／G ガレージへ戻る"
+	help.text = "操作：WASD 移動／マウス カメラ／左クリック 射撃／F 乗り降り（徒歩で近づいて乗り込む）／攻撃機は WASD で機首とロール・Q/E 方向舵・Space/Shift 加減速・Ctrl でも射撃（マウス不要）／Esc カーソル／R やり直し／G ガレージへ戻る"
 	help.add_theme_color_override("font_color", Color(0.7, 0.73, 0.75))
 	help.add_theme_font_size_override("font_size", 16)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

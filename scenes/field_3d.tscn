@@ -304,7 +304,7 @@ view_name = "航空機（後方）"
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Crosshair" type="Control" parent="HUD"]
+[node name="Crosshair" type="Control" parent="HUD" node_paths=PackedStringArray("occupant", "camera_rig")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -313,6 +313,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("6_cross")
+occupant = NodePath("../../Pilot")
+camera_rig = NodePath("../../CameraRig")
 
 [node name="HealthBar" type="Control" parent="HUD" node_paths=PackedStringArray("target")]
 layout_mode = 3

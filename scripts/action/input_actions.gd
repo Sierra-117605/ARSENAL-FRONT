@@ -31,6 +31,11 @@ const KEYS := {
 	THROTTLE_DOWN: KEY_SHIFT,
 }
 
+## 操作名 → キー（マウスでも同じことができる操作の、キーボード側の割り当て）
+const EXTRA_KEYS := {
+	FIRE: KEY_CTRL,
+}
+
 ## 操作名 → マウスボタン
 const MOUSE_BUTTONS := {
 	FIRE: MOUSE_BUTTON_LEFT,
@@ -53,3 +58,11 @@ static func ensure_registered() -> void:
 		var mb := InputEventMouseButton.new()
 		mb.button_index = MOUSE_BUTTONS[action]
 		InputMap.action_add_event(action, mb)
+	# マウスを使わずに遊べるよう、同じ操作にキーボードも足しておく
+	for action in EXTRA_KEYS:
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+		var key := InputEventKey.new()
+		key.physical_keycode = EXTRA_KEYS[action]
+		if not InputMap.action_has_event(action, key):
+			InputMap.action_add_event(action, key)

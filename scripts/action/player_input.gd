@@ -18,14 +18,8 @@ extends Node
 ## 照準の先を探す最大距離（メートル）。機体のパーツで決まる場合はそちらを使う
 @export var aim_range: float = 2000.0
 
-## 航空機のマウス感度（1 ピクセルで操縦桿がどれだけ倒れるか）
-@export var stick_sensitivity: float = 0.004
-
-## 操縦桿の「遊び」。これより小さい傾きは中央と見なす（少しのずれで勝手に曲がらないように）
-@export var stick_deadzone: float = 0.12
-
-## 航空機に乗っている間の操縦桿の傾き（-1〜1。中央に戻すと水平飛行）
-var stick: Vector2 = Vector2.ZERO
+## 航空機はキーボードだけで操縦する（マウスでは機体を動かさない）。
+## 操縦桿の傾きは W/S・A/D の押し具合そのもの
 
 ## マウスでカメラを回せる状態か（Esc で解除、画面クリックで再開）
 var look_enabled: bool = true
@@ -55,16 +49,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			fire_blocked = true
 			get_viewport().set_input_as_handled()
 		return
-	# マウスの動き
-	if event is InputEventMouseMotion and look_enabled and camera_rig != null:
+	# マウスの動き：カメラを回す（右へ動かすと右を向く、上へ動かすと上を向く）。
+	# 航空機に乗っている間はマウスを使わないので何も起きない
+	if event is InputEventMouseMotion and look_enabled and camera_rig != null and _aircraft() == null:
 		var d: Vector2 = event.screen_relative
-		if _aircraft() != null:
-			# 航空機：マウスが操縦桿になる。倒した位置のままだとその方向へ曲がり続ける
-			stick.x = clampf(stick.x + d.x * stick_sensitivity, -1.0, 1.0)
-			stick.y = clampf(stick.y - d.y * stick_sensitivity, -1.0, 1.0)
-		else:
-			# それ以外：カメラを回す（右へ動かすと右を向く、上へ動かすと上を向く）
-			camera_rig.add_look(-d.x * mouse_sensitivity, -d.y * mouse_sensitivity)
+		camera_rig.add_look(-d.x * mouse_sensitivity, -d.y * mouse_sensitivity)
 
 
 func _physics_process(_delta: float) -> void:
@@ -90,10 +79,7 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_pressed(InputActions.RUDDER_LEFT):
 		rudder -= 1.0
 	control["rudder"] = rudder
-	if _aircraft() == null:
-		stick = Vector2.ZERO
-	control["stick_x"] = _with_deadzone(stick.x)
-	control["stick_y"] = _with_deadzone(stick.y)
+
 	if camera_rig != null:
 		control["yaw"] = camera_rig.yaw
 		control["pitch"] = camera_rig.pitch
@@ -107,8 +93,12 @@ func _physics_process(_delta: float) -> void:
 	occupant.send_control(control)
 
 
-## 画面中央（照準）の先にある地点を探す。何もなければ最大距離の地点
+## 照準の先にある地点を探す。何もなければ最大距離の地点。
+## 航空機は機首の正面に固定（マウスを使わないので、狙いは機体の向きそのもの）
 func _find_aim_point() -> Vector3:
+	var plane := _aircraft()
+	if plane != null:
+		return _nose_aim_point(plane)
 	var camera := camera_rig.camera
 	var from := camera.global_position
 	var range_m := aim_range
@@ -182,9 +172,16 @@ func _machine_radius(vehicle: Pilotable) -> float:
 	return 4.0
 
 
-## 操縦桿の小さなずれを 0 として扱う（遊びの分）
-func _with_deadzone(value: float) -> float:
-	return 0.0 if absf(value) < stick_deadzone else value
+## 航空機の照準：機首の正面をまっすぐ見て、当たる物があればその位置
+func _nose_aim_point(plane: Pilotable) -> Vector3:
+	var from: Vector3 = plane.global_position
+	var forward: Vector3 = -plane.global_transform.basis.z
+	var range_m := float(plane.get("aim_range")) if plane.get("aim_range") != null else aim_range
+	var to: Vector3 = from + forward * range_m
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.exclude = [plane.get_rid()]
+	var hit := plane.get_world_3d().direct_space_state.intersect_ray(query)
+	return hit["position"] if not hit.is_empty() else to
 
 
 ## 今プレイヤーが操縦している航空機（乗っていなければ null）
@@ -200,7 +197,6 @@ func _switch_view_to(target: Node3D) -> void:
 		camera_rig.target = target
 		# 航空機は後方からの追従視点、それ以外は三人称（肩越し）に切り替える
 		camera_rig.select_view(ChaseView if target is Aircraft else ThirdPersonView)
-		stick = Vector2.ZERO
 	if health_bar != null:
 		health_bar.target = target
 
