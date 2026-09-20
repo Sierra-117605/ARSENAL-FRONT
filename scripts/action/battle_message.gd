@@ -7,6 +7,8 @@ extends Control
 
 var message: String = ""
 var reward_text: String = ""
+## 任務名（英数字のみ。日本語は既定フォントに無いため id を使う）
+var mission_text: String = ""
 var color: Color = Color.WHITE
 
 
@@ -23,7 +25,8 @@ func _on_finished(result: String) -> void:
 		message = "DESTROYED"
 		color = Color(1.0, 0.45, 0.4)
 	if battle != null:
-		reward_text = "materials +%d" % battle.earned_materials
+		mission_text = "%s (%s)" % [battle.mission.get("id", ""), battle.mission.get("difficulty", "")]
+		reward_text = "materials +%d / rare +%d" % [battle.earned_materials, battle.earned_rare]
 		if not battle.earned_blueprints.is_empty():
 			var names: Array[String] = []
 			for part_id in battle.earned_blueprints:
@@ -38,7 +41,9 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var center := size / 2.0
 	# 見やすいように後ろを暗くする
-	draw_rect(Rect2(Vector2(0, center.y - 90), Vector2(size.x, 180)), Color(0, 0, 0, 0.5))
+	draw_rect(Rect2(Vector2(0, center.y - 100), Vector2(size.x, 200)), Color(0, 0, 0, 0.5))
+	draw_string(font, Vector2(0, center.y - 46), mission_text,
+		HORIZONTAL_ALIGNMENT_CENTER, size.x, 24, Color(0.85, 0.88, 0.9))
 	draw_string(font, Vector2(0, center.y), message, HORIZONTAL_ALIGNMENT_CENTER, size.x, 72, color)
 	draw_string(font, Vector2(0, center.y + 44), reward_text,
 		HORIZONTAL_ALIGNMENT_CENTER, size.x, 24, Color(1, 0.95, 0.7))

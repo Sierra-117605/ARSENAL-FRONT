@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -14,6 +14,8 @@
 [ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
 [ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
 [ext_resource type="PackedScene" path="res://scenes/objective.tscn" id="14_obj"]
+[ext_resource type="Script" path="res://scripts/action/mission_hud.gd" id="15_mhud"]
+[ext_resource type="Theme" path="res://assets/ui_theme.tres" id="16_theme"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -306,4 +308,16 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("11_msg")
+battle = NodePath("../..")
+
+[node name="MissionHUD" type="Control" parent="HUD" node_paths=PackedStringArray("battle")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("16_theme")
+script = ExtResource("15_mhud")
 battle = NodePath("../..")
