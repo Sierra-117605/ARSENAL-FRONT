@@ -1,0 +1,60 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/action/soldier.gd" id="1_soldier"]
+[ext_resource type="Script" path="res://scripts/action/weapon.gd" id="2_weapon"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_uniform"]
+albedo_color = Color(0.32, 0.36, 0.28, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_gear"]
+albedo_color = Color(0.18, 0.18, 0.16, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_body"]
+radius = 0.28
+height = 1.3
+
+[sub_resource type="BoxMesh" id="Mesh_head"]
+size = Vector3(0.28, 0.3, 0.3)
+
+[sub_resource type="BoxMesh" id="Mesh_rifle"]
+size = Vector3(0.08, 0.12, 0.9)
+
+[sub_resource type="CapsuleShape3D" id="Shape_body"]
+radius = 0.35
+height = 1.8
+
+[node name="Soldier" type="CharacterBody3D"]
+script = ExtResource("1_soldier")
+pilotable_id = "soldier_01"
+max_hp = 100
+team = "player"
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("Shape_body")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+mesh = SubResource("Mesh_body")
+surface_material_override/0 = SubResource("Mat_uniform")
+
+[node name="Head" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("Mesh_head")
+surface_material_override/0 = SubResource("Mat_gear")
+
+[node name="Rifle" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 1.1, -0.45)
+mesh = SubResource("Mesh_rifle")
+surface_material_override/0 = SubResource("Mat_gear")
+
+[node name="Weapon" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 1.1, -0.95)
+script = ExtResource("2_weapon")
+fire_interval = 0.15
+damage = 3
+bullet_speed = 400.0
+spread = 0.6

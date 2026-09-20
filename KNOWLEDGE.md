@@ -131,6 +131,13 @@
 - 教訓：**テストは開発者のセーブデータを読まない・書き換えない**
 - 関連 TODO：N4-1
 
+### 2026-09-20 兵士と乗り降りの作り
+- 兵士も `Pilotable` として作る（`scripts/action/soldier.gd`）。乗員は「席に座っていれば乗り物へ、座っていなければ自分の体（兵士）へ」操作を流す（`Occupant.send_control`）
+- 乗り込み時は兵士を `visible = false` ＋ `set_physics_process(false)` ＋ 当たり判定を無効化（機体の中にいる扱い）。降りる時に機体の横へ戻す
+- F キーは 1 つで「乗り換え／降りる／乗り込む」を兼ねる（`PlayerInput.toggle_board`）
+- カメラは相手の全高に比例して寄るが、兵士（1.8m）で寄りすぎないよう下限（`min_factor`）を設けた
+- 関連 TODO：N4-6
+
 ### 2026-09-20 開発ツリーの作り（進行状況の保存）
 - 進行状況は `user://progress.json`（開発済みパーツ・設計図・資材）。`scripts/action/progress_store.gd`
 - パーツ側の JSON に `"locked": true` と `"develop_cost"` を足すだけで「未開発パーツ」を増やせる

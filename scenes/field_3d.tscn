@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=29 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://scripts/action/battle.gd" id="10_battle"]
 [ext_resource type="Script" path="res://scripts/action/battle_message.gd" id="11_msg"]
 [ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
+[ext_resource type="PackedScene" path="res://scenes/soldier.tscn" id="13_soldier"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -242,9 +243,13 @@ body_color = Color(0.55, 0.15, 0.13, 1)
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
 fire_interval = 2.6
-[node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
+[node name="Soldier" parent="." instance=ExtResource("13_soldier")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 4)
+
+[node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat", "body")]
 script = ExtResource("3_occ")
 start_seat = NodePath("../Robot/DriverSeat")
+body = NodePath("../Soldier")
 
 [node name="PlayerInput" type="Node" parent="." node_paths=PackedStringArray("occupant", "camera_rig", "health_bar")]
 script = ExtResource("4_input")

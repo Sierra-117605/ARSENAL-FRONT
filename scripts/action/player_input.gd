@@ -33,7 +33,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# F：近くの空いている機体に乗り換える
 	if event is InputEventKey and event.pressed and not event.echo:
 		if (event as InputEventKey).physical_keycode == InputActions.KEYS[InputActions.BOARD]:
-			try_board_nearby()
+			toggle_board()
 			return
 	# Esc：マウスカーソルを戻す
 	if event is InputEventKey and event.pressed and event.physical_keycode == KEY_ESCAPE:
@@ -92,6 +92,86 @@ func _find_aim_point() -> Vector3:
 	if hit.is_empty():
 		return to
 	return hit["position"]
+
+
+## F キーの処理：乗っていれば降りる、徒歩なら近くの機体に乗り込む
+func toggle_board() -> bool:
+	if occupant == null:
+		return false
+	if occupant.get_vehicle() != null:
+		# 乗っている：近くに別の機体があれば乗り換え、無ければ降りる
+		if try_board_nearby():
+			return true
+		return try_exit()
+	return try_board_from_foot()
+
+
+## 徒歩から近くの機体に乗り込む
+func try_board_from_foot() -> bool:
+	var soldier := occupant.body
+	if soldier == null or not soldier.is_alive():
+		return false
+	var best_seat := _find_seat_near(soldier.global_position, soldier.team)
+	if best_seat == null:
+		return false
+	if soldier.has_method("enter_vehicle"):
+		soldier.enter_vehicle()
+	best_seat.take_over(occupant)
+	_switch_view_to(best_seat.get_vehicle())
+	return true
+
+
+## 乗り物から降りて徒歩に戻る
+func try_exit() -> bool:
+	var vehicle := occupant.get_vehicle()
+	var soldier := occupant.body
+	if vehicle == null or soldier == null:
+		return false
+	var drop := vehicle.global_position + vehicle.global_transform.basis.x * (_machine_radius(vehicle) + 2.0)
+	drop.y = vehicle.global_position.y
+	if occupant.seat != null:
+		occupant.seat.release_to_ai()
+	occupant.seat = null
+	if soldier.has_method("exit_vehicle"):
+		soldier.exit_vehicle(drop, vehicle.rotation.y)
+	_switch_view_to(soldier)
+	return true
+
+
+## 機体の横幅の目安（降りる位置を決めるのに使う）
+func _machine_radius(vehicle: Pilotable) -> float:
+	if vehicle.get("height") != null:
+		return float(vehicle.get("height")) * 0.4
+	return 4.0
+
+
+## カメラと耐久バーの見る相手を切り替える
+func _switch_view_to(target: Node3D) -> void:
+	if camera_rig != null:
+		camera_rig.target = target
+	if health_bar != null:
+		health_bar.target = target
+
+
+## 指定の場所の近くにある、乗り込める操縦席を探す
+func _find_seat_near(from: Vector3, team: String) -> Seat:
+	var best_seat: Seat = null
+	var best_distance := board_distance
+	for node in get_tree().get_nodes_in_group("pilotable"):
+		var other := node as Pilotable
+		if other == null or not other.is_alive() or other.team != team:
+			continue
+		if occupant.body != null and other == occupant.body:
+			continue
+		var distance := from.distance_to(other.global_position)
+		if distance > best_distance:
+			continue
+		for seat in other.get_seats():
+			var takeable: bool = seat.occupant == null or seat.occupant is AIPilot
+			if seat.is_driver and takeable:
+				best_seat = seat
+				best_distance = distance
+	return best_seat
 
 
 ## 近くの空いている操縦席へ乗り移る。乗り換えたら true

@@ -5,6 +5,8 @@ extends CameraView
 
 ## この数値は全高 12m の機体を基準にしている（機種で全高が変わると比例させる）
 @export var base_machine_height: float = 12.0
+## 縮尺の下限（兵士 1.8m でもこの割合までしか寄らない）
+@export var min_factor: float = 0.28
 ## 回転の中心の高さ（機体の足元から。胸〜頭のあたり）
 @export var pivot_height: float = 10.4
 ## 回転の中心からカメラまでの距離
@@ -19,7 +21,8 @@ func update_camera(camera: Camera3D, target: Node3D, yaw: float, pitch: float) -
 	# 機体が大きいほどカメラを引く
 	var factor := 1.0
 	if target.get("height") != null:
-		factor = float(target.get("height")) / base_machine_height
+		# 小さい相手（兵士など）でもカメラが近づきすぎないよう下限を設ける
+		factor = maxf(float(target.get("height")) / base_machine_height, min_factor)
 	var pivot := target.global_position + Vector3(0.0, pivot_height * factor, 0.0)
 	var look := Basis.from_euler(Vector3(pitch, yaw, 0.0))
 	# 見ている方向の真後ろに下がった位置にカメラを置く
