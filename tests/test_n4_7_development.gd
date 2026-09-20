@@ -5,7 +5,7 @@ extends SceneTree
 ##  1. 最初は各部位の標準パーツだけが使える（キャノンなどは未開発）
 ##  2. 敵を倒すと資材が手に入り、勝つと設計図が 1 つ手に入る
 ##  3. 戦果は保存され、次の起動でも残る
-##  4. 資材が足りなければ開発できない／足りれば開発できて資材が減る
+##  4. 資材が足りなければ開発できない／足りれば開発できて資材が減る（前提と希少素材はそろえた状態で確認）
 ##  5. 開発したパーツはガレージで選べるようになる
 ##  6. 未開発のパーツは選択欄で選べない（グレーアウト）
 ##  7. 未開発のパーツが構成に残っていても、起動時に標準品へ戻す（不正防止）
@@ -65,7 +65,13 @@ func _physics_process(_delta: float) -> bool:
 			# 4：開発（まずは資材が足りない状態で試す）
 			var progress := ProgressStore.load_progress()
 			var part_id: String = progress["blueprints"][0]
-			var cost := int(RobotParts.find(part_id).get("develop_cost", 100))
+			var part := RobotParts.find(part_id)
+			var cost := int(part.get("develop_cost", 100))
+			# 前提パーツと希少素材はそろっている状態にして、資材の判定だけを見る
+			for required in part.get("requires", []):
+				if not (progress["unlocked"] as Array).has(str(required)):
+					progress["unlocked"].append(str(required))
+			progress["rare"] = int(part.get("rare_cost", 0)) + 5
 			progress["materials"] = cost - 1
 			_report(not ProgressStore.develop(progress, part_id),
 				"資材が足りないと開発できない (%d / %d)" % [progress["materials"], cost])

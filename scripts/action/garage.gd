@@ -308,6 +308,9 @@ func _refresh_develop() -> void:
 func _on_develop(part_id: String) -> void:
 	if ProgressStore.develop(progress, part_id):
 		ProgressStore.save_progress(progress)
+		GameLog.write("開発", "%s を開発（残り 資材 %d ／ 希少素材 %d）" % [
+			RobotParts.find(part_id).get("name", part_id),
+			progress.get("materials", 0), progress.get("rare", 0)])
 		_refresh()
 
 
@@ -320,3 +323,7 @@ func _on_sortie() -> void:
 func _on_sortie_test() -> void:
 	loadout["machine_type"] = machine_id
 	LoadoutStore.save(loadout)
+	var stats := RobotParts.compute_stats(loadout, machine_id)
+	GameLog.write("出撃", GameLog.loadout_text(loadout, machine_id))
+	GameLog.write("出撃", "耐久 %d ／ 速さ %.1f ／ 威力 %d ／ 連射 %.2f 秒" % [
+		stats["max_hp"], stats["walk_speed"], stats["damage"], stats["fire_interval"]])

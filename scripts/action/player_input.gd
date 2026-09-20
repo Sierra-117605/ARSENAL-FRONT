@@ -115,7 +115,9 @@ func try_board_from_foot() -> bool:
 	if soldier.has_method("enter_vehicle"):
 		soldier.enter_vehicle()
 	best_seat.take_over(occupant)
-	_switch_view_to(best_seat.get_vehicle())
+	var boarded := best_seat.get_vehicle()
+	_switch_view_to(boarded)
+	GameLog.write("乗降", "%s に乗り込んだ（耐久 %d / %d）" % [boarded.name, boarded.hp, boarded.max_hp])
 	return true
 
 
@@ -133,6 +135,7 @@ func try_exit() -> bool:
 	if soldier.has_method("exit_vehicle"):
 		soldier.exit_vehicle(drop, vehicle.rotation.y)
 	_switch_view_to(soldier)
+	GameLog.write("乗降", "%s から降りた（機体の耐久 %d / %d）" % [vehicle.name, vehicle.hp, vehicle.max_hp])
 	return true
 
 
