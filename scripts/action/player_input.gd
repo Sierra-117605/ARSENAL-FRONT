@@ -111,15 +111,17 @@ func try_board_nearby() -> bool:
 		if distance > best_distance:
 			continue
 		for seat in other.get_seats():
-			if seat.is_driver and seat.occupant == null:
+			# 空席、または AI が操縦している自軍機なら乗り込める
+			var takeable: bool = seat.occupant == null or (seat.occupant is AIPilot and other.team == current.team)
+			if seat.is_driver and takeable:
 				best_seat = seat
 				best_distance = distance
 	if best_seat == null:
 		return false
-	# 今の席を降りて、新しい席に座る
+	# 今の席を降りて（AI が控えていれば AI に返す）、新しい席に乗り込む
 	if occupant.seat != null:
-		occupant.seat.leave()
-	best_seat.sit(occupant)
+		occupant.seat.release_to_ai()
+	best_seat.take_over(occupant)
 	var new_vehicle := best_seat.get_vehicle()
 	# カメラと耐久バーの見る相手も切り替える
 	if camera_rig != null:

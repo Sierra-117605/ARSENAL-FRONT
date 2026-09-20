@@ -8,6 +8,8 @@ extends Marker3D
 
 ## 今座っている乗員（空席なら null）
 var occupant: Occupant = null
+## プレイヤーが乗り込む前に座っていた AI 乗員（降りたら戻す）
+var ai_backup: Occupant = null
 
 
 ## この席が付いている乗り物を返す
@@ -31,6 +33,26 @@ func leave() -> void:
 	occupant = null
 	var vehicle := get_vehicle()
 	if is_driver and vehicle != null:
+		vehicle.apply_control(Pilotable.empty_control())
+
+
+## プレイヤーがこの席を引き継ぐ（AI が座っていたら席を譲る）
+func take_over(new_occupant: Occupant) -> void:
+	if occupant != null and occupant != new_occupant:
+		ai_backup = occupant
+		occupant.seat = null
+	occupant = new_occupant
+	new_occupant.seat = self
+
+
+## プレイヤーが降りた後、AI 乗員に席を返す（AI がいなければ空席のまま）
+func release_to_ai() -> void:
+	var vehicle := get_vehicle()
+	occupant = ai_backup
+	ai_backup = null
+	if occupant != null:
+		occupant.seat = self
+	elif is_driver and vehicle != null:
 		vehicle.apply_control(Pilotable.empty_control())
 
 

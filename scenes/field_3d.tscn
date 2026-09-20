@@ -81,9 +81,10 @@ height = 5.0
 [sub_resource type="BoxMesh" id="Mesh_house"]
 size = Vector3(8, 6.5, 8)
 
-[node name="Field3D" type="Node3D" node_paths=PackedStringArray("player", "enemies_root")]
+[node name="Field3D" type="Node3D" node_paths=PackedStringArray("player", "player_occupant", "enemies_root")]
 script = ExtResource("10_battle")
 player = NodePath("Robot")
+player_occupant = NodePath("Pilot")
 enemies_root = NodePath("Enemies")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -177,11 +178,18 @@ text = "2F HOUSE 6.5m"
 font_size = 128
 
 [node name="SpareRobot" parent="." instance=ExtResource("1_robot")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 0, -22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, -10)
 pilotable_id = "spare_01"
 machine_type = "scout_walker"
 max_hp = 200
 body_color = Color(0.25, 0.35, 0.5, 1)
+team = "player"
+
+[node name="AIPilot" type="Node" parent="SpareRobot" node_paths=PackedStringArray("start_seat")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
+preferred_distance = 70.0
+fire_range = 110.0
 
 [node name="Covers" type="Node3D" parent="."]
 
@@ -199,33 +207,36 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -78)
 [node name="Enemy1" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -160)
 pilotable_id = "enemy_01"
+team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat", "chase_target")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat", "chase_occupant")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_target = NodePath("../../../Robot")
+chase_occupant = NodePath("../../../Pilot")
 [node name="Enemy2" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -150)
 pilotable_id = "enemy_02"
+team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat", "chase_target")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat", "chase_occupant")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_target = NodePath("../../../Robot")
+chase_occupant = NodePath("../../../Pilot")
 [node name="Enemy3" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -132)
 pilotable_id = "enemy_03"
+team = "enemy"
 max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
-[node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat", "chase_target")]
+[node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat", "chase_occupant")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
-chase_target = NodePath("../../../Robot")
+chase_occupant = NodePath("../../../Pilot")
 
 [node name="Pilot" type="Node" parent="." node_paths=PackedStringArray("start_seat")]
 script = ExtResource("3_occ")

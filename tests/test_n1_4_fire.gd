@@ -93,10 +93,11 @@ func _check_no_fire_when_released() -> void:
 	hits_at_release = wall.get("hits")
 
 
+## 自機が撃った弾だけを数える（味方 AI の弾は数えない）
 func _bullets() -> Array:
 	var list := []
 	for child in field.get_children():
-		if child is Bullet:
+		if child is Bullet and (child as Bullet).shooter_rid == robot.get_rid():
 			list.append(child)
 	return list
 

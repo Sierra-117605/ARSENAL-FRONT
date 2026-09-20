@@ -8,6 +8,8 @@ extends CharacterBody3D
 @export var pilotable_id: String = ""
 ## 耐久の最大値（0 になると撃破）
 @export var max_hp: int = 300
+## 陣営（"player" = 自軍 / "enemy" = 敵軍）。狙う相手を決めるのに使う
+@export var team: String = "player"
 
 ## 今の耐久
 var hp: int = 0
@@ -42,6 +44,7 @@ static func aim_point(ctrl: Dictionary) -> Vector3:
 func _ready() -> void:
 	hp = max_hp
 	add_to_group("pilotable")  # 乗り換え先を探すときに使う
+	add_to_group("team_" + team)  # 陣営ごとの検索用
 
 
 ## 弾などが当たった時に呼ばれる（Bullet から）

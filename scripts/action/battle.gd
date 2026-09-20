@@ -2,8 +2,10 @@ class_name Battle
 extends Node3D
 ## 戦闘の進行役。自機が壊れたら「撃破」、敵を全部壊したら「勝利」を表示し、R キーでやり直す。
 
-## プレイヤーの機体
+## プレイヤーの機体（開始時。乗り換えると自動で切り替わる）
 @export var player: Pilotable
+## プレイヤーの乗員。これが乗っている機体が壊れたら負け
+@export var player_occupant: Occupant
 ## 敵をまとめている入れ物
 @export var enemies_root: Node3D
 
@@ -20,10 +22,20 @@ signal garage_requested
 
 func _ready() -> void:
 	InputActions.ensure_registered()
-	if player != null:
+	if player != null and player_occupant == null:
+		# 乗員が指定されていない時だけ、開始時の機体で判定する
 		player.destroyed.connect(_on_player_destroyed)
 	for enemy in _enemies():
 		enemy.destroyed.connect(_on_enemy_destroyed.bind(enemy))
+
+
+func _physics_process(_delta: float) -> void:
+	# 乗り換えに対応するため、今乗っている機体が壊れたかを毎回見る
+	if outcome != "" or player_occupant == null:
+		return
+	var current := player_occupant.get_vehicle()
+	if current != null and not current.is_alive():
+		_finish("lose")
 
 
 func _unhandled_input(event: InputEvent) -> void:
