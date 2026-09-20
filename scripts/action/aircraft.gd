@@ -3,10 +3,12 @@ extends Pilotable
 ## 攻撃機（SPEC §0.15）。エースコンバット風に「常に前へ飛び続ける」機体。
 ## 空中で止まることはできず、マウス（＝操縦桿）で機首を上下させ、機体を傾けて旋回する。
 ##
-## 操作（キーボードだけで飛ばせる。マウスは使わない）：
-##   W = 機首下げ、S = 機首上げ、A/D = 機体を左右に傾ける、Q/E = 方向舵（機首を左右に振る）
-##   Space = 加速、Shift = 減速、左クリックまたは Ctrl = 機関砲
-##   狙いは機首の正面に固定（機体を向けた方向へ撃つ）
+## **AI 専用の機体**（2026-09-21 決定）。プレイヤーは乗り込めない（操縦席の player_can_board = false）。
+## AI が自分で離陸し、決まった高さで戦場を飛び回り、狙う相手の方へ機首を向けて撃つ。
+## プレイヤーが空を飛びたい場合はヘリコプター（Helicopter）に乗る。
+##
+## 操縦の仕組みは残してあるので、将来また乗れるようにすることもできる（W/S = 機首、A/D = ロール、
+## Q/E = 方向舵、Space/Shift = 加減速）。
 ## 地面にぶつかると墜落する。速度を落として水平に近づければ着陸できる。
 ##
 ## 操縦方式は 2 つ（ガレージ画面で切り替え。エースコンバットの呼び方に合わせている）：
@@ -35,6 +37,16 @@ extends Pilotable
 @export var landing_tilt_deg: float = 20.0
 ## 地上での減速の強さ
 @export var ground_brake: float = 40.0
+## AI が保つ高さ（メートル）
+@export var ai_cruise_height: float = 70.0
+## AI がこれより低くなったら機首を上げる高さ（メートル）
+@export var ai_min_height: float = 40.0
+## AI の旋回の速さ（度/秒）
+@export var ai_turn_speed_deg: float = 45.0
+## AI が飛ぶ速さ（メートル/秒）
+@export var ai_speed: float = 80.0
+## AI が撃つ時に許す狙いのずれ（度）
+@export var ai_fire_angle_deg: float = 12.0
 ## 方向舵（A/D と一緒に使う水平の回頭）の速さ（度/秒）
 @export var rudder_speed_deg: float = 30.0
 ## 操縦方式（"expert" / "novice"）。空のままなら保存された設定を使う
@@ -80,19 +92,28 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
+	var ai := _driver_is_ai()
 	if on_ground:
-		_run_on_ground(delta)
+		_run_on_ground(delta, ai)
+	elif ai:
+		_fly_ai(delta)
 	else:
 		_fly(delta)
 	_aim_gun()
 
-	if control["fire"] and weapon != null:
+	# AI は機首が相手に向いている時だけ撃つ（明後日の方向に撃たないように）
+	var may_fire: bool = bool(control["fire"])
+	if ai:
+		may_fire = may_fire and _nose_is_on_target()
+	if may_fire and weapon != null:
 		weapon.try_fire(Pilotable.aim_point(control), self)
 
 
 ## 駐機中・着陸後の動き。加速していけば浮き上がる
-func _run_on_ground(delta: float) -> void:
+func _run_on_ground(delta: float, ai: bool = false) -> void:
 	var throttle := float(control.get("throttle", 0.0))
+	if ai:
+		throttle = 1.0  # AI は自分で加速して離陸する
 	if throttle > 0.0:
 		speed = clampf(speed + throttle * throttle_power * delta, 0.0, max_speed)
 	else:
@@ -169,6 +190,51 @@ func _turn_novice(delta: float) -> void:
 		rotation.x = move_toward(rotation.x, 0.0, deg_to_rad(60.0) * delta)
 
 
+## AI の飛び方：決まった高さを保ち、狙う相手の方へゆっくり向きを変えて飛び続ける
+func _fly_ai(delta: float) -> void:
+	speed = move_toward(speed, ai_speed, throttle_power * delta)
+	var aim := Pilotable.aim_point(control)
+	# 狙う相手がいればその方角へ、いなければ今の向きのまま
+	if aim != Vector3.ZERO:
+		var to_aim: Vector3 = aim - global_position
+		if Vector2(to_aim.x, to_aim.z).length() > 1.0:
+			var wanted_yaw := atan2(-to_aim.x, -to_aim.z)
+			var before := rotation.y
+			rotation.y = rotate_toward(rotation.y, wanted_yaw, deg_to_rad(ai_turn_speed_deg) * delta)
+			# 曲がる方向へ機体を傾ける（見た目）
+			var turning: float = wrapf(rotation.y - before, -PI, PI)
+			rotation.z = move_toward(rotation.z, clampf(-turning * 40.0, -0.7, 0.7), 2.0 * delta)
+	else:
+		rotation.z = move_toward(rotation.z, 0.0, 1.0 * delta)
+	# 高さを保つ（低くなりすぎたら機首を上げる）
+	var wanted_height: float = ai_cruise_height
+	if aim != Vector3.ZERO:
+		wanted_height = maxf(ai_cruise_height, aim.y + 30.0)
+	var diff: float = wanted_height - global_position.y
+	var wanted_pitch: float = clampf(diff / 60.0, -0.4, 0.5)
+	if global_position.y < ai_min_height:
+		wanted_pitch = 0.5
+	rotation.x = move_toward(rotation.x, wanted_pitch, deg_to_rad(40.0) * delta)
+	var forward := -global_transform.basis.z
+	velocity = forward * speed
+	if move_and_slide():
+		# AI は地面をこすっても墜落させず、上を向かせて立て直す
+		rotation.x = deg_to_rad(25.0)
+		global_position.y = maxf(global_position.y, ai_min_height)
+
+
+## 機首が狙っている相手の方を向いているか
+func _nose_is_on_target() -> bool:
+	var aim := Pilotable.aim_point(control)
+	if aim == Vector3.ZERO:
+		return false
+	var to_aim: Vector3 = aim - global_position
+	if to_aim.length() < 1.0:
+		return false
+	var forward: Vector3 = -global_transform.basis.z
+	return forward.angle_to(to_aim.normalized()) < deg_to_rad(ai_fire_angle_deg)
+
+
 ## 地面・建物に触れた：条件が良ければ着陸、そうでなければ墜落
 func _touch_ground() -> void:
 	if takeoff_grace > 0.0:
@@ -228,6 +294,14 @@ func _aim_gun() -> void:
 			gun_pivot.global_basis = Basis.looking_at(to_aim.normalized())
 	if weapon != null and muzzle_point != null:
 		weapon.global_transform = muzzle_point.global_transform
+
+
+## 今の操縦者が AI かどうか（AI なら自動操縦で飛ぶ）
+func _driver_is_ai() -> bool:
+	for seat in get_seats():
+		if seat.is_driver:
+			return seat.occupant is AIPilot
+	return false
 
 
 ## 地上にいるか（空中では乗り降りできない）

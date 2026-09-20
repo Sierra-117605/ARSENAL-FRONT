@@ -73,6 +73,7 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_pressed(InputActions.THROTTLE_DOWN):
 		throttle -= 1.0
 	control["throttle"] = throttle
+	control["lift"] = throttle  # ヘリでは上昇・下降として使う
 	var rudder := 0.0
 	if Input.is_action_pressed(InputActions.RUDDER_RIGHT):
 		rudder += 1.0
@@ -93,12 +94,8 @@ func _physics_process(_delta: float) -> void:
 	occupant.send_control(control)
 
 
-## 照準の先にある地点を探す。何もなければ最大距離の地点。
-## 航空機は機首の正面に固定（マウスを使わないので、狙いは機体の向きそのもの）
+## 画面中央（照準）の先にある地点を探す。何もなければ最大距離の地点
 func _find_aim_point() -> Vector3:
-	var plane := _aircraft()
-	if plane != null:
-		return _nose_aim_point(plane)
 	var camera := camera_rig.camera
 	var from := camera.global_position
 	var range_m := aim_range
@@ -172,19 +169,7 @@ func _machine_radius(vehicle: Pilotable) -> float:
 	return 4.0
 
 
-## 航空機の照準：機首の正面をまっすぐ見て、当たる物があればその位置
-func _nose_aim_point(plane: Pilotable) -> Vector3:
-	var from: Vector3 = plane.global_position
-	var forward: Vector3 = -plane.global_transform.basis.z
-	var range_m := float(plane.get("aim_range")) if plane.get("aim_range") != null else aim_range
-	var to: Vector3 = from + forward * range_m
-	var query := PhysicsRayQueryParameters3D.create(from, to)
-	query.exclude = [plane.get_rid()]
-	var hit := plane.get_world_3d().direct_space_state.intersect_ray(query)
-	return hit["position"] if not hit.is_empty() else to
-
-
-## 今プレイヤーが操縦している航空機（乗っていなければ null）
+## 今プレイヤーが操縦している攻撃機（AI 専用なので通常は null）
 func _aircraft() -> Aircraft:
 	if occupant == null:
 		return null
@@ -216,7 +201,7 @@ func _find_seat_near(from: Vector3, team: String) -> Seat:
 			continue
 		for seat in other.get_seats():
 			var takeable: bool = seat.occupant == null or seat.occupant is AIPilot
-			if seat.is_driver and takeable:
+			if seat.is_driver and takeable and seat.player_can_board:
 				best_seat = seat
 				best_distance = distance
 	return best_seat

@@ -5,6 +5,8 @@ extends Marker3D
 
 ## true なら運転手席（この席の乗員が乗り物を動かす）
 @export var is_driver: bool = true
+## false ならプレイヤーは乗り込めない（AI 専用の機体に使う）
+@export var player_can_board: bool = true
 
 ## 今座っている乗員（空席なら null）
 var occupant: Occupant = null
