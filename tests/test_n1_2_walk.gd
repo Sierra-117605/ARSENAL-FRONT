@@ -23,6 +23,8 @@ func _initialize() -> void:
 	var field: Node = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	robot = field.get_node("Robot")
+	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
+	robot.use_saved_loadout = false
 	rig = field.get_node("CameraRig")
 
 

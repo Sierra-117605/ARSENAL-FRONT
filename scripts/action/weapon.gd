@@ -38,4 +38,7 @@ func try_fire(aim_point: Vector3, shooter: CollisionObject3D) -> bool:
 	if spread > 0.0:
 		dir += Vector3(randf_range(-spread, spread), randf_range(-spread, spread), randf_range(-spread, spread))
 	bullet.launch(global_position, dir, shooter)
+	# 発砲音。威力が大きい武器ほど低い音にする
+	var pitch := clampf(1.4 - float(damage) * 0.006, 0.6, 1.4)
+	Sounds.play_at(self, Sounds.SHOT, global_position, pitch)
 	return true

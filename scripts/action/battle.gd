@@ -88,4 +88,5 @@ func _finish(result: String) -> void:
 	if outcome != "":
 		return
 	outcome = result
+	Sounds.play_ui(self, Sounds.VICTORY if result == "win" else Sounds.DEFEAT)
 	finished.emit(result)

@@ -23,6 +23,8 @@ func _initialize() -> void:
 	root.add_child(field)
 	battle = field
 	robot = field.get_node("Robot")
+	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
+	robot.use_saved_loadout = false
 	enemies = field.get_node("Enemies").get_children()
 	message = field.get_node("HUD/BattleMessage")
 	battle.finished.connect(func(r: String): results.append(r))

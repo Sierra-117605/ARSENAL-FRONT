@@ -35,6 +35,7 @@ func _physics_process(delta: float) -> void:
 		query.exclude = [shooter_rid]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
+		Sounds.play_at(self, Sounds.IMPACT, hit["position"])
 		var target: Object = hit["collider"]
 		if target != null and target.has_method("take_hit"):
 			target.take_hit(damage)

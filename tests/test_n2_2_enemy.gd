@@ -26,6 +26,8 @@ func _initialize() -> void:
 	field = load("res://scenes/field_3d.tscn").instantiate()
 	root.add_child(field)
 	robot = field.get_node("Robot")
+	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
+	robot.use_saved_loadout = false
 	enemy = field.get_node("Enemies/Enemy1")
 	robot.damaged.connect(_on_player_damaged)
 

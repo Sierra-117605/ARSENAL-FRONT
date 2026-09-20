@@ -30,6 +30,8 @@ func _initialize() -> void:
 	rig = field.get_node("CameraRig")
 	camera = field.get_node("CameraRig/Camera3D")
 	targets = field.get_node("Targets").get_children()
+	# テストでは保存した構成を読まない（シーンの標準設定のまま使う）
+	field.get_node("Robot").use_saved_loadout = false
 
 
 func _physics_process(_delta: float) -> bool:

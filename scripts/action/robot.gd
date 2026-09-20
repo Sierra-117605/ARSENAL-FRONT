@@ -39,6 +39,8 @@ var aim_range: float = 1500.0
 var step_phase: float = 0.0
 ## 見た目の揺れの強さ（止まると 0 に戻る）
 var step_amount: float = 0.0
+## 前のフレームの歩調（足音を鳴らす切り替わりを見るため）
+var _last_step_half: int = 0
 
 
 func _ready() -> void:
@@ -168,6 +170,12 @@ func _update_step_motion(delta: float) -> void:
 	# 止まっている時は揺れを 0 に戻す
 	var wanted := clampf(speed / maxf(walk_speed, 0.01), 0.0, 1.0)
 	step_amount = move_toward(step_amount, wanted, 4.0 * delta)
+
+	# 足が地面に着くたび（1 周に 2 回）に足音を鳴らす
+	var half := int(step_phase * 2.0)
+	if half != _last_step_half and step_amount > 0.3:
+		Sounds.play_at(self, Sounds.STEP, global_position)
+	_last_step_half = half
 
 	var swing := sin(step_phase * TAU) * deg_to_rad(step_swing_deg) * step_amount
 	leg_pivot_l.rotation.x = swing

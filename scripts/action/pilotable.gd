@@ -49,7 +49,9 @@ func take_hit(damage: int) -> void:
 		return
 	hp = maxi(hp - damage, 0)
 	damaged.emit(hp, max_hp)
+	Sounds.play_at(self, Sounds.HIT, global_position)
 	if hp == 0:
+		Sounds.play_at(self, Sounds.DESTROY, global_position)
 		destroyed.emit()
 
 

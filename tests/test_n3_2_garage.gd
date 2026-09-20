@@ -8,15 +8,16 @@ var frame := 0
 var failed := false
 var shot_path := ""
 var text_before := ""
+var saved_before := ""
 
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shot="):
 			shot_path = arg.substr(7)
-	# 前回の保存を消しておく
+	# 開発者が保存した構成を壊さないよう、いったん覚えておく
 	if FileAccess.file_exists(LoadoutStore.PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(LoadoutStore.PATH))
+		saved_before = FileAccess.get_file_as_string(LoadoutStore.PATH)
 	garage = load("res://scenes/garage.tscn").instantiate()
 	root.add_child(garage)
 
@@ -25,6 +26,9 @@ func _physics_process(_delta: float) -> bool:
 	frame += 1
 	match frame:
 		10:
+			# 保存済みの構成に関係なく、標準の構成から始める
+			garage.loadout = RobotParts.default_loadout()
+			garage._refresh()
 			_report(garage.pickers.size() == 6, "6 つの部位の選択欄がある (%d)" % garage.pickers.size())
 			text_before = garage.stats_label.text
 			_report(text_before.contains("耐久"), "性能表示に日本語が出ている")
@@ -42,8 +46,13 @@ func _physics_process(_delta: float) -> bool:
 			var saved := LoadoutStore.load_saved()
 			_report(saved.get("weapon", "") == "weapon_cannon" and saved.get("legs", "") == "legs_heavy",
 				"選んだ構成が保存される (%s)" % [saved])
-			# テストで書いた保存ファイルは消しておく（実際の遊びに影響させない）
-			DirAccess.remove_absolute(ProjectSettings.globalize_path(LoadoutStore.PATH))
+			# 開発者の構成を元に戻す（テストで書き換えたままにしない）
+			if saved_before != "":
+				var restore := FileAccess.open(LoadoutStore.PATH, FileAccess.WRITE)
+				if restore != null:
+					restore.store_string(saved_before)
+			else:
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(LoadoutStore.PATH))
 			print("RESULT: ", "FAIL" if failed else "PASS")
 			return true
 	return false
