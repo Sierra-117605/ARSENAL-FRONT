@@ -44,6 +44,8 @@ func _physics_process(delta: float) -> void:
 	if not warning and railgun_timer <= warning_time:
 		warning = true
 		GameLog.write("ボス", "レールガンの発射予兆")
+		# 警告音は画面全体に鳴らす（どこにいても気づけるように）
+		Sounds.play_ui(self, Sounds.ALARM)
 		railgun_warning.emit()
 	if railgun_timer <= 0.0:
 		_fire_railgun()
@@ -113,6 +115,7 @@ func _on_part_destroyed(part: BossPart) -> void:
 func _fire_railgun() -> void:
 	railgun_fired.emit()
 	GameLog.write("ボス", "レールガン発射")
+	Sounds.play_ui(self, Sounds.RAILGUN)
 	var muzzle: Node3D = get_node_or_null("RailgunMuzzle")
 	var from: Vector3 = muzzle.global_position if muzzle != null else global_position
 	# 自分（要塞）の部位は遮蔽に数えない

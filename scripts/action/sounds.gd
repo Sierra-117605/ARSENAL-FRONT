@@ -10,6 +10,8 @@ const DESTROY := "destroy"
 const STEP := "step"
 const VICTORY := "victory"
 const DEFEAT := "defeat"
+const ALARM := "alarm"
+const RAILGUN := "railgun"
 
 const FILES := {
 	SHOT: "res://assets/audio/shot.wav",
@@ -19,6 +21,8 @@ const FILES := {
 	STEP: "res://assets/audio/step.wav",
 	VICTORY: "res://assets/audio/victory.wav",
 	DEFEAT: "res://assets/audio/defeat.wav",
+	ALARM: "res://assets/audio/alarm.wav",
+	RAILGUN: "res://assets/audio/railgun.wav",
 }
 
 ## 音ごとの大きさ（デシベル。0 が元の大きさ、マイナスで小さくなる）
@@ -30,6 +34,8 @@ const VOLUMES := {
 	STEP: -14.0,
 	VICTORY: -4.0,
 	DEFEAT: -4.0,
+	ALARM: -2.0,
+	RAILGUN: 2.0,
 }
 
 ## 読み込んだ音（名前 → 音データ）

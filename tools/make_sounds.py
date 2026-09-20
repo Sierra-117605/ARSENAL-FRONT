@@ -96,6 +96,20 @@ def main():
     # 足音：重い機体の踏みしめ
     write_wav("step.wav", mix(noise_burst(0.28, decay=2.4, low_pass=6.0),
                               tone(0.26, 110, 45, decay=2.4)))
+    # レールガンの警告：はっきり気づく二音の繰り返し（3 回）
+    alarm = []
+    for _ in range(3):
+        alarm += tone(0.18, 880, 880, decay=0.8)
+        alarm += [0.0] * int(0.05 * RATE)
+        alarm += tone(0.18, 660, 660, decay=0.8)
+        alarm += [0.0] * int(0.12 * RATE)
+    write_wav("alarm.wav", mix(alarm))
+
+    # レールガンの発射：低く長い衝撃＋高い唸り
+    write_wav("railgun.wav", mix(noise_burst(1.6, decay=0.9, low_pass=1.5),
+                                 tone(1.4, 90, 30, decay=1.0, shape="square"),
+                                 tone(0.7, 1400, 300, decay=1.6)))
+
     # 勝利：上がっていく音
     write_wav("victory.wav", mix(tone(0.9, 440, 880, decay=0.6),
                                  tone(0.9, 660, 1320, decay=0.8)))

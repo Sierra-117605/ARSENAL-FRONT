@@ -8,10 +8,10 @@ albedo_color = Color(0.3, 0.31, 0.3, 1)
 roughness = 0.95
 
 [sub_resource type="BoxMesh" id="Mesh_base"]
-size = Vector3(200, 24, 140)
+size = Vector3(190, 12, 120)
 
 [sub_resource type="BoxShape3D" id="Shape_base"]
-size = Vector3(200, 24, 140)
+size = Vector3(190, 12, 120)
 
 [node name="BossFortress" type="Node3D"]
 script = ExtResource("1_boss")
@@ -19,19 +19,19 @@ script = ExtResource("1_boss")
 [node name="Base" type="StaticBody3D" parent="."]
 
 [node name="Mesh" type="MeshInstance3D" parent="Base"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
 mesh = SubResource("Mesh_base")
 surface_material_override/0 = SubResource("Mat_base")
 
 [node name="Collision" type="CollisionShape3D" parent="Base"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 0)
 shape = SubResource("Shape_base")
 
 [node name="RailgunMuzzle" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 60, 60)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 30, 70)
 
 [node name="Turret1" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -70, 28, 55)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -78, 6, 104)
 pilotable_id = "turret1"
 max_hp = 180
 team = "enemy"
@@ -41,7 +41,7 @@ can_shoot = true
 intact_color = Color(0.5, 0.42, 0.35, 1)
 
 [node name="Turret2" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, -25, 28, 62)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -30, 6, 112)
 pilotable_id = "turret2"
 max_hp = 180
 team = "enemy"
@@ -51,7 +51,7 @@ can_shoot = true
 intact_color = Color(0.5, 0.42, 0.35, 1)
 
 [node name="Turret3" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 25, 28, 62)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 30, 6, 112)
 pilotable_id = "turret3"
 max_hp = 180
 team = "enemy"
@@ -61,7 +61,7 @@ can_shoot = true
 intact_color = Color(0.5, 0.42, 0.35, 1)
 
 [node name="Turret4" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 70, 28, 55)
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 78, 6, 104)
 pilotable_id = "turret4"
 max_hp = 180
 team = "enemy"
@@ -71,7 +71,7 @@ can_shoot = true
 intact_color = Color(0.5, 0.42, 0.35, 1)
 
 [node name="Generator1" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, -55, 30, 0)
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, -64, 9, 78)
 pilotable_id = "generator1"
 max_hp = 320
 team = "enemy"
@@ -81,7 +81,7 @@ can_shoot = false
 intact_color = Color(0.35, 0.5, 0.42, 1)
 
 [node name="Generator2" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 55, 30, 0)
+transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 64, 9, 78)
 pilotable_id = "generator2"
 max_hp = 320
 team = "enemy"
@@ -90,18 +90,8 @@ part_label = "発電施設2"
 can_shoot = false
 intact_color = Color(0.35, 0.5, 0.42, 1)
 
-[node name="Barrel" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(2.2, 0, 0, 0, 1.2, 0, 0, 0, 6.0, 0, 46, -20)
-pilotable_id = "barrel"
-max_hp = 420
-team = "enemy"
-stage = 3
-part_label = "レールガン砲身"
-can_shoot = false
-intact_color = Color(0.45, 0.45, 0.5, 1)
-
 [node name="Core" parent="." instance=ExtResource("2_part")]
-transform = Transform3D(1.8, 0, 0, 0, 1.8, 0, 0, 0, 1.8, 0, 26, -52)
+transform = Transform3D(2.4, 0, 0, 0, 2.0, 0, 0, 0, 1.6, 0, 10, 74)
 pilotable_id = "core"
 max_hp = 520
 team = "enemy"
@@ -109,3 +99,13 @@ stage = 3
 part_label = "中枢"
 can_shoot = true
 intact_color = Color(0.6, 0.35, 0.3, 1)
+
+[node name="Barrel" parent="." instance=ExtResource("2_part")]
+transform = Transform3D(2.0, 0, 0, 0, 1.4, 0, 0, 0, 7.0, 0, 20, 25)
+pilotable_id = "barrel"
+max_hp = 420
+team = "enemy"
+stage = 3
+part_label = "レールガン砲身"
+can_shoot = false
+intact_color = Color(0.45, 0.45, 0.5, 1)
