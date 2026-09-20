@@ -53,6 +53,15 @@ func _repaint(node: Node) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# 壊れていたら操作を受け付けない（その場で止まる）
+	if not is_alive():
+		velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
+		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
+		if not is_on_floor():
+			velocity.y -= gravity * delta
+		move_and_slide()
+		_update_step_motion(delta)
+		return
 	# 機体をカメラの向き（操縦入力の yaw）に合わせる（SPEC §0.7）
 	rotation.y = control["yaw"]
 	# 入力を機体の向き基準の方向に直す（前 = 機体の正面）

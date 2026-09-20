@@ -13,9 +13,11 @@ extends Occupant
 ## 相手のどのくらいの高さを狙うか（足元からの高さ）
 @export var aim_height: float = 6.0
 ## 撃つ間隔（秒）。プレイヤーより遅くしてある
-@export var fire_interval: float = 1.2
+@export var fire_interval: float = 2.0
 ## 保つ距離の許容幅（この幅の中では前後に動かない）
 @export var distance_margin: float = 8.0
+## 狙いのブレ（メートル）。0 だと百発百中で厳しすぎる
+@export var aim_spread: float = 4.0
 
 
 func _ready() -> void:
@@ -48,9 +50,15 @@ func _physics_process(_delta: float) -> void:
 	# 射程に入ったら撃つ
 	if distance <= fire_range:
 		control["fire"] = true
-		var aim: Vector3 = chase_target.global_position + Vector3(0.0, aim_height, 0.0)
+		var aim: Vector3 = chase_target.global_position + Vector3(0.0, aim_height, 0.0) + _spread()
 		control["aim"] = {"x": aim.x, "y": aim.y, "z": aim.z}
 	send_control(control)
+
+
+## 狙いのブレを作る
+func _spread() -> Vector3:
+	return Vector3(randf_range(-aim_spread, aim_spread), randf_range(-aim_spread, aim_spread),
+		randf_range(-aim_spread, aim_spread))
 
 
 ## 追いかける相手がまだ生きているか

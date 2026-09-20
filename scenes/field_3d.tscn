@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/robot.tscn" id="1_robot"]
 [ext_resource type="Script" path="res://scripts/action/camera_rig.gd" id="2_rig"]
@@ -9,6 +9,9 @@
 [ext_resource type="PackedScene" path="res://scenes/target.tscn" id="7_target"]
 [ext_resource type="Script" path="res://scripts/action/health_bar.gd" id="8_hp"]
 [ext_resource type="Script" path="res://scripts/action/ai_pilot.gd" id="9_ai"]
+[ext_resource type="Script" path="res://scripts/action/battle.gd" id="10_battle"]
+[ext_resource type="Script" path="res://scripts/action/battle_message.gd" id="11_msg"]
+[ext_resource type="PackedScene" path="res://scenes/cover_block.tscn" id="12_cover"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.32, 0.45, 0.62, 1)
@@ -78,7 +81,10 @@ height = 5.0
 [sub_resource type="BoxMesh" id="Mesh_house"]
 size = Vector3(8, 6.5, 8)
 
-[node name="Field3D" type="Node3D"]
+[node name="Field3D" type="Node3D" node_paths=PackedStringArray("player", "enemies_root")]
+script = ExtResource("10_battle")
+player = NodePath("Robot")
+enemies_root = NodePath("Enemies")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env_1")
@@ -102,23 +108,23 @@ shape = SubResource("GroundShape")
 [node name="Targets" type="Node3D" parent="."]
 
 [node name="Target1" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, -75)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 0, -35)
 target_id = "target_01"
 
 [node name="Target2" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 0, -120)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -67)
 target_id = "target_02"
 
 [node name="Target3" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0, -150)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -95, 0, -113)
 target_id = "target_03"
 
 [node name="Target4" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, -90)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, -121)
 target_id = "target_04"
 
 [node name="Target5" parent="Targets" instance=ExtResource("7_target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -240)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55, 0, -151)
 target_id = "target_05"
 
 [node name="ScaleRefs" type="Node3D" parent="."]
@@ -169,15 +175,46 @@ pixel_size = 0.02
 text = "2F HOUSE 6.5m"
 font_size = 128
 
+[node name="Covers" type="Node3D" parent="."]
+
+[node name="Cover1" parent="Covers" instance=ExtResource("12_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, -40)
+
+[node name="Cover2" parent="Covers" instance=ExtResource("12_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -62)
+
+[node name="Cover3" parent="Covers" instance=ExtResource("12_cover")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -78)
+
 [node name="Enemies" type="Node3D" parent="."]
 
 [node name="Enemy1" parent="Enemies" instance=ExtResource("1_robot")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -160)
 pilotable_id = "enemy_01"
-max_hp = 60
+max_hp = 100
 body_color = Color(0.55, 0.15, 0.13, 1)
 
 [node name="AIPilot" type="Node" parent="Enemies/Enemy1" node_paths=PackedStringArray("start_seat", "chase_target")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
+chase_target = NodePath("../../../Robot")
+[node name="Enemy2" parent="Enemies" instance=ExtResource("1_robot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -150)
+pilotable_id = "enemy_02"
+max_hp = 100
+body_color = Color(0.55, 0.15, 0.13, 1)
+
+[node name="AIPilot" type="Node" parent="Enemies/Enemy2" node_paths=PackedStringArray("start_seat", "chase_target")]
+script = ExtResource("9_ai")
+start_seat = NodePath("../DriverSeat")
+chase_target = NodePath("../../../Robot")
+[node name="Enemy3" parent="Enemies" instance=ExtResource("1_robot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -132)
+pilotable_id = "enemy_03"
+max_hp = 100
+body_color = Color(0.55, 0.15, 0.13, 1)
+
+[node name="AIPilot" type="Node" parent="Enemies/Enemy3" node_paths=PackedStringArray("start_seat", "chase_target")]
 script = ExtResource("9_ai")
 start_seat = NodePath("../DriverSeat")
 chase_target = NodePath("../../../Robot")
@@ -226,3 +263,14 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("8_hp")
 target = NodePath("../../Robot")
+
+[node name="BattleMessage" type="Control" parent="HUD" node_paths=PackedStringArray("battle")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("11_msg")
+battle = NodePath("../..")

@@ -8,6 +8,7 @@ const MOVE_BACK := "move_back"
 const MOVE_LEFT := "move_left"
 const MOVE_RIGHT := "move_right"
 const FIRE := "fire"
+const RESTART := "restart"
 
 ## 操作名 → キー（キーボード上の物理位置で指定するので配列が違っても同じ場所）
 const KEYS := {
@@ -15,6 +16,7 @@ const KEYS := {
 	MOVE_BACK: KEY_S,
 	MOVE_LEFT: KEY_A,
 	MOVE_RIGHT: KEY_D,
+	RESTART: KEY_R,
 }
 
 ## 操作名 → マウスボタン

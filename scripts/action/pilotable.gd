@@ -7,7 +7,7 @@ extends CharacterBody3D
 ## この物を識別する文字列（保存・将来の通信用）
 @export var pilotable_id: String = ""
 ## 耐久の最大値（0 になると撃破）
-@export var max_hp: int = 100
+@export var max_hp: int = 300
 
 ## 今の耐久
 var hp: int = 0
