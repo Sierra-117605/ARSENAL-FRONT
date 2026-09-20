@@ -169,7 +169,7 @@ func _setup_objective() -> void:
 		return
 	objective.max_hp = int(mission.get("objective_hp", 400))
 	objective.hp = objective.max_hp
-	objective.team = "player" if kind == "defend" else "enemy"
+	objective.team = "player" if kind == "defend" else "enemy"  # グループも自動で付け替わる
 	objective.destroyed.connect(_on_objective_destroyed)
 	GameLog.write("開始", "%s（耐久 %d）" % [
 		"守る拠点" if kind == "defend" else "破壊目標", objective.max_hp])

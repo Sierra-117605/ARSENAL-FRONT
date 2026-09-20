@@ -15,11 +15,21 @@ extends Node3D
 var direction: Vector3 = Vector3.FORWARD
 ## 撃った本人（自分には当たらない）
 var shooter_rid: RID
+## 撃った側の陣営（同じ陣営の相手は素通りする＝味方に当たらない）
+var shooter_team: String = ""
 ## 撃った機体ごとの命中数（自動プレイ検証で命中率を出すために数えている）
 static var hit_counts: Dictionary = {}
 ## 撃った機体の識別番号
 var shooter_id: int = 0
 var travelled: float = 0.0
+
+
+## 同じ陣営の相手か（味方の弾は当たらない）
+func _is_friendly(target: Object) -> bool:
+	if shooter_team == "" or target == null:
+		return false
+	var other_team: Variant = target.get("team") if target.has_method("get") else null
+	return other_team != null and str(other_team) == shooter_team
 
 
 ## 発射位置と向きを決める（シーンに追加した直後に呼ぶ）
@@ -28,6 +38,8 @@ func launch(from: Vector3, dir: Vector3, shooter: CollisionObject3D) -> void:
 	if shooter != null:
 		shooter_rid = shooter.get_rid()
 		shooter_id = shooter.get_instance_id()
+		if shooter.get("team") != null:
+			shooter_team = str(shooter.get("team"))
 	# 弾の見た目を飛ぶ向きにそろえる（-Z が進行方向）
 	global_transform = Transform3D(Basis.looking_at(direction), from)
 
@@ -35,13 +47,21 @@ func launch(from: Vector3, dir: Vector3, shooter: CollisionObject3D) -> void:
 func _physics_process(delta: float) -> void:
 	var from := global_position
 	var to := from + direction * speed * delta
-	var query := PhysicsRayQueryParameters3D.create(from, to)
+	var ignored: Array[RID] = []
 	if shooter_rid.is_valid():
-		query.exclude = [shooter_rid]
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		Sounds.play_at(self, Sounds.IMPACT, hit["position"])
+		ignored.append(shooter_rid)
+	# 味方に当たった場合は素通りさせて、その先を調べ直す（最大 4 回）
+	for _step in 4:
+		var query := PhysicsRayQueryParameters3D.create(from, to)
+		query.exclude = ignored
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty():
+			break
 		var target: Object = hit["collider"]
+		if _is_friendly(target):
+			ignored.append(hit["rid"])
+			continue
+		Sounds.play_at(self, Sounds.IMPACT, hit["position"])
 		if target != null and target.has_method("take_hit_at_shape"):
 			# 部位を持つ相手（ロボットなど）には、当たった場所を伝える
 			target.take_hit_at_shape(damage, int(hit.get("shape", -1)))

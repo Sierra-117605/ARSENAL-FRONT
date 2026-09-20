@@ -8,8 +8,14 @@ extends CharacterBody3D
 @export var pilotable_id: String = ""
 ## 耐久の最大値（0 になると撃破）
 @export var max_hp: int = 300
-## 陣営（"player" = 自軍 / "enemy" = 敵軍）。狙う相手を決めるのに使う
-@export var team: String = "player"
+## 陣営（"player" = 自軍 / "enemy" = 敵軍）。狙う相手を決めるのに使う。
+## 途中で変えても検索用のグループが付け替わる（任務で拠点の陣営が変わるため）
+@export var team: String = "player":
+	set(value):
+		if is_inside_tree():
+			remove_from_group("team_" + team)
+			add_to_group("team_" + value)
+		team = value
 
 ## 今の耐久
 var hp: int = 0
