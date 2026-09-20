@@ -132,6 +132,7 @@
 - 関連 TODO：N4-1
 
 ### 2026-09-20 兵士と乗り降りの作り
+- 2026-09-20 追加決定：**機体から機体へ直接は飛び移れない**。乗り換えは必ず降りて歩く（乗り込み距離 15m）。`PlayerInput.try_board_nearby` は廃止し、`toggle_board`（降りる／乗り込む）に一本化
 - 兵士も `Pilotable` として作る（`scripts/action/soldier.gd`）。乗員は「席に座っていれば乗り物へ、座っていなければ自分の体（兵士）へ」操作を流す（`Occupant.send_control`）
 - 乗り込み時は兵士を `visible = false` ＋ `set_physics_process(false)` ＋ 当たり判定を無効化（機体の中にいる扱い）。降りる時に機体の横へ戻す
 - F キーは 1 つで「乗り換え／降りる／乗り込む」を兼ねる（`PlayerInput.toggle_board`）

@@ -52,18 +52,22 @@ func _physics_process(_delta: float) -> bool:
 			# 味方 AI が自分で動いているか（少し前に出ているはず）
 			_report(spare.control["move_z"] != 0.0 or spare.control["fire"],
 				"味方 AI が自分で動く・撃つ (前後 %.1f / 射撃 %s)" % [spare.control["move_z"], spare.control["fire"]])
-			spare.global_position = robot.global_position + Vector3(20, 0, 0)
+			spare.global_position = robot.global_position + Vector3(25, 0, 0)
+			input.toggle_board()  # いったん降りる
+			field.get_node("Soldier").global_position = spare.global_position + Vector3(5, 0, 0)
 		45:
 			# 3：AI が乗っている味方機に乗り込む
-			_report(input.try_board_nearby(), "AI が乗っている味方機にも乗り込める")
+			_report(input.toggle_board(), "AI が乗っている味方機にも乗り込める")
 			_report(spare_seat.occupant == pilot, "操縦席がプレイヤーのものになる")
 			_report(spare_seat.ai_backup == ally_ai, "AI 乗員は席を譲って控えている")
 			var enemy_target2 := enemy_ai._current_target()
 			_report(enemy_target2 != null and (enemy_target2 as Pilotable).team == "player",
 				"乗り換え後も敵は自軍機を狙う (%s)" % enemy_target2.name)
 		50:
-			# 4：元の機体へ戻る
-			_report(input.try_board_nearby(), "元の機体に戻れる")
+			# 4：降りて元の機体へ戻る
+			input.toggle_board()
+			field.get_node("Soldier").global_position = robot.global_position + Vector3(5, 0, 0)
+			_report(input.toggle_board(), "元の機体に戻れる")
 			_report(spare_seat.occupant == ally_ai, "置いていった機体は AI が操縦を再開する")
 			_report(spare_seat.ai_backup == null, "控えの記録が消えている")
 		80:

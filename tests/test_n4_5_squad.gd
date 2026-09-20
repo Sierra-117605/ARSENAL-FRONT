@@ -57,9 +57,11 @@ func _physics_process(_delta: float) -> bool:
 				unique[t] = true
 			_report(unique.size() >= 2, "敵の狙いが分かれている（全員が同じ相手に群がらない）狙い：%s" % [targets])
 			# 味方機を近くへ寄せて乗り換える
-			spare.global_position = robot.global_position + Vector3(20, 0, 0)
+			spare.global_position = robot.global_position + Vector3(25, 0, 0)
+			input.toggle_board()  # いったん降りる
+			field.get_node("Soldier").global_position = spare.global_position + Vector3(5, 0, 0)
 		25:
-			_report(input.try_board_nearby(), "味方機に乗り換えた")
+			_report(input.toggle_board(), "降りた兵士が味方機に乗り込んだ")
 			_report(robot_seat.occupant == robot_ai, "降りた自機は AI が操縦を引き継ぐ")
 			robot_pos_at_switch = robot.global_position
 		90:

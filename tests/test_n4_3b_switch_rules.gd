@@ -36,9 +36,11 @@ func _physics_process(_delta: float) -> bool:
 			var first_target := enemy_pilot._current_target()
 			_report(first_target != null and (first_target as Pilotable).team == "player",
 				"敵は自軍のいずれかを狙う (%s)" % first_target.name)
-			spare.global_position = robot.global_position + Vector3(20, 0, 0)
+			spare.global_position = robot.global_position + Vector3(25, 0, 0)
+			input.toggle_board()  # いったん降りる
+			field.get_node("Soldier").global_position = spare.global_position + Vector3(5, 0, 0)
 		15:
-			_report(input.try_board_nearby(), "予備機に乗り換えた")
+			_report(input.toggle_board(), "降りた兵士が予備機に乗り込んだ")
 			var target_after := enemy_pilot._current_target()
 			_report(target_after != null and (target_after as Pilotable).team == "player",
 				"乗り換え後も敵は自軍のいずれかを狙う (%s)" % target_after.name)

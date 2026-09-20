@@ -10,8 +10,8 @@ extends Node
 @export var camera_rig: CameraRig
 ## 耐久バー（乗り換えたら表示先も切り替える）
 @export var health_bar: Control
-## この距離まで近づけば乗り換えられる（メートル）
-@export var board_distance: float = 40.0
+## この距離まで近づけば乗り込める（メートル）。兵士が歩いて近づく必要がある
+@export var board_distance: float = 15.0
 ## マウス感度（1 ピクセル動かしたときに回る角度・ラジアン）
 @export var mouse_sensitivity: float = 0.003
 
@@ -94,14 +94,12 @@ func _find_aim_point() -> Vector3:
 	return hit["position"]
 
 
-## F キーの処理：乗っていれば降りる、徒歩なら近くの機体に乗り込む
+## F キーの処理：乗っていれば降りる、徒歩なら近くの機体に乗り込む。
+## 機体から機体へ直接飛び移ることはできない（必ず一度降りて歩いて乗り込む）。
 func toggle_board() -> bool:
 	if occupant == null:
 		return false
 	if occupant.get_vehicle() != null:
-		# 乗っている：近くに別の機体があれば乗り換え、無ければ降りる
-		if try_board_nearby():
-			return true
 		return try_exit()
 	return try_board_from_foot()
 
@@ -172,43 +170,6 @@ func _find_seat_near(from: Vector3, team: String) -> Seat:
 				best_seat = seat
 				best_distance = distance
 	return best_seat
-
-
-## 近くの空いている操縦席へ乗り移る。乗り換えたら true
-func try_board_nearby() -> bool:
-	if occupant == null:
-		return false
-	var current := occupant.get_vehicle()
-	if current == null:
-		return false
-	var best_seat: Seat = null
-	var best_distance := board_distance
-	for node in get_tree().get_nodes_in_group("pilotable"):
-		var other := node as Pilotable
-		if other == null or other == current or not other.is_alive():
-			continue
-		var distance := current.global_position.distance_to(other.global_position)
-		if distance > best_distance:
-			continue
-		for seat in other.get_seats():
-			# 空席、または AI が操縦している自軍機なら乗り込める
-			var takeable: bool = seat.occupant == null or (seat.occupant is AIPilot and other.team == current.team)
-			if seat.is_driver and takeable:
-				best_seat = seat
-				best_distance = distance
-	if best_seat == null:
-		return false
-	# 今の席を降りて（AI が控えていれば AI に返す）、新しい席に乗り込む
-	if occupant.seat != null:
-		occupant.seat.release_to_ai()
-	best_seat.take_over(occupant)
-	var new_vehicle := best_seat.get_vehicle()
-	# カメラと耐久バーの見る相手も切り替える
-	if camera_rig != null:
-		camera_rig.target = new_vehicle
-	if health_bar != null:
-		health_bar.target = new_vehicle
-	return true
 
 
 ## カメラ操作の有効/無効を切り替え、マウスカーソルの表示を合わせる
