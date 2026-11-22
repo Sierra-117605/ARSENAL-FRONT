@@ -26,6 +26,10 @@ func _initialize() -> void:
 	DisplayServer.window_set_size(Vector2i(WIDTH, HEIGHT))
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
+	# 計測中は必ず前面に出す。背面に回ると Windows 側で描画が制限され、
+	# すべてのフレームが同じ低い値になって計測にならない（KNOWLEDGE 2026-11-23）
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, true)
+	DisplayServer.window_move_to_foreground()
 	if FileAccess.file_exists(MissionData.CHOICE_PATH):
 		mission_before = FileAccess.get_file_as_string(MissionData.CHOICE_PATH)
 	MissionData.save_choice("sweep_plain", "normal")
@@ -47,17 +51,33 @@ func _process(_delta: float) -> bool:
 
 
 func _report() -> void:
+	# 計測を始めた直後の数十フレームは値が安定しない（1.0 などの異常値が出る）ので、
+	# 「最低値」はそこを除いて数える。除く前の値も参考に出す
+	var skip: int = mini(30, samples.size() / 4)
 	var total := 0.0
 	var lowest := 99999.0
-	for v in samples:
+	var raw_lowest := 99999.0
+	for i in samples.size():
+		var v: float = samples[i]
 		total += v
-		lowest = minf(lowest, v)
+		raw_lowest = minf(raw_lowest, v)
+		if i >= skip:
+			lowest = minf(lowest, v)
 	# 最初の数十フレームは値が安定しないので、後半だけで最低値も出す
 	var late_low := 99999.0
 	for i in range(samples.size() / 2, samples.size()):
 		late_low = minf(late_low, samples[i])
-	print("FPS AVG: %.1f  MIN: %.1f  LATE_MIN: %.1f  (%d フレーム計測)" % [
-		total / maxf(samples.size(), 1.0), lowest, late_low, samples.size()])
+	# すべてのフレームが同じ値なら、描画が制限された状態（計測になっていない）
+	var flat := true
+	for i in range(1, samples.size()):
+		if absf(samples[i] - samples[0]) > 0.5:
+			flat = false
+			break
+	if flat and samples.size() > 10:
+		print("FPS 計測失敗：全フレームが同じ値（%.1f）。ウィンドウが前面に無い可能性。測り直すこと" % samples[0])
+		return
+	print("FPS AVG: %.1f  MIN: %.1f  LATE_MIN: %.1f  (%d フレーム計測 / 最初の %d を除外。除外前の最低 %.1f)" % [
+		total / maxf(samples.size(), 1.0), lowest, late_low, samples.size(), skip, raw_lowest])
 
 
 func _restore_mission() -> void:
