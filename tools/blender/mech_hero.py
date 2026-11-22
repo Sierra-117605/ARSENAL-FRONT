@@ -100,26 +100,26 @@ class Assembly:
         return obj
 
 
-# 顔幅、顎角の幅、顎先、後頭部の長さ、目尻の高さを独立に設計する。
+# 共通の首取付位置に対して、下顔面の装甲、庇の奥行き、側頭部の構成を変える。
 class Face(NamedTuple):
-    width: float
-    jaw: float
-    chin: float
-    occiput: float
-    eye_tilt: float
+    half_width: float
+    chin_width: float
+    chin_z: float
+    rear: float
+    visor_y: float
 
 
 PROFILES = {
-    "E": Face(.39, .275, -.335, .39, .018),
-    "F": Face(.41, .335, -.310, .42, -.005),
-    "G": Face(.335, .215, -.369, .37, .051),
-    "H": Face(.46, .345, -.332, .51, .032),
+    "I": Face(.410, .116, -.334, -.40, .385),
+    "J": Face(.355, .084, -.320, -.55, .445),
+    "K": Face(.480, .180, -.310, -.43, .360),
+    "L": Face(.405, .135, -.356, -.46, .405),
 }
 ARMOR, PALE, DARK, STEEL, ORANGE, GLASS = range(6)
 
 
 def shell_patch(part, slot, border, peak, thickness=.04):
-    """顔の折れ面。各頂点を別々の奥行きに置いて鼻筋や頬骨を実際に張り出す。"""
+    """顔の折れ面。各頂点を別々の奥行きに置いて継ぎ目や装甲の峰に実際の奥行きを与える。"""
     start = len(part.verts)
     n = len(border)
     part.verts.extend((x, y-thickness, z) for x, y, z in border)
@@ -143,139 +143,121 @@ def strut(part, slot, start, end, radius):
                       for i in range(12)] for center in (start, end)])
 
 
+def side_rail(part, slot, side, sections):
+    """後方から前方へ断面を送り、装甲の外面と折り返しを一体で造形する。"""
+    rings = []
+    for y, center, radius, bottom, top in sections:
+        h = top-bottom
+        rings.append([(side*(center+radius*x), y, bottom+h*z)
+                      for x,z in [(-1,.16),(-.77,.88),(-.25,1),(.65,.92),
+                                  (1,.58),(.90,.18),(.35,0),(-.60,.02)]])
+    part.loft(slot, rings)
+
+
 def build_face(key, palette):
     f = PROFILES[key]
-    w = f.width
-    neck, skull, mask, brow = [Assembly(n) for n in ("Neck", "Cranium", "Maxilla", "Brow")]
+    w, front = f.half_width, f.visor_y
+    neck, skull, mask, brow = [Assembly(n) for n in ("Neck", "Housing", "Faceplate", "VisorGuard")]
     neck.pin(DARK, 0, -.085, -.37, .144, .33)
     for z in [-.48, -.385, -.29]:
         neck.pin(STEEL, 0, -.085, z, .158, .033)
-    # 後頭部を丸く包む面の輪。眼窩の高さで前面を後退させ、鼻と唇に側面の段を作る。
-    sections = [(-.26,.52,.13,.075),(-.10,.82,.28,.105),(.115,.97,.36,.105),
-                (.29,1,.41,.170),(.43,.90,.36,.185),(.535,.66,.28,.13),(.57,.32,.14,.06)]
-    rings = []
-    for z, width, rear, front in sections:
-        ring = []
-        for i in range(16):
-            a = tau*i/16
-            depth = front if cos(a)>0 else rear*f.occiput/.39
-            ring.append((w*width*sin(a), -.035+depth*cos(a), z))
-        rings.append(ring)
-    skull.loft(DARK if key=="F" else ARMOR, rings)
-    if key=="H":
-        # 幅広の工業型は額の左右を張る。中央を切り欠いて鼻筋を露出する。
-        skull.hull(ARMOR,(.31,0,-.09,w,.27),(.43,0,-.10,w*1.08,.32),
-                  (.50,0,-.18,w*.81,.30))
-    # 控えめな一本の額突起を額の面から後ろへ流す。
-    lean = {"E":-.04, "F":-.12, "G":.01, "H":-.19}[key]
-    skull.hull(PALE,(.37,0,.11,.040,.085),(.53,0,.065,.035,.083),
-               (.686,0,.035+lean,.013,.036))
-    # 鼻根→鼻梁→鼻先→鼻下。平たい顔面板に鼻を描かず、横からも凹凸を出す。
-    bridge = .411 if key=="F" else .465 if key=="H" else .446
-    mask.hull(STEEL if key=="F" else PALE,(-.095,0,.296,.072,.052),(-.055,0,.356,.094,bridge-.356),
-              (.002,0,.344,.056,.088),(.157,0,.285,.038,.057),
-              (.215,0,.245,.061,.058))
-    # 人の口に相当する高さに通気口を置き、上下の面構成は顔ごとに変える。
-    if key in ("E", "G"):
-        lip = .153 if key=="E" else .118
-        z = -.172 if key=="E" else -.183
-        for side in [-1,1]:
-            upper_lip = [(0,.322,-.107),(side*.065,.334,-.101),
-                         (side*lip,.287,z+.011),(side*lip,.287,z-.007),
-                         (side*.055,.345,z+.008),(0,.347,z+.003)]
-            shell_patch(mask,ARMOR,upper_lip,(side*.064,.351,z+.029))
-        mask.hull(DARK,(z-.047,0,.268,lip*.91,.075),(z+.005,0,.265,lip,.071))
-        mask.hull(PALE,(f.chin,0,.211,lip*.54,.061),(f.chin+.031,0,.247,lip*.86,.083),
-                  (z-.060,0,.260,lip*.97,.085),(z-.026,0,.265,lip*.74,.058))
-    elif key=="F":
-        # 中央の細い桟を通した吸気口。下側のフレームから顎リンクへ力が伝わる形。
-        mask.hull(DARK,(-.267,0,.224,.113,.076),(-.192,0,.267,.158,.079),
-                  (-.092,0,.263,.125,.073))
-        for x in [-.095,-.046,0,.046,.095]:
-            strut(mask,STEEL,(x*.76,.321,-.228),(x,.336,-.122),.011)
-        mask.hull(ARMOR,(f.chin,0,.205,.094,.060),(-.263,0,.243,.147,.083),
-                  (-.241,0,.253,.136,.075))
-    else:
-        # 一体の防護マスクには、横スリットを挟んで前面が連続する顎板を設ける。
-        mask.hull(ARMOR,(-.317,0,.229,.150,.107),(-.251,0,.258,.217,.126),
-                  (-.175,0,.267,.213,.110))
-        mask.hull(DARK,(-.177,0,.268,.182,.105),(-.143,0,.274,.176,.105))
-        mask.hull(PALE,(-.145,0,.274,.187,.122),(-.105,0,.268,.174,.106),
-                  (-.070,0,.263,.104,.065))
+    # ヘルメットの下に暗いセンサーユニットを収める。鼻穴・口唇・眼球の形は作らない。
+    skull.hull(DARK,(-.246,0,-.018,.196,.20),(-.055,0,-.02,w*.78,.29),
+              (.16,0,-.02,w*.93,.33),(.32,0,-.06,w*.92,.31),
+              (.47,0,-.092,w*.65,.23))
+    skull.hull(ARMOR,(.245,0,-.07,w*.94,.28),(.38,0,-.105,w*.93,.30),
+              (.525,0,-.14,w*.65,.23),(.56,0,-.15,w*.39,.13))
+    # 一本の額の照準フィンを縦の背骨に埋め込む。
+    lean = {"I":-.10,"J":-.25,"K":-.045,"L":-.13}[key]
+    skull.hull(PALE,(.37,0,.11,.057,.118),(.525,0,.072,.043,.096),
+               (.686,0,.079+lean,.014,.031))
+    # 下端の放熱口は顎の裏に斜めに引き込む。水平の唇に見えないよう段差を後退させる。
+    mask.hull(DARK,(f.chin_z-.007,0,.105,f.chin_width,.14),
+              (-.16,0,.155,w*.59,.16),(.11,0,.158,w*.76,.16))
+    for z in [-.254,-.208]:
+        mask.hull(STEEL,(z,0,.213,f.chin_width*.94,.072),
+                  (z+.017,0,.207,f.chin_width*.98,.074))
     parts=[neck,skull,mask,brow]
     for side in [-1,1]:
-        def patch(part, slot, corners, center):
-            shell_patch(part,slot,[(side*x,y,z) for x,y,z in corners],
-                        (side*center[0],center[1],center[2]))
-        # 左右の額は眉間に下る。眉は眼窩の直上、外側はこめかみに回り込む。
-        temple=w*.98
-        patch(brow, ARMOR, [(0,.236,.235),(.045,.251,.375),(.14,.144,.518),
-                            (w*.75,.042,.454),(temple,-.007,.287),(w*.79,.169,.248),
-                            (.125,.289,.235)], (w*.48,.231,.362))
-        upper=.206+f.eye_tilt
-        patch(brow, PALE, [(.039,.294,.182),(.128,.302,.255),(w*.73,.215,upper+.071),
-                           (temple,.049,upper+.018),(w*.80,.182,upper),
-                           (.117,.306,.181)], (w*.49,.288,upper+.032))
+        def panel(part, slot, border, peak):
+            shell_patch(part,slot,[(side*x,y,z) for x,y,z in border],
+                        (side*peak[0],peak[1],peak[2]))
+        # 額から後頭部へ続く外殻。色の違う帯ではなく板厚と合わせ目を作る。
+        side_rail(skull, ARMOR, side, [
+            (f.rear, w*.43,.075,.24,.34),(f.rear+.11,w*.51,w*.33,.20,.49),
+            (-.053,w*.49,w*.43,.23,.535),(.179,w*.47,w*.40,.231,.433),
+            (.281,w*.40,w*.33,.218,.328)])
+        # レンズの枠より少し前へ張り出す庇。先端は左右で途切れ、二眼が独立して見える。
+        slope={"I":.039,"J":.055,"K":.004,"L":.029}[key]
+        panel(brow,PALE,[(.018,front-.042,.207),(.084,front-.028,.306),
+              (w*.77,.124,.366),(w*1.03,-.025,.255),(w*.90,.151,.207+slope),
+              (w*.69,.275,.187+slope),(.096,front,.175)],(w*.46,front-.04,.275))
         eye=Assembly("RightOptics" if side>0 else "LeftOptics")
-        # 杏仁形の眼窩に、わずかに奥まった二つの光学窓をはめる。
-        socket=[(.057,.285,.119),(.112,.287,.183),(w*.72,.206,upper),
-                (w*.84,.154,upper-.020),(w*.73,.206,.089+f.eye_tilt),
-                (.143,.284,.061)]
-        patch(eye,DARK,socket,(.168,.294,.132))
-        lens=[(.091,.302,.127),(.143,.296,.163),(w*.69,.231,.173+f.eye_tilt),
-              (w*.75,.211,.162+f.eye_tilt),(w*.59,.260,.102+f.eye_tilt),
-              (.149,.298,.094)]
-        if key=="F":
-            # 眼窩の中に双眼カメラを取り付け、前側に金属の鏡筒を残す。
-            for slot, radius, depth in [(STEEL,.071,.300),(DARK,.058,.313),(GLASS,.044,.325)]:
-                eye.loft(slot, [[(side*.175+radius*cos(tau*i/16),y,
-                                  .133+radius*sin(tau*i/16)) for i in range(16)]
-                                for y in [depth-.023,depth+.006]])
+        # レンズは発光する薄い光学窓。目尻をこめかみへ折り返す。
+        socket=[(.040,front-.039,.149),(.096,front-.026,.189),
+                (w*.74,.246,.199+slope),(w*.90,.165,.184+slope),
+                (w*.79,.208,.083+slope),(.112,front-.042,.053)]
+        panel(eye,DARK,socket,(w*.43,front-.012,.129))
+        lens=[(.079,front-.012,.132),(.12,front-.009,.157),
+              (w*.67,.267,.173+slope),(w*.786,.218,.163+slope),
+              (w*.665,.267,.114+slope),(.130,front-.014,.096)]
+        panel(eye,GLASS,lens,(w*.46,front-.014,.142))
+        cheek=Assembly("SideR" if side>0 else "SideL")
+        # 面頬は鼻先で途切れず、眼の下から顎まで一続きの稜線を持つ。
+        width = {"I":.76,"J":.60,"K":.86,"L":.66}[key]*w
+        ridge_y = {"I":.389,"J":.440,"K":.359,"L":.389}[key]
+        tone = ARMOR if key=="K" else PALE
+        # 目の下から顎へ折った装甲を実際に上下二枚に分ける。
+        # 継ぎ目は中央で途切れ、横へ抜ける排気路の底だけが見える。
+        slot_z = {"I":-.17,"J":-.13,"K":-.15,"L":-.19}[key]
+        panel(mask,tone,[(.012,.317,.146),(.067,.315,.057),(width*.86,.252,.041),
+              (width,.185,-.018),(width*.88,.211,slot_z+.060),
+              (width*.30,ridge_y-.008,slot_z+.016),(.012,.318,slot_z+.041)],
+              (width*.30,ridge_y,-.053))
+        panel(mask,DARK,[(.014,.311,slot_z+.047),(width*.88,.204,slot_z+.067),
+              (width*.81,.196,slot_z-.008),(.011,.298,slot_z-.063)],
+              (width*.32,ridge_y-.042,slot_z+.010))
+        panel(mask,tone,[(.012,.314,slot_z+.028),(width*.31,ridge_y-.011,slot_z-.016),
+              (width*.86,.208,slot_z+.018),(width*.72,.201,-.235),
+              (f.chin_width,.210,f.chin_z),(.012,.262,f.chin_z+.022)],
+              (width*.34,ridge_y-.028,slot_z-.056))
+        if key=="I":
+            side_rail(cheek,ARMOR,side,[(f.rear-.035,.31,.044,-.055,.18),
+                      (-.14,.374,.086,-.102,.22),(.08,.365,.070,-.163,.125),
+                      (.207,.225,.047,-.250,-.078),(.224,.151,.032,-.305,-.212)])
+        elif key=="J":
+            # 後方へ長いレールと、下側の二本の支持材の間に実際の空間を残す。
+            side_rail(cheek,PALE,side,[(f.rear-.165,.29,.030,.154,.210),
+                      (-.30,.339,.067,.105,.249),(.007,.355,.064,.083,.225),
+                      (.224,.293,.038,.068,.148)])
+            for z in [-.035,-.112]:
+                strut(cheek,STEEL,(side*.322,-.21,z+.08),
+                      (side*.158,.200,z-.134),.022)
+            side_rail(cheek,ARMOR,side,[(-.35,.302,.042,-.069,.039),
+                      (-.08,.312,.064,-.131,.051),(.185,.202,.037,-.230,-.112)])
+        elif key=="K":
+            # 二重の側面装甲で縦長の排気溝をはさむ箱形の頬モジュール。
+            side_rail(cheek,ARMOR,side,[(f.rear,.35,.061,-.10,.215),
+                      (-.20,.413,.094,-.157,.247),(.065,.414,.103,-.157,.209),
+                      (.225,.339,.076,-.194,.095)])
+            for z in [-.098,-.032,.033]:
+                side_rail(cheek,STEEL,side,[(-.32,.485,.022,z,z+.027),
+                          (-.14,.509,.024,z-.016,z+.019),(.055,.513,.018,z-.028,z+.006)])
         else:
-            if key=="H":
-                lens=[(x,y,.136+(z-.136)*.54) for x,y,z in lens]
-            patch(eye,GLASS,lens,(w*.47,.305,.142))
-        cheek=Assembly("RightMandible" if side>0 else "LeftMandible")
-        # 頬骨は眼窩の下に張り、頬は口の横でくぼむ。後端は耳の軸につなぐ。
-        patch(cheek,PALE if key!="F" else ARMOR,
-              [(.094,.294,.062),(w*.64,.243,.087+f.eye_tilt),(w*.88,.135,.126),
-               (w*1.01,.012,.058),(w*.79,.111,-.078),(.155,.259,-.134),
-               (.104,.312,-.067)],(w*.63,.302,.005))
-        jaw=f.jaw
-        if key=="F":
-            # 開放顎。鋳物の外側に二本のリンクが見える。
-            for dy,dz in [(0,0),(-.037,-.065)]:
-                strut(cheek,STEEL,(side*w*.93,-.046,.032+dz),
-                      (side*.146,.242+dy,-.222+dz),.028)
-            patch(cheek,ARMOR,[(w*.92,-.095,-.06),(jaw,.01,-.19),
-                  (.117,.254,f.chin+.016),(.21,.172,-.29)],(jaw,.00,-.202))
-        else:
-            patch(cheek,ARMOR,
-                  [(w*.96,-.075,.026),(w*.86,.09,-.095),(.155,.260,-.157),
-                   (.113,.264,f.chin+.018),(jaw,.064,-.246),(w*.91,-.106,-.121)],
-                  (jaw,.094,-.177))
-        # 側頭部の工業的な構造は顔面より後方に置く。
-        ear_x=w*.91
-        cheek.pin(DARK,side*ear_x,-.10,.109,.121,.095,"x")
-        cheek.pin(STEEL,side*(ear_x+.05),-.10,.109,.082,.023,"x")
-        cheek.pin(ORANGE,side*(ear_x+.064),-.10,.109,.037,.012,"x")
-        if key=="G":
-            # 頬から顎先まで細長い一枚を通し、細面の横顔を作る。
-            patch(cheek,PALE,[(w*.94,.086,.145),(w*.81,.180,.063),
-                  (.131,.289,-.176),(.096,.267,-.322),(.204,.184,-.235),
-                  (w*.96,.037,-.052)],(w*.74,.214,-.080))
-        if key=="H":
-            patch(cheek,ARMOR,[(w*1.06,-.18,.12),(w*1.13,.008,.053),
-                  (w*.70,.240,-.122),(.173,.283,-.267),(w*.86,-.04,-.237)],
-                  (w*.90,.102,-.111))
-            for z in [.04,.13,.22]:
-                cheek.hull(ARMOR,(z,side*w*.88,-.20,.081,.185),
-                           (z+.046,side*w*.89,-.245,.094,.216))
-        elif key=="G":
-            cheek.hull(PALE,(.12,side*w*.91,-.12,.045,.115),
-                       (.39,side*w*.92,-.16,.055,.17),(.51,side*w*.79,-.20,.026,.092))
-        elif key=="E":
-            strut(cheek,DARK,(side*.20,.032,-.238),(side*.14,-.07,-.411),.040)
+            # 外側の板と内側の板を独立させ、側面に長い抜けと重なる先端を作る。
+            side_rail(cheek,DARK,side,[(-.40,.336,.054,-.09,.17),
+                      (-.18,.37,.085,-.17,.19),(.175,.285,.055,-.23,.002)])
+            side_rail(cheek,PALE,side,[(f.rear,.299,.033,.118,.234),
+                      (-.215,.395,.054,.033,.235),(.048,.375,.053,-.11,.128),
+                      (.265,.189,.036,-.315,-.140)])
+            panel(mask,ARMOR,[(.025,.339,.044),(.129,.312,-.022),
+                  (.132,.290,-.166),(.048,.267,-.290)],(.077,.409,-.10))
+        # アクセスカバーのピンと小さな整備標識。発光するのは光学窓だけ。
+        pin_x={"I":.426,"J":.393,"K":.509,"L":.434}[key]
+        cheek.pin(DARK,side*pin_x,-.170,.102,.071,.032,"x")
+        cheek.pin(STEEL,side*(pin_x+.018),-.170,.102,.046,.018,"x")
+        side_rail(cheek,ORANGE,side,[(-.132,pin_x,.010,.13,.15),
+                  (-.051,pin_x+.008,.010,.12,.146)])
         parts.extend([eye,cheek])
     # 8組の部品を1個の交換メッシュにまとめ、首の下端と額先を量産機の高さに合わせる。
     objects=[part.build(palette) for part in parts]
@@ -331,7 +313,7 @@ def main():
     args=parser.parse_args(sys.argv[sys.argv.index("--")+1:])
     args.out.mkdir(parents=True,exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    palette=[material("Armor",(.29,.36,.43)),material("Edge",(.46,.54,.59)),
+    palette=[material("Armor",(.155,.215,.29)),material("Edge",(.46,.54,.59)),
              material("Graphite",(.035,.049,.061),.48,.44),
              material("Steel",(.26,.31,.33),.78,.34),material("Orange",(.80,.17,.032)),
              material("Optics",(.040,.60,.83),.12,.25,1.65)]
