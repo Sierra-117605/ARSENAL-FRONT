@@ -75,6 +75,10 @@
 
 ## 3. 実装中に詰まったこと（ここから随時追記）
 
+### 2026-11-23 案Bの頭部を三方向で確認
+- `tools/blender/mech_b.py:119` に首・額・頬、同153行に独立した光学窓。GLBは698,180バイト。変更前後の14個の名前が一致し、頂点・面・材質番号・部位の配置を比較して差があったのは Head と Visor のみ。
+- 三方向の再撮影は shot_set の mech_front と同じ配置で、カメラを自機の Head に向ける。機体の正面を0度として0・42・90度、距離係数5.8、高さ係数0.17、画角31度。横から頬でレンズが隠れることは正面だけでは分からなかった。
+
 ### 2026-11-23 案 B の Blender モデルを Godot で検証
 - 再生成はプロジェクト直下の PowerShell で `& "C:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python-exit-code 1 --python tools/blender/mech_b.py`。続いて Godot で `--headless --path . --import`。試作は 614,720 バイト。
 - `tools/blender/mech_b.py:33` で部位の中心を原点に頂点を作る。部位ごとの面取りと、広い面に合わせた陰影を適用して書き出した。`scripts/action/mech_detail.gd:161` は 14 部位の存在を確認してから差し替える。実機で GLB あり＝14 個・旧胸板なし、GLB なしの複製環境＝0 個・旧胸板あり。胴の塗装面は 0 番。
