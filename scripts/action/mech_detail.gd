@@ -13,14 +13,66 @@ extends RefCounted
 ## 既存のノード名・当たり判定・部位ダメージの仕組みには触れない。
 ## 名前が "Dark" で始まる部品は機体色で塗り替えない（装甲の切れ目を見せるため）。
 
-## 形は全機体で共通なので、一度作って使い回す
+## 形の案（SPEC §0.18 の「形の特徴」を、方向の違う 3 つに振り分けたもの）
+## a＝重装：胸と肩が大きく、脚が太い。構えが低く重い
+## b＝軽量高機動：胴が細く脚が長い。背面の推進器が大きく、装甲は薄く鋭い
+## c＝実用重機：ずんぐりして装甲が厚い。駆動部とスカート装甲が目立つ
+const STYLES := {
+	"a": {
+		"torso": [1.6, 1.1, 2.3, 1.45, 1.5, 0.34], "hip": [1.6, 1.0, 1.3, 0.86, 0.52, 0.2],
+		"head": [0.72, 0.84, 0.54, 0.66, 0.5, 0.14], "shoulder": [0.7, 0.9, 0.62, 0.8, 0.66, 0.18],
+		"leg": [0.92, 1.0, 0.68, 0.76, 1.8, 0.2], "foot": [1.06, 1.46, 0.88, 1.24, 0.32, 0.16],
+		"pack": [1.62, 0.86, 1.3, 0.6, 1.3, 0.24],
+		"pauldron": [1.08, 1.16, 0.74, 0.86, 0.56, 0.22], "shoulder_out": 0.2, "plate_thick": 0.34,
+	},
+	"b": {
+		"torso": [1.18, 0.86, 1.82, 1.14, 1.3, 0.32], "hip": [1.0, 0.7, 0.84, 0.6, 0.38, 0.16],
+		"head": [0.54, 0.68, 0.38, 0.48, 0.42, 0.16], "shoulder": [0.5, 0.72, 0.42, 0.58, 0.5, 0.16],
+		"leg": [0.6, 0.74, 0.42, 0.54, 1.98, 0.16], "foot": [0.8, 1.42, 0.6, 1.1, 0.24, 0.12],
+		"pack": [1.52, 0.82, 1.4, 0.7, 1.62, 0.2],
+		"pauldron": [1.0, 1.22, 0.46, 0.64, 0.38, 0.24], "shoulder_out": 0.3, "plate_thick": 0.22,
+		"lift": {"Torso": 0.14, "Head": 0.12, "Hip": 0.06, "ShoulderL": 0.12, "ShoulderR": 0.12,
+			"BackPack": 0.14},
+	},
+	"c": {
+		"torso": [1.75, 1.2, 2.0, 1.5, 1.34, 0.26], "hip": [1.7, 1.05, 1.5, 0.95, 0.56, 0.16],
+		"head": [0.8, 0.86, 0.66, 0.72, 0.44, 0.1], "shoulder": [0.72, 0.9, 0.68, 0.84, 0.6, 0.12],
+		"leg": [0.96, 1.02, 0.8, 0.88, 1.8, 0.14], "foot": [1.12, 1.5, 1.0, 1.36, 0.34, 0.12],
+		"pack": [1.46, 0.9, 1.26, 0.74, 1.12, 0.16],
+		"pauldron": [1.0, 1.1, 0.86, 0.96, 0.46, 0.14], "shoulder_out": 0.12, "plate_thick": 0.42,
+	},
+}
+
+## 今使っている案（"a" / "b" / "c"）
+static var style: String = "b"
+
+## 形は案ごとに作って使い回す
 static var _shapes: Dictionary = {}
 
 
+## 今の案の設定を引く
+static func _p(key: String) -> Array:
+	var preset: Dictionary = STYLES.get(style, STYLES["a"])
+	return preset.get(key, [])
+
+
+## 今の案の数値を引く
+static func _v(key: String, fallback: float) -> float:
+	var preset: Dictionary = STYLES.get(style, STYLES["a"])
+	return float(preset.get(key, fallback))
+
+
+## 案の設定（幅・奥行き・上面の幅・上面の奥行き・高さ・角の落とし量）から形を作る
+static func _block_of(key: String) -> ArrayMesh:
+	var a := _p(key)
+	return MeshShapes.angled_block(a[0], a[1], a[2], a[3], a[4], a[5])
+
+
 static func _shape(key: String, maker: Callable) -> ArrayMesh:
-	if not _shapes.has(key):
-		_shapes[key] = maker.call()
-	return _shapes[key]
+	var full := style + ":" + key
+	if not _shapes.has(full):
+		_shapes[full] = maker.call()
+	return _shapes[full]
 
 
 ## 塗装した装甲（つや消し。縁にうっすら光が乗る）
@@ -112,7 +164,9 @@ static func add_details(visual: Node3D) -> void:
 	var torso := visual.get_node_or_null("Torso") as Node3D
 	if torso != null:
 		_attach(torso, "ChestPlate", _shape("chest", func(): return MeshShapes.angled_block(
-			1.45, 0.3, 1.15, 0.22, 0.8, 0.16, -0.06)), Vector3(0, 0.12, -0.6), plate, -10.0)
+			_p("torso")[0] * 0.95, _v("plate_thick", 0.3), _p("torso")[0] * 0.75,
+			_v("plate_thick", 0.3) * 0.72, 0.8, 0.16, -0.06)),
+			Vector3(0, 0.12, -_p("torso")[1] * 0.56), plate, -10.0)
 		_box(torso, "DarkChestVent", Vector3(0.85, 0.14, 0.1), Vector3(0, -0.4, -0.66), dark)
 		_attach(torso, "CollarL", _shape("collar", func(): return MeshShapes.wedge(
 			0.5, 0.18, 0.42, 0.52)), Vector3(-0.76, 0.6, -0.12), plate)
@@ -151,8 +205,8 @@ static func add_details(visual: Node3D) -> void:
 		var shoulder := visual.get_node_or_null(node_name) as Node3D
 		if shoulder == null:
 			continue
-		_attach(shoulder, "Pauldron", _shape("pauldron", func(): return MeshShapes.angled_block(
-			0.95, 1.05, 0.66, 0.78, 0.5, 0.2)), Vector3(side * 0.16, 0.34, 0), plate)
+		_attach(shoulder, "Pauldron", _shape("pauldron", func(): return _block_of("pauldron")),
+			Vector3(side * 0.16, 0.34, 0), plate)
 		_attach(shoulder, "PauldronSkirt", _shape("pauldron_s", func(): return MeshShapes.wedge(
 			0.9, 0.12, 0.34, 0.95)), Vector3(side * 0.24, -0.06, 0), plate)
 		_tube(shoulder, "DarkShoulderAxis", 0.18, 0.72, Vector3(side * -0.2, 0.08, 0), dark, false)
@@ -215,23 +269,30 @@ static func add_details(visual: Node3D) -> void:
 
 ## 主要な部品の形を、箱から「角を落とした台形」に差し替える
 static func _reshape_body(visual: Node3D) -> void:
-	# 胸は上が広く、腰に向かって細くなる
-	_reshape(visual, "Torso", _shape("torso", func(): return MeshShapes.angled_block(
-		1.5, 1.05, 2.05, 1.35, 1.4, 0.3, -0.05)))
-	_reshape(visual, "Hip", _shape("hip", func(): return MeshShapes.angled_block(
-		1.5, 0.95, 1.25, 0.82, 0.5, 0.2)))
-	_reshape(visual, "Head", _shape("head", func(): return MeshShapes.angled_block(
-		0.68, 0.8, 0.5, 0.62, 0.5, 0.14, -0.04)))
+	# 胸は上が広く、腰に向かって細くなる（寸法は案ごとの設定から）
+	_reshape(visual, "Torso", _shape("torso", func(): return _block_of("torso")))
+	_reshape(visual, "Hip", _shape("hip", func(): return _block_of("hip")))
+	_reshape(visual, "Head", _shape("head", func(): return _block_of("head")))
 	for node_name in ["ShoulderL", "ShoulderR"]:
-		_reshape(visual, node_name, _shape("shoulder", func(): return MeshShapes.angled_block(
-			0.62, 0.84, 0.56, 0.72, 0.6, 0.16)))
+		_reshape(visual, node_name, _shape("shoulder", func(): return _block_of("shoulder")))
 	# 脚は上が太く、足首に向かって細くなる
 	for path in ["LegPivotL/LegL", "LegPivotR/LegR", "RearLegPivotL/RearLegL", "RearLegPivotR/RearLegR"]:
-		_reshape(visual, path, _shape("leg", func(): return MeshShapes.angled_block(
-			0.8, 0.88, 0.6, 0.68, 1.8, 0.18)))
+		_reshape(visual, path, _shape("leg", func(): return _block_of("leg")))
 	for path in ["LegPivotL/FootL", "LegPivotR/FootR", "RearLegPivotL/RearFootL", "RearLegPivotR/RearFootR"]:
-		_reshape(visual, path, _shape("foot", func(): return MeshShapes.angled_block(
-			0.96, 1.36, 0.8, 1.16, 0.3, 0.14)))
+		_reshape(visual, path, _shape("foot", func(): return _block_of("foot")))
 	# 背面ユニットは大きく張り出させる
-	_reshape(visual, "BackPack", _shape("pack", func(): return MeshShapes.angled_block(
-		1.5, 0.8, 1.2, 0.56, 1.25, 0.22)))
+	_reshape(visual, "BackPack", _shape("pack", func(): return _block_of("pack")))
+	# 案ごとに、部品の高さを少し動かして比率を変える（当たり判定は動かさない）
+	var preset: Dictionary = STYLES.get(style, STYLES["a"])
+	var lift: Dictionary = preset.get("lift", {})
+	for node_name in lift:
+		var moved := visual.get_node_or_null(str(node_name)) as Node3D
+		if moved != null:
+			moved.position.y += float(lift[node_name])
+
+	# 肩の張り出し（案ごとに外へ出す量を変える）
+	var out := _v("shoulder_out", 0.16)
+	for side: float in [-1.0, 1.0]:
+		var sh := visual.get_node_or_null("ShoulderL" if side < 0.0 else "ShoulderR") as Node3D
+		if sh != null:
+			sh.position.x += side * out

@@ -30,6 +30,8 @@ func _initialize() -> void:
 			tag = arg.substr(6)
 		elif arg.begins_with("--out="):
 			out_dir = arg.substr(6)
+		elif arg.begins_with("--style="):
+			MechDetail.style = arg.substr(8)
 
 	# 窓と描画の大きさを固定する（撮る絵の大きさを毎回同じにする）
 	root.content_scale_size = Vector2i(SHOT_WIDTH, SHOT_HEIGHT)
@@ -93,10 +95,12 @@ func _place_subjects() -> void:
 	if refs != null:
 		refs.visible = false
 	match tag:
-		"mech":
+		"mech", "mech_front":
 			# 機体のアップ：自機だけを広い場所に置き、他は画面の外へどける
 			robot.position = Vector3(0, 0, 0)
-			robot.rotation.y = deg_to_rad(18.0)
+			robot.rotation.y = deg_to_rad(18.0 if tag == "mech" else 212.0)
+			# 機体は操縦入力の向き（yaw）へ向き直すので、そちらにも同じ値を入れる
+			robot.control["yaw"] = robot.rotation.y
 			for other in [soldier, tank, heli, plane, spare]:
 				if other != null:
 					other.position = Vector3(2000, 0, 2000)
@@ -147,6 +151,10 @@ func _place_camera() -> void:
 		"mech":
 			from = Vector3(16.0, 11.0, 22.0)
 			look = Vector3(0.0, 7.0, 0.0)
+		"mech_front":
+			# 正面斜め（形の案を見比べる用）
+			from = Vector3(13.0, 9.0, 19.0)
+			look = Vector3(0.0, 6.5, 0.0)
 		"battle":
 			from = Vector3(7.5, 16.0, -14.0)
 			look = Vector3(0.0, 7.0, -70.0)
