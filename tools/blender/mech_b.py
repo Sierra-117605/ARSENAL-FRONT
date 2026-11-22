@@ -1,4 +1,6 @@
 """案Bの装甲と駆動系。座標は左右 X、前方 +Y、高さ Z（Godot では前方 -Z）。"""
+import argparse
+import sys
 from math import cos, sin, tau, radians
 from pathlib import Path
 
@@ -116,49 +118,114 @@ for s in [-1,1]:
     hip.shell(ARMOR,(-.41,s*.46,.29,.34,.26),(-.10,s*.43,.26,.55,.44),(.14,s*.34,.17,.48,.45))
 hip.build()
 
-# 首の二段の旋回環の上に、前後に細長いセンサー架台を載せる。
-head = Part("Head", (0, .10, 4.02))
-head.axle(DARK, 0, -.03, -.245, .162, .16, "z")
-head.axle(STEEL, 0, -.03, -.215, .175, .055, "z")
-head.shell(DARK, (-.19, 0, .005, .32, .49), (-.075, 0, .045, .54, .70),
-           (.085, 0, -.035, .55, .84))
+def build_low_head():
+    # 首の二段の旋回環の上に、前後に細長いセンサー架台を載せる。
+    head = Part("Head", (0, .10, 4.02))
+    head.axle(DARK, 0, -.03, -.245, .162, .16, "z")
+    head.axle(STEEL, 0, -.03, -.215, .175, .055, "z")
+    head.shell(DARK, (-.19, 0, .005, .32, .49), (-.075, 0, .045, .54, .70),
+               (.085, 0, -.035, .55, .84))
 
-# 額は中央を前に突き出し、左右をこめかみまで引いた折れ面にする。
-# 横断面を前後につなぎ、後頭部は低く薄い形に絞る。
-brow_sections = [
-    # 前後位置、半幅、下面の高さ、上面の高さ
-    (-.66, .108, .045, .118), (-.35, .265, .048, .265),
-    (-.075, .385, .058, .300), (.285, .345, .067, .217),
-    (.565, .128, .038, .113),
-]
-rings = []
-for y, width, low, high in brow_sections:
-    # +Y に向かって断面をつなぐ。左右の稜線で天面と斜面を分ける。
-    rings.append([(x * width, y, z) for x, z in [
-        (-.82, low), (-1, low + .031), (-.62, high - .025),
-        (0, high), (.62, high - .025), (1, low + .031), (.82, low)]])
-head.loft(rings, ARMOR)
-for side in [-1, 1]:
-    # 頬の先を前下方へ振り、レンズの両脇に奥行きのある開口を残す。
-    head.shell(PALE, (-.185, side*.198, .325, .096, .26),
-               (-.111, side*.265, .195, .167, .55),
-               (.015, side*.309, -.013, .144, .60))
-    head.axle(DARK, side*.304, -.168, -.016, .110, .088)
-    head.axle(STEEL, side*.351, -.168, -.016, .067, .026)
-# 後頭部の放熱口は額の張り出しの下に納める。
-for y in [-.47, -.36, -.25]:
-    head.shell(DARK, (-.067, 0, y, .286, .066), (.069, 0, y-.045, .344, .073))
-head.build(.022)
+    # 額は中央を前に突き出し、左右をこめかみまで引いた折れ面にする。
+    # 横断面を前後につなぎ、後頭部は低く薄い形に絞る。
+    brow_sections = [
+        # 前後位置、半幅、下面の高さ、上面の高さ
+        (-.66, .108, .045, .118), (-.35, .265, .048, .265),
+        (-.075, .385, .058, .300), (.285, .345, .067, .217),
+        (.565, .128, .038, .113),
+    ]
+    rings = []
+    for y, width, low, high in brow_sections:
+        # +Y に向かって断面をつなぐ。左右の稜線で天面と斜面を分ける。
+        rings.append([(x * width, y, z) for x, z in [
+            (-.82, low), (-1, low + .031), (-.62, high - .025),
+            (0, high), (.62, high - .025), (1, low + .031), (.82, low)]])
+    head.loft(rings, ARMOR)
+    for side in [-1, 1]:
+        # 頬の先を前下方へ振り、レンズの両脇に奥行きのある開口を残す。
+        head.shell(PALE, (-.185, side*.198, .325, .096, .26),
+                   (-.111, side*.265, .195, .167, .55),
+                   (.015, side*.309, -.013, .144, .60))
+        head.axle(DARK, side*.304, -.168, -.016, .110, .088)
+        head.axle(STEEL, side*.351, -.168, -.016, .067, .026)
+    # 後頭部の放熱口は額の張り出しの下に納める。
+    for y in [-.47, -.36, -.25]:
+        head.shell(DARK, (-.067, 0, y, .286, .066), (.069, 0, y-.045, .344, .073))
+    head.build(.022)
 
-# センサーは独立した既存部位。奥まった光学窓と片側の補助レンズに分ける。
-visor = Part("Visor", (0, .52, 3.95))
-visor.shell(DARK, (-.074, 0, -.030, .322, .155),
-            (-.003, 0, -.008, .474, .188), (.077, 0, -.040, .48, .18))
-visor.axle(STEEL, -.056, .080, -.003, .098, .05, "y")
-visor.axle(DARK, -.056, .108, -.003, .079, .026, "y")
-visor.axle(LENS, -.056, .123, -.003, .060, .014, "y")
-visor.shell(LENS, (.005, .132, .077, .093, .030), (.036, .128, .079, .101, .032))
-visor.build(.02)
+    # センサーは独立した既存部位。奥まった光学窓と片側の補助レンズに分ける。
+    visor = Part("Visor", (0, .52, 3.95))
+    visor.shell(DARK, (-.074, 0, -.030, .322, .155),
+                (-.003, 0, -.008, .474, .188), (.077, 0, -.040, .48, .18))
+    visor.axle(STEEL, -.056, .080, -.003, .098, .05, "y")
+    visor.axle(DARK, -.056, .108, -.003, .079, .026, "y")
+    visor.axle(LENS, -.056, .123, -.003, .060, .014, "y")
+    visor.shell(LENS, (.005, .132, .077, .093, .030), (.036, .128, .079, .101, .032))
+    visor.build(.02)
+
+
+def build_head_option(shape):
+    # 比較案も既存の頭・光学窓の原点に取り付ける。
+    head = Part("Head", (0, .10, 4.02))
+    visor = Part("Visor", (0, .52, 3.95))
+    head.axle(STEEL, 0, 0, -.218, .16, .16, "z")
+    if shape == "mask":
+        # 縦長の面甲。左右に離れた目の下で、頬骨と顎が中央へ絞られる。
+        head.shell(DARK, (-.18,0,.04,.29,.47), (.18,0,.04,.59,.65),
+                   (.52,0,-.05,.57,.55))
+        head.shell(ARMOR, (.24,0,-.035,.69,.72), (.45,0,-.08,.64,.62),
+                   (.63,0,-.12,.39,.42), (.69,0,-.12,.23,.25))
+        for side in [-1,1]:
+            head.shell(PALE, (-.18,side*.09,.23,.13,.25), (.03,side*.207,.25,.19,.34),
+                       (.17,side*.26,.15,.16,.37))
+            head.shell(ARMOR, (.215,side*.19,.22,.30,.43), (.31,side*.20,.14,.35,.49),
+                       (.39,side*.17,.075,.28,.36))
+            visor.shell(LENS, (.212,side*.20,-.018,.164,.057),
+                        (.264,side*.181,-.012,.204,.065))
+        head.shell(STEEL, (-.14,0,.29,.12,.21), (.045,0,.30,.22,.28),
+                   (.21,0,.27,.12,.19))
+    elif shape == "turret":
+        # 幅の広い砲塔。横に広い鋳物の両端を旋回軸と側面装甲で受ける。
+        head.axle(DARK, 0, -.03, .012, .33, .31, "z")
+        head.shell(ARMOR, (-.08,0,-.035,.82,.66), (.07,0,-.01,1.04,.83),
+                   (.34,0,-.105,.98,.80), (.46,0,-.17,.72,.57))
+        for side in [-1,1]:
+            head.axle(DARK, side*.46,-.06,.16,.20,.19)
+            head.axle(STEEL, side*.555,-.06,.16,.132,.026)
+            head.shell(PALE, (.12,side*.40,.13,.20,.43),
+                       (.36,side*.405,.08,.26,.52), (.41,side*.40,.02,.20,.37))
+        visor.shell(DARK, (.006,0,-.025,.65,.17), (.32,0,-.075,.62,.23))
+        visor.axle(STEEL, -.085,.087,.169,.169,.101,"y")
+        visor.axle(DARK, -.085,.148,.169,.130,.035,"y")
+        visor.axle(LENS, -.085,.170,.169,.094,.021,"y")
+        for z in [.108,.216]:
+            visor.axle(LENS,.18,.074,z,.040,.032,"y")
+    else:
+        # 高く積んだ観測器。上の横長の窓と下の独立カメラを二股の側板で支える。
+        head.shell(DARK, (-.17,0,0,.26,.37), (.12,0,.02,.47,.53),
+                   (.43,0,-.09,.34,.45))
+        for side in [-1,1]:
+            head.shell(ARMOR, (-.12,side*.16,.06,.14,.36), (.16,side*.24,-.01,.18,.52),
+                       (.58,side*.25,-.13,.14,.38), (.69,side*.24,-.19,.11,.22))
+            head.axle(STEEL,side*.27,-.075,.48,.103,.12)
+        head.shell(PALE, (.39,0,-.055,.42,.50), (.50,0,-.025,.48,.58),
+                   (.70,0,-.09,.45,.51), (.77,0,-.145,.32,.35))
+        visor.shell(DARK, (.535,0,-.195,.386,.22), (.735,0,-.235,.374,.23))
+        visor.shell(LENS, (.588,0,-.074,.294,.040), (.658,0,-.082,.302,.05))
+        visor.axle(STEEL,0,-.032,.165,.112,.19,"y")
+        visor.axle(LENS,0,.072,.165,.063,.023,"y")
+    head.build(.028)
+    visor.build(.02)
+
+
+# 引数なしは従来の薄型。比較案は別名で書き出し、ゲームの自機とは別に保管する。
+parser = argparse.ArgumentParser()
+parser.add_argument("--head", choices=["low", "mask", "turret", "tower"], default="low")
+args = parser.parse_args(sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else [])
+if args.head == "low":
+    build_low_head()
+else:
+    build_head_option(args.head)
 
 for s, suffix in [(-1,"L"),(1,"R")]:
     shoulder = Part("Shoulder"+suffix,(s*1.6,0,3.42))
@@ -211,5 +278,7 @@ barrel.build(.02).rotation_euler.x = radians(90)
 
 # Blender の原点は組み立て時の位置。Godot は各部位のローカル頂点のみ使う。
 destination = Path(__file__).resolve().parents[2] / "assets/models/mech_b.glb"
+if args.head != "low":
+    destination = destination.with_name(f"mech_b_{args.head}.glb")
 destination.parent.mkdir(parents=True, exist_ok=True)
 bpy.ops.export_scene.gltf(filepath=str(destination), export_format="GLB", export_apply=True)
