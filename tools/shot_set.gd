@@ -151,8 +151,8 @@ func _place_camera() -> void:
 			from = Vector3(7.5, 16.0, -14.0)
 			look = Vector3(0.0, 7.0, -70.0)
 		"boss":
-			from = Vector3(13.0, 34.0, -168.0)
-			look = Vector3(0.0, 12.0, -258.0)
+			from = Vector3(34.0, 92.0, -44.0)
+			look = Vector3(0.0, 8.0, -246.0)
 	camera.global_position = from
 	camera.look_at(look, Vector3.UP)
 	camera.current = true

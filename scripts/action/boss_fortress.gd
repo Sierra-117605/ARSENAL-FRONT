@@ -31,6 +31,8 @@ signal railgun_fired
 
 func _ready() -> void:
 	add_to_group("railgun_boss")  # AI が「隠れるべき相手」を探すのに使う
+	# 土台に外壁・鉄塔などを足す（当たり判定には触らない。N8-2）
+	BossDetail.add_base_details(get_node_or_null("Base/Mesh"))
 	railgun_timer = railgun_interval
 	for part in parts():
 		part.destroyed.connect(_on_part_destroyed.bind(part))

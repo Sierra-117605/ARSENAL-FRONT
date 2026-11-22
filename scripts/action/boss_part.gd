@@ -24,6 +24,17 @@ var material: StandardMaterial3D
 var active: bool = false
 
 
+## 部位名から、どんな形に作り込むかを決める
+func _detail_kind() -> String:
+	if part_label.contains("砲台"):
+		return "turret"
+	if part_label.contains("発電"):
+		return "generator"
+	if part_label.contains("砲身"):
+		return "barrel"
+	return "core"
+
+
 func _ready() -> void:
 	super._ready()
 	# 壊れたら当たり判定を消す（残骸が盾になって奥の部位を守ってしまわないように）
@@ -32,6 +43,8 @@ func _ready() -> void:
 	var mesh: MeshInstance3D = get_node_or_null("Mesh")
 	if mesh != null:
 		mesh.material_override = material
+		# 部位ごとの形を足す（当たり判定には触らない。N8-2）
+		BossDetail.add_part_details(mesh, _detail_kind())
 	_update_color()
 	damaged.connect(func(_hp, _max): _update_color())
 	if weapon != null:
