@@ -149,16 +149,64 @@ static func _reshape(visual: Node3D, node_path: String, mesh: Mesh) -> void:
 		node.mesh = mesh
 
 
+const MODEL_B := "res://assets/models/mech_b.glb"
+const MODEL_PARTS := [
+	"Torso", "Hip", "Head", "ShoulderL", "ShoulderR", "ArmL", "ArmPivotR/ArmR",
+	"ArmPivotR/Barrel", "LegPivotL/LegL", "LegPivotR/LegR", "LegPivotL/FootL",
+	"LegPivotR/FootR", "BackPack", "Visor",
+]
+
+
+## 14 部位がそろった時だけまとめて差し替える。ファイルが無い時は従来の装甲を使う。
+static func _apply_model_b(visual: Node3D) -> bool:
+	if not ResourceLoader.exists(MODEL_B):
+		return false
+	var packed := load(MODEL_B) as PackedScene
+	if packed == null:
+		return false
+	var model := packed.instantiate()
+	var meshes: Dictionary = {}
+	for path: String in MODEL_PARTS:
+		var source := model.find_child(path.get_file(), true, false) as MeshInstance3D
+		if source == null or source.mesh == null or not visual.get_node_or_null(path) is MeshInstance3D:
+			model.free()
+			return false
+		meshes[path] = source.mesh
+	model.free()
+	for path: String in MODEL_PARTS:
+		var part := visual.get_node(path) as MeshInstance3D
+		part.set_surface_override_material(0, null)
+		part.mesh = meshes[path]
+		var paint_slot := -1
+		for i in part.mesh.get_surface_count():
+			var material := part.mesh.surface_get_material(i)
+			if material != null and material.resource_name == "Armor":
+				paint_slot = i
+		part.set_meta("model_paint_slot", paint_slot)
+	return true
+
+
+## 生成モデルでは装甲面だけを塗り、露出した駆動部と計器の色を保つ。
+static func tint_part(part: MeshInstance3D, color: Color) -> void:
+	if part.has_meta("model_paint_slot"):
+		var slot := int(part.get_meta("model_paint_slot"))
+		if slot >= 0:
+			part.set_surface_override_material(slot, painted_armor(color))
+	else:
+		part.material_override = painted_armor(color)
+
+
 ## ロボットの見た目を作り込む。visual は Robot の "Visual" ノード
-static func add_details(visual: Node3D) -> void:
+static func add_details(visual: Node3D, use_model_b: bool = false) -> void:
 	if visual == null or visual.has_meta("detailed"):
 		return
 	visual.set_meta("detailed", true)
+	_reshape_body(visual)
+	if use_model_b and style == "b" and _apply_model_b(visual):
+		return
 	var dark := bare_metal()
 	var plate := painted_armor(Color(0.3, 0.335, 0.26))
 	var glow := sensor_glow()
-
-	_reshape_body(visual)
 
 	# --- 胴体：胸の傾斜装甲・襟・脇の排気口・腰の機械部
 	var torso := visual.get_node_or_null("Torso") as Node3D

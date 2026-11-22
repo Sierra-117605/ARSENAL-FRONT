@@ -80,9 +80,13 @@ var step_amount: float = 0.0
 var _last_step_half: int = 0
 
 
+## 案 B の Blender モデルを使うのは自機だけ。
+@export var use_model_b: bool = false
+
+
 func _ready() -> void:
 	# 装甲の形を作り込む（当たり判定・部位名には触らない。SPEC §0.18 / N8-2）
-	MechDetail.add_details(get_node_or_null("Visual"))
+	MechDetail.add_details(get_node_or_null("Visual"), use_model_b)
 	# 組み立ての構成が指定されている時だけ性能を入れ替える。
 	# 指定が無い機体（敵など）は、シーンで設定した耐久・速さをそのまま使う
 	if use_saved_loadout:
@@ -254,7 +258,7 @@ func _apply_part_visuals() -> void:
 ## 部品（とその子）の色を変える
 func _tint(node: Node, color: Color) -> void:
 	if node is MeshInstance3D:
-		(node as MeshInstance3D).material_override = MechDetail.painted_armor(color)
+		MechDetail.tint_part(node, color)
 	for child in node.get_children():
 		_tint(child, color)
 
@@ -264,7 +268,7 @@ func _repaint(node: Node) -> void:
 	for child in node.get_children():
 		# "Visor"（目玉）と "Dark" で始まる部品は、濃い色のまま残して装甲の切れ目を見せる
 		if child is MeshInstance3D and child.name != "Visor" and not str(child.name).begins_with("Dark"):
-			(child as MeshInstance3D).material_override = MechDetail.painted_armor(body_color)
+			MechDetail.tint_part(child, body_color)
 		_repaint(child)
 
 
