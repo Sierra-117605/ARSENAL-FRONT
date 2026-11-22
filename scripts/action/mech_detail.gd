@@ -79,12 +79,10 @@ static func _shape(key: String, maker: Callable) -> ArrayMesh:
 static func painted_armor(color: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
-	m.metallic = 0.12
-	m.metallic_specular = 0.4
-	m.roughness = 0.68
-	m.rim_enabled = true
-	m.rim = 0.45
-	m.rim_tint = 0.35
+	# 再塗装でもつや消し面に合わせ、輪郭の光は面取りと照明で出す。
+	m.metallic = 0.04
+	m.metallic_specular = 0.25
+	m.roughness = 0.88
 	return m
 
 

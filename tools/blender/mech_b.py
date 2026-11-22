@@ -23,8 +23,8 @@ def finish(name, color, metallic, roughness, glow=0):
 
 
 materials = [
-    finish("Armor", (.19, .225, .145), .35, .46),
-    finish("Ceramic", (.32, .32, .24), .32, .48),
+    finish("Armor", (.19, .225, .145), .04, .88),
+    finish("Ceramic", (.32, .32, .24), .06, .84),
     finish("Graphite", (.046, .054, .052), .5, .43),
     finish("Titanium", (.27, .29, .26), .77, .32),
     finish("Optic", (1, .27, .025), .2, .27, 2),
@@ -143,9 +143,9 @@ def build_low_head():
     head.loft(rings, ARMOR)
     for side in [-1, 1]:
         # 頬の先を前下方へ振り、レンズの両脇に奥行きのある開口を残す。
-        head.shell(PALE, (-.185, side*.198, .325, .096, .26),
-                   (-.111, side*.265, .195, .167, .55),
-                   (.015, side*.309, -.013, .144, .60))
+        head.shell(PALE, (-.170, side*.205, .195, .082, .20),
+                   (-.114, side*.252, .113, .130, .47),
+                   (.013, side*.303, -.050, .127, .51))
         head.axle(DARK, side*.304, -.168, -.016, .110, .088)
         head.axle(STEEL, side*.351, -.168, -.016, .067, .026)
     # 後頭部の放熱口は額の張り出しの下に納める。
@@ -157,9 +157,14 @@ def build_low_head():
     visor = Part("Visor", (0, .52, 3.95))
     visor.shell(DARK, (-.074, 0, -.030, .322, .155),
                 (-.003, 0, -.008, .474, .188), (.077, 0, -.040, .48, .18))
-    visor.axle(STEEL, -.056, .080, -.003, .098, .05, "y")
-    visor.axle(DARK, -.056, .108, -.003, .079, .026, "y")
-    visor.axle(LENS, -.056, .123, -.003, .060, .014, "y")
+    visor.axle(STEEL, -.056, .112, -.003, .098, .127, "y")
+    visor.axle(DARK, -.056, .173, -.003, .081, .036, "y")
+    # 主レンズを凸面にして、横からも発光面の厚みが見えるようにする。
+    rings = []
+    for depth, radius in [(.186, .066), (.211, .068), (.239, .050), (.250, .018)]:
+        rings.append([(-.056 + radius*sin(tau*i/16), depth, -.003 + radius*cos(tau*i/16))
+                      for i in range(16)])
+    visor.loft(rings, LENS)
     visor.shell(LENS, (.005, .132, .077, .093, .030), (.036, .128, .079, .101, .032))
     visor.build(.02)
 
@@ -233,6 +238,10 @@ for s, suffix in [(-1,"L"),(1,"R")]:
     shoulder.axle(STEEL,s*.18,0,0,.21,.10)
     shoulder.shell(ARMOR,(-.21,s*.23,0,.63,.82),(.05,s*.20,.02,1.03,1.22),(.39,-s*.06,-.04,.68,.76),(.45,-s*.14,-.13,.45,.52))
     shoulder.shell(PALE,(-.27,s*.30,.08,.53,.73),(-.10,s*.34,.03,.72,.92),(-.045,s*.30,.01,.66,.88))
+    # 肩の内側から上腕の中心まで下ろした軸受けで、肩と腕の空隙をつなぐ。
+    shoulder.shell(DARK, (-.61,-s*.30,.0,.32,.37), (-.42,-s*.30,.0,.40,.47),
+                   (-.13,-s*.22,-.02,.49,.54), (.02,-s*.18,-.03,.47,.51))
+    shoulder.axle(STEEL,-s*.30,.0,-.42,.142,.42)
     shoulder.build(.04)
 
     arm = Part("Arm"+suffix,(s*1.3,0,2.35))
