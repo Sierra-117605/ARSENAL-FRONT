@@ -81,6 +81,8 @@ var _last_step_half: int = 0
 
 
 func _ready() -> void:
+	# 装甲板などの細かい形を足す（当たり判定・部位名には触らない。SPEC §0.15 / N8-2）
+	MechDetail.add_details(get_node_or_null("Visual"))
 	# 組み立ての構成が指定されている時だけ性能を入れ替える。
 	# 指定が無い機体（敵など）は、シーンで設定した耐久・速さをそのまま使う
 	if use_saved_loadout:
@@ -252,24 +254,30 @@ func _apply_part_visuals() -> void:
 ## 部品（とその子）の色を変える
 func _tint(node: Node, color: Color) -> void:
 	if node is MeshInstance3D:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = color
-		mat.roughness = 0.7
-		mat.metallic = 0.3
-		(node as MeshInstance3D).material_override = mat
+		(node as MeshInstance3D).material_override = painted_armor(color)
 	for child in node.get_children():
 		_tint(child, color)
+
+
+## 塗装した装甲の質感を作る（つや消し寄りで、縁にうっすら光が乗る）
+static func painted_armor(color: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.metallic = 0.12
+	mat.metallic_specular = 0.4
+	mat.roughness = 0.68
+	mat.rim_enabled = true
+	mat.rim = 0.45
+	mat.rim_tint = 0.35
+	return mat
 
 
 ## 機体の見た目を指定の色で塗り替える（目玉の発光部分はそのまま）
 func _repaint(node: Node) -> void:
 	for child in node.get_children():
-		if child is MeshInstance3D and child.name != "Visor":
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = body_color
-			mat.roughness = 0.7
-			mat.metallic = 0.3
-			(child as MeshInstance3D).material_override = mat
+		# "Visor"（目玉）と "Dark" で始まる部品は、濃い色のまま残して装甲の切れ目を見せる
+		if child is MeshInstance3D and child.name != "Visor" and not str(child.name).begins_with("Dark"):
+			(child as MeshInstance3D).material_override = painted_armor(body_color)
 		_repaint(child)
 
 
