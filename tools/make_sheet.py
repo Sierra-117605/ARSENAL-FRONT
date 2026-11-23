@@ -19,14 +19,20 @@ LABELS = [("head_front.png", "正面"), ("head_quarter.png", "斜め 42 度"), (
 
 
 def main():
+    # 第2引数に接頭辞（head / body）、第3引数に並べる参考画を渡せる。
     out = Path(sys.argv[1])
-    shots = [Image.open(out / name).convert("RGB") for name, _ in LABELS]
+    prefix = sys.argv[2] if len(sys.argv) > 2 else "head"
+    reference_path = Path(sys.argv[3]) if len(sys.argv) > 3 else REFERENCE
+    labels = [(name.replace("head_", prefix + "_"), label) for name, label in LABELS]
+    globals()["LABELS"] = labels
+    globals()["REFERENCE"] = reference_path
+    shots = [Image.open(out / name).convert("RGB") for name, _ in labels]
     w, h = shots[0].size
     row = Image.new("RGB", (w * len(shots), h), BACKGROUND)
     for i, shot in enumerate(shots):
         row.paste(shot, (i * w, 0))
 
-    reference = Image.open(REFERENCE).convert("RGB")
+    reference = Image.open(reference_path).convert("RGB")
     ref_h = round(reference.height * row.width / reference.width)
     reference = reference.resize((row.width, ref_h), Image.LANCZOS)
 
