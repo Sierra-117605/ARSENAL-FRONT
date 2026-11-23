@@ -80,13 +80,13 @@ var step_amount: float = 0.0
 var _last_step_half: int = 0
 
 
-## 案 B の Blender モデルを使うのは自機だけ。
-@export var use_model_b: bool = false
+## 主役機の外装を使う機体。乗員が乗り換えてもこの印は変わらない。
+@export var hero: bool = false
 
 
 func _ready() -> void:
 	# 装甲の形を作り込む（当たり判定・部位名には触らない。SPEC §0.18 / N8-2）
-	MechDetail.add_details(get_node_or_null("Visual"), use_model_b)
+	MechDetail.add_details(get_node_or_null("Visual"), hero)
 	# 組み立ての構成が指定されている時だけ性能を入れ替える。
 	# 指定が無い機体（敵など）は、シーンで設定した耐久・速さをそのまま使う
 	if use_saved_loadout:
@@ -104,7 +104,7 @@ func _ready() -> void:
 	# どの機体でも部位ごとの耐久を用意する（本体の耐久が決まった後に行う）
 	_reset_parts()
 	super._ready()
-	if body_color.a > 0.0:
+	if body_color.a > 0.0 and not visual.has_meta("hero_materials"):
 		_repaint(visual)
 
 
@@ -253,7 +253,8 @@ func _apply_part_visuals() -> void:
 			if node == null:
 				continue
 			node.scale = Vector3.ONE * scale_value
-			if rgb.size() == 3 and body_color.a <= 0.0:
+			# 主役機は装備を替えてもモデル本来の配色を保つ。破損の黒ずみは別に反映する。
+			if rgb.size() == 3 and body_color.a <= 0.0 and not visual.has_meta("hero_materials"):
 				_tint(node, Color(rgb[0], rgb[1], rgb[2]))
 
 

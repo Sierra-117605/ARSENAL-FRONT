@@ -128,7 +128,7 @@ shape = SubResource("GroundShape")
 
 [node name="Robot" parent="." instance=ExtResource("1_robot")]
 use_saved_loadout = true
-use_model_b = true
+hero = true
 team = "player"
 
 [node name="AIPilot" type="Node" parent="Robot" node_paths=PackedStringArray("start_seat")]

@@ -54,8 +54,9 @@ func _physics_process(_delta: float) -> bool:
 	match frame:
 		10:
 			# 2：敵を全部倒して勝つ
-			for enemy in field.get_node("Enemies").get_children():
-				(enemy as Pilotable).take_hit(100000)
+			# 敵が発射した弾も同じ親に入るので、戦闘側の敵機一覧を使う。
+			for enemy in battle._enemies():
+				enemy.take_hit(100000)
 		15:
 			_report(battle.outcome == "win", "勝利した")
 			_report(battle.earned_materials > 0, "資材が手に入る (%d)" % battle.earned_materials)

@@ -48,6 +48,8 @@ static var style: String = "b"
 
 ## 形は案ごとに作って使い回す
 static var _shapes: Dictionary = {}
+## 任務開始時に敵機が減っても、描画中に参照する塗装材を保持する。
+static var _armor_by_color: Dictionary[Color, StandardMaterial3D] = {}
 
 
 ## 今の案の設定を引く
@@ -77,12 +79,15 @@ static func _shape(key: String, maker: Callable) -> ArrayMesh:
 
 ## 塗装した装甲（つや消し。縁にうっすら光が乗る）
 static func painted_armor(color: Color) -> StandardMaterial3D:
+	if _armor_by_color.has(color):
+		return _armor_by_color[color]
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
 	# 再塗装でもつや消し面に合わせ、輪郭の光は面取りと照明で出す。
 	m.metallic = 0.04
 	m.metallic_specular = 0.25
 	m.roughness = 0.88
+	_armor_by_color[color] = m
 	return m
 
 
@@ -148,6 +153,7 @@ static func _reshape(visual: Node3D, node_path: String, mesh: Mesh) -> void:
 
 
 const MODEL_B := "res://assets/models/mech_b.glb"
+const MODEL_HERO := "res://assets/models/mech_hero.glb"
 const MODEL_PARTS := [
 	"Torso", "Hip", "Head", "ShoulderL", "ShoulderR", "ArmL", "ArmPivotR/ArmR",
 	"ArmPivotR/Barrel", "LegPivotL/LegL", "LegPivotR/LegR", "LegPivotL/FootL",
@@ -155,23 +161,27 @@ const MODEL_PARTS := [
 ]
 
 
-## 14 部位がそろった時だけまとめて差し替える。ファイルが無い時は従来の装甲を使う。
-static func _apply_model_b(visual: Node3D) -> bool:
-	if not ResourceLoader.exists(MODEL_B):
+## 部位がすべてそろった時だけ差し替える。主役機の二眼は頭部に含まれる。
+static func _apply_model(visual: Node3D, hero: bool) -> bool:
+	var model_path := MODEL_HERO if hero else MODEL_B
+	if not ResourceLoader.exists(model_path):
 		return false
-	var packed := load(MODEL_B) as PackedScene
+	var packed := load(model_path) as PackedScene
 	if packed == null:
 		return false
 	var model := packed.instantiate()
 	var meshes: Dictionary = {}
 	for path: String in MODEL_PARTS:
-		var source := model.find_child(path.get_file(), true, false) as MeshInstance3D
+		if hero and path == "Visor":
+			continue
+		var source_name := "Head_hero" if hero and path == "Head" else path.get_file()
+		var source := model.find_child(source_name, true, false) as MeshInstance3D
 		if source == null or source.mesh == null or not visual.get_node_or_null(path) is MeshInstance3D:
 			model.free()
 			return false
 		meshes[path] = source.mesh
 	model.free()
-	for path: String in MODEL_PARTS:
+	for path: String in meshes:
 		var part := visual.get_node(path) as MeshInstance3D
 		part.set_surface_override_material(0, null)
 		part.mesh = meshes[path]
@@ -181,6 +191,9 @@ static func _apply_model_b(visual: Node3D) -> bool:
 			if material != null and material.resource_name == "Armor":
 				paint_slot = i
 		part.set_meta("model_paint_slot", paint_slot)
+	if hero:
+		visual.get_node("Visor").hide()
+		visual.set_meta("hero_materials", true)
 	return true
 
 
@@ -195,13 +208,17 @@ static func tint_part(part: MeshInstance3D, color: Color) -> void:
 
 
 ## ロボットの見た目を作り込む。visual は Robot の "Visual" ノード
-static func add_details(visual: Node3D, use_model_b: bool = false) -> void:
+static func add_details(visual: Node3D, hero: bool = false) -> void:
 	if visual == null or visual.has_meta("detailed"):
 		return
 	visual.set_meta("detailed", true)
 	_reshape_body(visual)
-	if use_model_b and style == "b" and _apply_model_b(visual):
-		return
+	if style == "b":
+		if hero and _apply_model(visual, true):
+			return
+		if _apply_model(visual, false):
+			return
+	_position_procedural_parts(visual)
 	var dark := bare_metal()
 	var plate := painted_armor(Color(0.3, 0.335, 0.26))
 	var glow := sensor_glow()
@@ -328,7 +345,10 @@ static func _reshape_body(visual: Node3D) -> void:
 		_reshape(visual, path, _shape("foot", func(): return _block_of("foot")))
 	# 背面ユニットは大きく張り出させる
 	_reshape(visual, "BackPack", _shape("pack", func(): return _block_of("pack")))
-	# 案ごとに、部品の高さを少し動かして比率を変える（当たり判定は動かさない）
+
+
+## 計算で作る形だけに位置補正をかける。モデルの頭や肩は機体の原点に合わせてある。
+static func _position_procedural_parts(visual: Node3D) -> void:
 	var preset: Dictionary = STYLES.get(style, STYLES["a"])
 	var lift: Dictionary = preset.get("lift", {})
 	for node_name in lift:
