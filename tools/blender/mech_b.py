@@ -131,14 +131,14 @@ for s in [-1,1]:
     torso.axle(STEEL, .91*s,0,.27,.18,.64)
 for i in range(3):
     torso.shell(STEEL, (-.55+i*.11,0,.32,.54,.18),(-.50+i*.11,0,.37,.56,.20))
-torso.narrow(.50)
+torso.narrow(.58)
 torso.build(.045)
 
 hip = Part("Hip",(0,0,2.48))
 hip.shell(DARK,(-.19,0,0,1,.7),(.19,0,0,.84,.6))
 for s in [-1,1]:
     hip.shell(ARMOR,(-.41,s*.46,.29,.34,.26),(-.10,s*.43,.26,.55,.44),(.14,s*.34,.17,.48,.45))
-hip.narrow(.78)
+hip.narrow(1.05)
 hip.build()
 
 def build_low_head():
@@ -256,7 +256,7 @@ else:
     build_head_option(args.head)
 
 for s, suffix in [(-1,"L"),(1,"R")]:
-    shoulder = Part("Shoulder"+suffix,(s*0.82,0,3.44))
+    shoulder = Part("Shoulder"+suffix,(s*0.95,0,3.44))
     shoulder.axle(DARK,-s*.23,0,0,.29,.83)
     shoulder.axle(STEEL,s*.18,0,0,.21,.10)
     shoulder.shell(ARMOR,(-.21,s*.23,0,.63,.82),(.05,s*.20,.02,1.03,1.22),(.39,-s*.06,-.04,.68,.76),(.45,-s*.14,-.13,.45,.52))
@@ -265,20 +265,20 @@ for s, suffix in [(-1,"L"),(1,"R")]:
     shoulder.shell(DARK, (-.61,-s*.30,.0,.32,.37), (-.42,-s*.30,.0,.40,.47),
                    (-.13,-s*.22,-.02,.49,.54), (.02,-s*.18,-.03,.47,.51))
     shoulder.axle(STEEL,-s*.30,.0,-.42,.142,.42)
-    shoulder.narrow(.52)
+    shoulder.narrow(.70)
     shoulder.stretch(.80)
     shoulder.build(.04)
 
-    arm = Part("Arm"+suffix,(s*0.82,0,2.82))
+    arm = Part("Arm"+suffix,(s*0.95,0,2.82))
     arm.shell(DARK,(-.72,0,.02,.29,.33),(-.41,0,.02,.32,.36),(.63,0,0,.30,.30))
     arm.shell(ARMOR,(.11,0,.01,.29,.35),(.51,s*.04,0,.46,.48),(.66,s*.04,-.04,.40,.36))
     arm.axle(STEEL,0,0,.025,.16,.44)
     arm.shell(ARMOR,(-.57,s*.025,.07,.36,.42),(-.23,s*.06,.11,.49,.57),(-.06,s*.045,.06,.41,.44))
     arm.shell(STEEL,(-.82,0,.05,.29,.30),(-.64,0,.07,.34,.34))
-    arm.narrow(.80)
+    arm.narrow(.90)
     arm.build()
 
-    leg = Part("Leg"+suffix,(s*.46,0,1.14))
+    leg = Part("Leg"+suffix,(s*.50,0,1.14))
     leg.shell(DARK,(-.94,0,-.03,.28,.37),(-.29,0,-.02,.40,.50),(.12,0,0,.31,.45),(.94,0,0,.42,.54))
     # 太ももは縦に長い一枚の折れ面。段差は外側に寄せて膝の境目を残す。
     leg.ridged_plate(ARMOR, (.12,0,.07,.40,.52,.035),(.54,s*.06,.04,.65,.73,.080),
@@ -292,15 +292,15 @@ for s, suffix in [(-1,"L"),(1,"R")]:
     leg.ridged_plate(ARMOR, (-.89,0,.045,.34,.47,.045),(-.46,s*.04,.075,.55,.64,.11),
                      (-.26,s*.04,.075,.58,.71,.115),(-.145,s*.04,-.015,.47,.46,.035))
     leg.axle(STEEL,s*.19,-.24,-.53,.066,.77,"z")
-    leg.narrow(.86)
+    leg.narrow(1.10)
     leg.stretch(1.11)
     leg.build(.036)
 
-    foot = Part("Foot"+suffix,(s*.46,.15,.15))
+    foot = Part("Foot"+suffix,(s*.50,.15,.15))
     foot.shell(DARK,(-.15,0,.07,.78,1.42),(-.065,0,.08,.8,1.42))
     foot.shell(ARMOR,(-.06,0,.12,.77,1.36),(.057,0,.14,.69,1.24),(.16,0,-.08,.48,.65))
     foot.shell(PALE,(-.035,0,.62,.57,.30),(.055,0,.57,.47,.29))
-    foot.narrow(.92)
+    foot.narrow(1.00)
     foot.build(.024)
 
 pack = Part("BackPack",(0,-.90,3.08))
@@ -314,7 +314,7 @@ for s in [-1,1]:
 pack.narrow(.85)
 pack.build()
 
-barrel = Part("Barrel",(0.98,.60,2.24))
+barrel = Part("Barrel",(0.95,.60,2.24))
 barrel.axle(DARK,0,0,0,.12,1.60,"z")
 barrel.shell(ARMOR,(-.29,0,0,.25,.29),(.37,0,0,.36,.40),(.78,0,0,.33,.37))
 barrel.axle(STEEL,0,0,-.62,.146,.25,"z")

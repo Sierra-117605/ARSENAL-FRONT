@@ -177,14 +177,14 @@ func _mark_broken_visual(part: String) -> void:
 ## （仮の機体は全高 4m で作ってあるので、機種の全高に合わせて倍率をかける）
 const BASE_HEIGHT := 4.0
 const BASE_SEAT_Y := 3.04
-const BASE_WEAPON_POS := Vector3(0.82, 2.24, -1.45)
+const BASE_WEAPON_POS := Vector3(0.95, 2.24, -1.45)
 ## 部位ごとの当たり判定の位置（全高 4m のときの値）
 ## 2026-11-23：全機体のプロポーションを決定稿の比率に合わせたので、見た目と同じ位置に直した
 ## （SPEC §0.18「全機体のプロポーション」の表が出どころ）
 const BASE_PART_POS := {
 	"HitHead": Vector3(0, 3.76, -0.1),
-	"HitArmL": Vector3(-0.82, 2.82, 0),
-	"HitArmR": Vector3(0.82, 2.82, 0),
+	"HitArmL": Vector3(-0.95, 2.82, 0),
+	"HitArmR": Vector3(0.95, 2.82, 0),
 	"HitLegs": Vector3(0, 1.14, 0),
 }
 
