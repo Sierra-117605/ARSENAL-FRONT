@@ -105,6 +105,14 @@ class Part:
             rings.append(ring)
         self.loft(rings, slot)
 
+    def stretch(self, factor):
+        """部位の高さだけを伸ばす。脚を長くしてプロポーションを変えるために使う。"""
+        self.vertices = [(x, y, z * factor) for x, y, z in self.vertices]
+
+    def narrow(self, factor):
+        """部位の横幅だけを絞る。前後の厚みは変えない。"""
+        self.vertices = [(x * factor, y, z) for x, y, z in self.vertices]
+
     def build(self, bevel=.032):
         mesh = bpy.data.meshes.new(self.name)
         mesh.from_pydata(self.vertices, [], self.faces)
@@ -350,7 +358,7 @@ def build_head():
     for vert in obj.data.vertices:
         vert.co *= .505
         vert.co.z += .140
-    obj.location = (0, .10, 4.02)
+    obj.location = (0, .10, 3.76)
     return obj
 
 
@@ -360,7 +368,7 @@ def build_head():
 
 def build_body():
     # --- 胴体：前へ大きく張り出した胸、中央に縦の稜線、細い腹 ---
-    torso = Part("Torso", (0, 0, 3.09))
+    torso = Part("Torso", (0, 0, 3.04))
     torso.shell(DARK, (-.70, 0, 0, .66, .56), (-.34, 0, 0, .92, .74),
                 (.30, 0, -.03, 1.42, 1.02), (.62, 0, -.06, 1.06, .70))
     # 鎖骨の横帯。胸甲の上端をここで切り、首まわりを締める。
@@ -369,9 +377,9 @@ def build_body():
         # 左右に割れた胸甲。中央へせり出し、脇へ鋭く絞る。
         torso.shell(ARMOR, (-.30, .24 * s, .34, .40, .50), (.16, .42 * s, .40, .82, .86),
                     (.52, .40 * s, .16, .78, .88), (.64, .36 * s, .04, .52, .54))
-        torso.ridged_plate(PALE, (.20, .40 * s, .60, .62, .34, .085),
-                           (.32, .42 * s, .57, .70, .38, .105),
-                           (.46, .42 * s, .49, .58, .30, .055))
+        torso.ridged_plate(PALE, (.20, .40 * s, .60, .62, .34, .045),
+                           (.32, .42 * s, .57, .70, .38, .055),
+                           (.46, .42 * s, .49, .58, .30, .030))
         # 肩の付け根。
         torso.axle(STEEL, .82 * s, 0, .26, .18, .62)
         torso.shell(DARK, (.10, .74 * s, .06, .38, .52), (.40, .78 * s, .08, .44, .60))
@@ -381,26 +389,28 @@ def build_body():
     # 腹の放熱口。
     for i in range(3):
         torso.shell(STEEL, (-.60 + i * .12, 0, .30, .46, .16), (-.55 + i * .12, 0, .34, .48, .18))
+    torso.narrow(.50)
     torso.build(.045)
 
     # --- 腰：細く絞り、前と横に大きなスカート装甲 ---
-    hip = Part("Hip", (0, 0, 2.11))
+    hip = Part("Hip", (0, 0, 2.48))
     hip.shell(DARK, (-.22, 0, 0, .86, .60), (.20, 0, 0, .74, .54))
     for s in (-1, 1):
         # 前面のスカート。立ち姿に「構え」を作る一番大きな板。
-        hip.ridged_plate(ARMOR, (-.78, s * .26, .46, .44, .28, .07),
-                         (-.30, s * .30, .50, .64, .36, .12),
-                         (.14, s * .28, .40, .56, .32, .08))
+        hip.ridged_plate(ARMOR, (-.48, s * .26, .46, .40, .26, .06),
+                         (-.16, s * .30, .50, .56, .34, .11),
+                         (.16, s * .28, .40, .50, .30, .07))
         # 横のスカート。
-        hip.shell(ARMOR, (-.50, s * .54, .02, .32, .60), (-.12, s * .56, .00, .40, .74),
-                  (.16, s * .48, -.02, .34, .60))
+        hip.shell(ARMOR, (-.34, s * .50, .02, .28, .52), (-.06, s * .52, .00, .34, .64),
+                  (.18, s * .46, -.02, .30, .54))
         hip.axle(STEEL, s * .40, 0, -.30, .16, .34)
         hip.shell(ORANGE, (-.30, s * .60, .26, .10, .12), (-.24, s * .60, .26, .10, .12))
+    hip.narrow(.78)
     hip.build()
 
     for s, suffix in [(-1, "L"), (1, "R")]:
         # --- 肩：量産機より一回り大きく、上へ跳ね上がる ---
-        shoulder = Part("Shoulder" + suffix, (s * 1.6, 0, 3.42))
+        shoulder = Part("Shoulder" + suffix, (s * 0.82, 0, 3.44))
         shoulder.axle(DARK, -s * .23, 0, 0, .30, .86)
         shoulder.axle(STEEL, s * .20, 0, 0, .22, .11)
         shoulder.shell(ARMOR, (-.34, s * .18, 0, .60, .92), (.06, s * .20, .04, .96, 1.46),
@@ -413,10 +423,12 @@ def build_body():
         shoulder.shell(DARK, (-.64, -s * .30, 0, .34, .39), (-.44, -s * .30, 0, .42, .49),
                        (-.14, -s * .22, -.02, .52, .57), (.02, -s * .18, -.03, .50, .54))
         shoulder.axle(STEEL, -s * .30, 0, -.44, .150, .44)
+        shoulder.narrow(.52)
+        shoulder.stretch(.80)
         shoulder.build(.04)
 
         # --- 腕：肘の円盤を見せ、前腕を角張らせる ---
-        arm = Part("Arm" + suffix, (s * 1.3, 0, 2.35))
+        arm = Part("Arm" + suffix, (s * 0.82, 0, 2.82))
         arm.shell(DARK, (-.80, 0, .02, .24, .28), (-.44, 0, .02, .26, .30), (.63, 0, 0, .26, .26))
         arm.shell(ARMOR, (-.70, s * .03, .05, .30, .34), (-.30, s * .05, .08, .40, .46),
                   (-.06, s * .04, .05, .34, .38))
@@ -430,10 +442,11 @@ def build_body():
         arm.shell(DARK, (-1.02, 0, .04, .30, .34), (-1.18, 0, .04, .26, .30))
         for i in (-1, 0, 1):
             arm.shell(PALE, (-1.26, i * .10, .06, .07, .09), (-1.46, i * .11, .10, .06, .08))
+        arm.narrow(.80)
         arm.build()
 
         # --- 脚：長く太く、膝の駆動部を見せる ---
-        leg = Part("Leg" + suffix, (s * .55, 0, 1.05))
+        leg = Part("Leg" + suffix, (s * .42, 0, 1.14))
         leg.shell(DARK, (-.96, 0, -.03, .28, .37), (-.30, 0, -.02, .40, .50),
                   (.12, 0, 0, .32, .46), (.96, 0, 0, .44, .56))
         # 太もも。縦に長い一枚の折れ面。段差は外側に寄せる。
@@ -452,18 +465,21 @@ def build_body():
                          (-.24, s * .04, .075, .52, .68, .12),
                          (-.125, s * .04, -.015, .42, .44, .04))
         leg.axle(STEEL, s * .20, -.26, -.55, .070, .80, "z")
+        leg.narrow(.68)
+        leg.stretch(1.11)
         leg.build(.036)
 
         # --- 足：つま先を前に長く伸ばす ---
-        foot = Part("Foot" + suffix, (s * .55, .15, .15))
+        foot = Part("Foot" + suffix, (s * .42, .15, .15))
         foot.shell(DARK, (-.15, 0, .07, .78, 1.50), (-.06, 0, .08, .82, 1.50))
         foot.shell(ARMOR, (-.05, 0, .14, .78, 1.44), (.07, 0, .16, .70, 1.30),
                    (.18, 0, -.08, .48, .66))
         foot.shell(PALE, (-.03, 0, .68, .58, .32), (.06, 0, .62, .48, .30))
+        foot.narrow(.74)
         foot.build(.024)
 
     # --- 背面の推進ユニットと、後方へ伸びる大きなブレード ---
-    pack = Part("BackPack", (0, -.90, 3.14))
+    pack = Part("BackPack", (0, -.90, 3.08))
     pack.shell(DARK, (-.62, 0, 0, .72, .56), (.58, 0, 0, 1.02, .74))
     for s in (-1, 1):
         pack.shell(ARMOR, (-.80, s * .60, -.05, .44, .62), (-.42, s * .62, -.11, .64, .86),
@@ -478,10 +494,11 @@ def build_body():
                    (1.26, s * 1.06, -2.00, .15, .07))
         pack.shell(ARMOR, (.04, s * .48, -.30, .34, .12), (.52, s * .70, -1.16, .24, .09),
                    (.88, s * .82, -1.90, .12, .06))
+    pack.narrow(.85)
     pack.build()
 
     # --- 武器（Godot 側が参照するので量産機と同じ作りで用意する）---
-    barrel = Part("Barrel", (1.3, .60, 1.75))
+    barrel = Part("Barrel", (0.98, .60, 2.24))
     barrel.axle(DARK, 0, 0, 0, .12, 1.60, "z")
     barrel.shell(ARMOR, (-.29, 0, 0, .25, .29), (.37, 0, 0, .36, .40), (.78, 0, 0, .33, .37))
     barrel.axle(STEEL, 0, 0, -.62, .146, .25, "z")
