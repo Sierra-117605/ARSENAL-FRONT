@@ -537,9 +537,48 @@ def studio():
     return scene, camera
 
 
+def add_reference(path):
+    """下絵の立体を薄い赤で重ねる。全高 4 にそろえ、足の裏を 0 に置く。"""
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(path.resolve()))
+    added = [o for o in bpy.data.objects if o not in before and o.type == "MESH"]
+    if not added:
+        return
+    points = []
+    for obj in added:
+        mw = obj.matrix_world
+        points.extend(mw @ v.co for v in obj.data.vertices)
+    lo = Vector((min(p[i] for p in points) for i in range(3)))
+    hi = Vector((max(p[i] for p in points) for i in range(3)))
+    scale = 4.0 / max(hi.z - lo.z, 1e-6)
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in added:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = added[0]
+    bpy.ops.object.join()
+    ref = bpy.context.view_layer.objects.active
+    ref.name = "Reference"
+    center = (lo + hi) * .5
+    ref.location -= Vector((center.x, center.y, lo.z))
+    bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
+    ref.scale = (scale, scale, scale)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    mat = bpy.data.materials.new("Reference")
+    mat.use_nodes = True
+    mat.blend_method = "BLEND"
+    shader = mat.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Base Color"].default_value = (.85, .18, .14, 1)
+    shader.inputs["Alpha"].default_value = .30
+    shader.inputs["Roughness"].default_value = .9
+    ref.data.materials.clear()
+    ref.data.materials.append(mat)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
+    # 画像→3D で起こした立体を下絵として重ねる（形を合わせるときに使う）
+    parser.add_argument("--reference", type=Path, default=None)
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     args.out = args.out.resolve()
     args.out.mkdir(parents=True, exist_ok=True)
@@ -558,6 +597,9 @@ def main():
             obj.select_set(True)
     bpy.ops.export_scene.gltf(filepath=str(destination), export_format="GLB",
                               export_apply=True, use_selection=True)
+
+    if args.reference is not None:
+        add_reference(args.reference)
 
     for label, angle in [("front", 0), ("quarter", 38), ("side", 90)]:
         camera.location = (9 * sin(radians(angle)), 9 * cos(radians(angle)), 2.3)
